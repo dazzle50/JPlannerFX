@@ -74,4 +74,168 @@ public class Plan
     return Utils.name( this ) + "[" + m_title + ", " + m_start + ", " + tasks.size() + " Tasks, " + resources.size()
         + " Resources, " + calendars.size() + " Calendars, " + daytypes.size() + " DayTypes]";
   }
+
+  /**************************************** initialise *******************************************/
+  public void initialise()
+  {
+    // initialise plan with default settings and contents
+    daytypes.initialise();
+    calendars.initialise();
+    resources.initialise();
+    tasks.initialise();
+
+    // TODO m_calendar = getCalendar( 0 );
+    m_start = DateTime.now();
+  }
+
+  /******************************************** task *********************************************/
+  public Task getTask( int index )
+  {
+    // return task corresponding to index
+    return tasks.get( index );
+  }
+
+  public int getIndex( Task task )
+  {
+    return tasks.indexOf( task );
+  }
+
+  /****************************************** resource *******************************************/
+  public Resource getResource( int index )
+  {
+    // return resource corresponding to index
+    return resources.get( index );
+  }
+
+  public int getIndex( Resource res )
+  {
+    return resources.indexOf( res );
+  }
+
+  /****************************************** calendar *******************************************/
+  public Calendar getCalendar( int index )
+  {
+    // return calendar corresponding to index
+    return calendars.get( index );
+  }
+
+  public int getIndex( Calendar cal )
+  {
+    return calendars.indexOf( cal );
+  }
+
+  /********************************************* day *********************************************/
+  public Day getDay( int index )
+  {
+    // return day-type corresponding to index
+    return daytypes.get( index );
+  }
+
+  public int getIndex( Day day )
+  {
+    return daytypes.indexOf( day );
+  }
+
+  /****************************************** getTitle *******************************************/
+  public String getTitle()
+  {
+    return m_title;
+  }
+
+  /****************************************** getNotes *******************************************/
+  public String getNotes()
+  {
+    return m_notes;
+  }
+
+  /*************************************** getDefaultStart ***************************************/
+  public DateTime getDefaultStart()
+  {
+    return m_start;
+  }
+
+  /************************************** getDefaultCalendar *************************************/
+  public Calendar getDefaultCalendar()
+  {
+    return m_calendar;
+  }
+
+  /************************************** getDateTimeFormat **************************************/
+  public String getDateTimeFormat()
+  {
+    return m_datetimeFormat;
+  }
+
+  /**************************************** getDateFormat ****************************************/
+  public String getDateFormat()
+  {
+    return m_dateFormat;
+  }
+
+  /***************************************** getFilename *****************************************/
+  public String getFilename()
+  {
+    return m_filename;
+  }
+
+  /*************************************** getFileLocation ***************************************/
+  public String getFileLocation()
+  {
+    return m_fileLocation;
+  }
+
+  /***************************************** getSavedBy ******************************************/
+  public String getSavedBy()
+  {
+    return m_savedBy;
+  }
+
+  /**************************************** getSavedWhen *****************************************/
+  public DateTime getSavedWhen()
+  {
+    return m_savedWhen;
+  }
+
+  /**************************************** getUndostack *****************************************/
+  public UndoStack getUndostack()
+  {
+    return m_undostack;
+  }
+
+  /******************************************* setNotes ******************************************/
+  public void setNotes( String notes )
+  {
+    m_notes = notes;
+  }
+
+  /******************************************* setTitle ******************************************/
+  public void setTitle( String title )
+  {
+    m_title = title;
+  }
+
+  /*************************************** setDefaultStart ***************************************/
+  public void setDefaultStart( DateTime start )
+  {
+    m_start = start;
+  }
+
+  /************************************** setDefaultCalendar *************************************/
+  public void setDefaultCalendar( Calendar cal )
+  {
+    m_calendar = cal;
+  }
+
+  /*************************************** setDateTimeFormat *************************************/
+  public void setDateTimeFormat( String DTformat )
+  {
+    m_datetimeFormat = DTformat;
+  }
+
+  /**************************************** setDateFormat ****************************************/
+  public void setDateFormat( String Dformat )
+  {
+    m_dateFormat = Dformat;
+  }
+
 }

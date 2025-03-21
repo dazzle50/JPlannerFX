@@ -20,6 +20,8 @@ package rjc.jplanner.plan;
 
 import java.util.ArrayList;
 
+import rjc.table.Utils;
+
 /*************************************************************************************************/
 /***************************** Single day type as used by calendars ******************************/
 /*************************************************************************************************/
@@ -35,5 +37,28 @@ public class Day
   public enum DefaultDayTypes
   {
     NONWORK, STANDARDWORK, SHORT, EVENING, TWENTYFOURHOURS
+  }
+
+  /**************************************** constructor ******************************************/
+  public Day()
+  {
+    // construct empty but usable day type
+    m_name = "Null";
+    m_work = 0.0;
+    m_periods = new ArrayList<>();
+    m_workMS = 0;
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    return Utils.name( this ) + "[" + m_name + ", " + m_work + ", " + m_periods + "]";
+  }
+
+  /******************************************* getName *******************************************/
+  public String getName()
+  {
+    return m_name;
   }
 }

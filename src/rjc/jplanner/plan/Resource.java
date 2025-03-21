@@ -18,11 +18,49 @@
 
 package rjc.jplanner.plan;
 
+import rjc.table.Utils;
+import rjc.table.data.types.Date;
+
 /*************************************************************************************************/
 /************************************* Single plan resource **************************************/
 /*************************************************************************************************/
 
 public class Resource
 {
+  private String   m_initials;     // must be unique across all resources in model
+  private String   m_name;         // free text
+  private String   m_org;          // free text
+  private String   m_group;        // free text
+  private String   m_role;         // free text
+  private String   m_alias;        // free text
+  private Date     m_start;        // date availability starts inclusive
+  private Date     m_end;          // date availability end inclusive
+  private double   m_availability; // number available
+  private double   m_cost;         // cost TODO
+  private Calendar m_calendar;     // calendar for resource
+  private String   m_comment;      // free text
+
+  /**************************************** constructor ******************************************/
+  public Resource()
+  {
+    // initialise private variables
+    m_availability = 1.0;
+  }
+
+  /**************************************** toStringShort ****************************************/
+  public String toStringShort()
+  {
+    // short string summary
+    return Utils.name( this ) + "[" + m_initials + "]";
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    // string summary
+    return Utils.name( this ) + "[" + m_initials + ", " + m_name + ", " + m_org + ", " + m_group + ", " + m_role + ", "
+        + m_alias + ", " + m_start + ", " + m_end + ", " + m_availability + "]";
+  }
 
 }

@@ -27,4 +27,11 @@ import java.util.ArrayList;
 public class Calendars extends ArrayList<Calendar>
 {
 
+  /**************************************** initialise *******************************************/
+  public void initialise()
+  {
+    // initialise list with default calendars
+    clear();
+  }
+
 }

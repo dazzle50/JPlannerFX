@@ -27,4 +27,10 @@ import java.util.ArrayList;
 public class Days extends ArrayList<Day>
 {
 
+  /**************************************** initialise *******************************************/
+  public void initialise()
+  {
+    // initialise list with default day-types
+    clear();
+  }
 }

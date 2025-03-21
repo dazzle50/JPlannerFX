@@ -18,11 +18,55 @@
 
 package rjc.jplanner.plan;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import rjc.table.Utils;
+import rjc.table.data.types.Date;
+
 /*************************************************************************************************/
 /********************************* Single calendar for planning **********************************/
 /*************************************************************************************************/
 
 public class Calendar
 {
+  private String             m_name;        // name of calendar
+  private Date               m_cycleAnchor; // anchor date of calendar cycle
+  private ArrayList<Day>     m_normal;      // normal basic cycle days
+  private HashMap<Date, Day> m_exceptions;  // exceptions override normal days
+
+  public enum DefaultCalendarTypes
+  {
+    STANDARD, FULLTIME, FANCY
+  };
+
+  /**************************************** constructor ******************************************/
+  public Calendar()
+  {
+    // construct empty but usable calendar
+    m_name = "Null";
+    m_cycleAnchor = new Date( 2000, 1, 1 );
+    m_normal = new ArrayList<>();
+    m_exceptions = new HashMap<>();
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    return Utils.name( this ) + "[" + m_name + ", " + m_cycleAnchor + ", " + m_normal + "]";
+  }
+
+  /******************************************* getName *******************************************/
+  public String getName()
+  {
+    return m_name;
+  }
+
+  /****************************************** getAnchor ******************************************/
+  public Date getAnchor()
+  {
+    return m_cycleAnchor;
+  }
 
 }

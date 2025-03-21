@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 
 /*************************************************************************************************/
@@ -40,6 +41,8 @@ public class JPlannerFX extends Application
   public static Image        JPLANNER_ICON;
   public static final String VERSION = "v0.0.1-alpha WIP";
 
+  public static Plan         plan;                        // globally accessible plan
+
   /******************************************** main *********************************************/
   public static void main( String[] args )
   {
@@ -48,9 +51,15 @@ public class JPlannerFX extends Application
     for ( Object property : new TreeSet<Object>( System.getProperties().keySet() ) )
       Utils.trace( property + " = '" + System.getProperty( property.toString() ) + "'" );
 
-    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
     Utils.trace( "JTableFX    VERSION = '" + Utils.VERSION + "'", args );
     Utils.trace( "JPlannerFX  VERSION = '" + VERSION + "'", args );
+    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+
+    Utils.trace( plan );
+    plan = new Plan();
+    Utils.trace( plan );
+    plan.initialise();
+    Utils.trace( plan );
 
     // launch demo application display
     launch( args );
