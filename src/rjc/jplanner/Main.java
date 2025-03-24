@@ -22,12 +22,12 @@ import java.util.TreeSet;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import rjc.jplanner.gui.MainWindow;
 import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
+import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
 // Aims to be a project planner similar to M$Project with table entry of tasks & Gantt chart
@@ -36,53 +36,66 @@ import rjc.table.Utils;
 // Also aims to have Gantt chart task bar thickness showing this variable resource usage
 /*************************************************************************************************/
 
-public class JPlannerFX extends Application
+public class Main extends Application
 {
-  public static Image        JPLANNER_ICON;
-  public static final String VERSION = "v0.0.1-alpha WIP";
+  public static final String VERSION = "v0.0.1 WIP";
 
-  public static Plan         plan;                        // globally accessible plan
+  private Image              m_icon;                // icon for application
+  private static Plan        m_plan;                // current active plan
+  private static UndoStack   m_undostack;           // current active undostack
 
   /******************************************** main *********************************************/
   public static void main( String[] args )
   {
     // main entry point for application startup
-    Utils.trace( "################################# Java properties #################################" );
-    for ( Object property : new TreeSet<Object>( System.getProperties().keySet() ) )
+    Utils.trace( "############################### Java properties ###############################" );
+    for ( Object property : new TreeSet<>( System.getProperties().keySet() ) )
       Utils.trace( property + " = '" + System.getProperty( property.toString() ) + "'" );
 
     Utils.trace( "JTableFX    VERSION = '" + Utils.VERSION + "'", args );
     Utils.trace( "JPlannerFX  VERSION = '" + VERSION + "'", args );
-    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
 
-    Utils.trace( plan );
-    plan = new Plan();
-    Utils.trace( plan );
-    plan.initialise();
-    Utils.trace( plan );
-
-    // launch demo application display
+    // launch application display
     launch( args );
-    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX ended ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+
+    Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX ended ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
   }
 
   /******************************************** start ********************************************/
   @Override
   public void start( Stage primaryStage ) throws Exception
   {
-    // create demo application window
-    JPLANNER_ICON = new Image( getClass().getResourceAsStream( "JPlannerFX-icon64.png" ) );
-    Scene scene = new Scene( new GridPane() );
-    primaryStage.setScene( scene );
-    primaryStage.setTitle( "JPlannerFX  " + VERSION );
-    primaryStage.getIcons().add( JPLANNER_ICON );
+    // prepare application
+    m_icon = new Image( getClass().getResourceAsStream( "JPlannerFX-icon64.png" ) );
+    m_undostack = new UndoStack();
+    m_plan = new Plan();
 
-    // close demo app when main window is closed (in case other windows are open)
+    // close app when main window is closed (in case other windows are open)
     primaryStage.setOnHidden( event -> Platform.exit() );
 
-    // open demo app window
+    // create app main window
+    primaryStage.setScene( new MainWindow() );
+    primaryStage.setTitle( "JPlannerFX  " + VERSION );
+    primaryStage.getIcons().add( m_icon );
+
+    // open app window
     primaryStage.setWidth( 1000 );
     primaryStage.setHeight( 600 );
     primaryStage.show();
+  }
+
+  /******************************************* getPlan *******************************************/
+  public static Plan getPlan()
+  {
+    // return application current active plan
+    return m_plan;
+  }
+
+  /***************************************** getUndostack ****************************************/
+  public static UndoStack getUndostack()
+  {
+    // return application current active undo-stack
+    return m_undostack;
   }
 }

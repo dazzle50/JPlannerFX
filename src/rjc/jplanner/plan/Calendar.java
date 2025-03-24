@@ -50,6 +50,16 @@ public class Calendar
     m_exceptions = new HashMap<>();
   }
 
+  /**************************************** constructor ******************************************/
+  public Calendar( String name, Date date )
+  {
+    // construct new calendar
+    m_name = name;
+    m_cycleAnchor = date;
+    m_normal = new ArrayList<>();
+    m_exceptions = new HashMap<>();
+  }
+
   /****************************************** toString *******************************************/
   @Override
   public String toString()

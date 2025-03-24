@@ -20,6 +20,8 @@ package rjc.jplanner.plan;
 
 import java.util.ArrayList;
 
+import rjc.table.data.types.Date;
+
 /*************************************************************************************************/
 /************************** Holds the complete list of plan calendars ****************************/
 /*************************************************************************************************/
@@ -32,6 +34,7 @@ public class Calendars extends ArrayList<Calendar>
   {
     // initialise list with default calendars
     clear();
+    add( new Calendar( "Standard", new Date( 2000, 1, 1 ) ) );
   }
 
 }

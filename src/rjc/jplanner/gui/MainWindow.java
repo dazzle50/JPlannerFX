@@ -16,27 +16,50 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui;
 
-import java.util.ArrayList;
+import javafx.scene.Scene;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import rjc.jplanner.Main;
+import rjc.table.Utils;
+import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan day-types ****************************/
+/************************** Main JPlannerFX application window contents **************************/
 /*************************************************************************************************/
 
-public class Days extends ArrayList<Day>
+public class MainWindow extends Scene
 {
+  private MenuBar         m_menus;      // menus at top of MainWindow
+  private TabPane         m_tabs;       // tabs containing application functionality
+  private TextField       m_statusBar;  // status bar at bottom of MainWindow
+  private UndoStackWindow m_undoWindow; // window to show undo-plan
 
-  /**************************************** initialise *******************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public MainWindow()
   {
-    // initialise list with default day-types
-    clear();
-    add( new Day( "Non working", 0.0 ) );
-    add( new Day( "Standard work day", 1.0, 9.0, 13.0, 14.0, 18.0 ) );
-    add( new Day( "Morning only", 0.5, 9.0, 13.0 ) );
-    add( new Day( "Evening shift", 0.6, 18.0, 22.0 ) );
-    add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
+    // main window based on grid layout
+    super( new GridPane() );
+
+    // prepare components
+    m_menus = new MainMenus();
+    m_tabs = new MainTabs();
+    m_statusBar = new TextField();
+
+    // arrange the grid
+    GridPane grid = (GridPane) getRoot();
+    grid.add( m_menus, 0, 0 );
+    grid.add( m_tabs, 0, 1 );
+    grid.add( m_statusBar, 0, 2 );
+    GridPane.setHgrow( m_tabs, Priority.ALWAYS );
+    GridPane.setVgrow( m_tabs, Priority.ALWAYS );
+
+    Utils.trace( Main.getPlan() );
+    Utils.trace( Main.getUndostack() );
   }
 
 }

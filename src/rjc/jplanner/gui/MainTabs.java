@@ -16,27 +16,33 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui;
 
-import java.util.ArrayList;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan day-types ****************************/
+/************** TabPane showing the Plan/Tasks&Gantt/Resources/Calendars/Days tabs ***************/
 /*************************************************************************************************/
 
-public class Days extends ArrayList<Day>
+public class MainTabs extends TabPane
 {
+  private Tab m_plan;
+  private Tab m_tasks;
+  private Tab m_resources;
+  private Tab m_calendars;
+  private Tab m_days;
 
-  /**************************************** initialise *******************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public MainTabs()
   {
-    // initialise list with default day-types
-    clear();
-    add( new Day( "Non working", 0.0 ) );
-    add( new Day( "Standard work day", 1.0, 9.0, 13.0, 14.0, 18.0 ) );
-    add( new Day( "Morning only", 0.5, 9.0, 13.0 ) );
-    add( new Day( "Evening shift", 0.6, 18.0, 22.0 ) );
-    add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
-  }
+    // construct main window tabs
+    m_plan = new Tab( "Plan" );
+    m_tasks = new Tab( "Tasks" );
+    m_resources = new Tab( "Resources" );
+    m_calendars = new Tab( "Calendars" );
+    m_days = new Tab( "Days" );
 
+    getTabs().addAll( m_plan, m_tasks, m_resources, m_calendars, m_days );
+  }
 }

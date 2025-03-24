@@ -16,27 +16,34 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui;
 
-import java.util.ArrayList;
+import javafx.scene.control.Menu;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan day-types ****************************/
+/*********************************** Main application menu bar ***********************************/
 /*************************************************************************************************/
 
-public class Days extends ArrayList<Day>
+import javafx.scene.control.MenuBar;
+
+public class MainMenus extends MenuBar
 {
+  private Menu m_menuFile;
+  private Menu m_menuEdit;
+  private Menu m_menuReport;
+  private Menu m_menuView;
+  private Menu m_menuHelp;
 
-  /**************************************** initialise *******************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public MainMenus()
   {
-    // initialise list with default day-types
-    clear();
-    add( new Day( "Non working", 0.0 ) );
-    add( new Day( "Standard work day", 1.0, 9.0, 13.0, 14.0, 18.0 ) );
-    add( new Day( "Morning only", 0.5, 9.0, 13.0 ) );
-    add( new Day( "Evening shift", 0.6, 18.0, 22.0 ) );
-    add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
-  }
+    // construct main window menu bar
+    m_menuFile = new Menu( "File" );
+    m_menuEdit = new Menu( "Edit" );
+    m_menuReport = new Menu( "Report" );
+    m_menuView = new Menu( "View" );
+    m_menuHelp = new Menu( "Help" );
 
+    getMenus().addAll( m_menuFile, m_menuEdit, m_menuReport, m_menuView, m_menuHelp );
+  }
 }

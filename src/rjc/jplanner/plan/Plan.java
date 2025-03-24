@@ -20,7 +20,6 @@ package rjc.jplanner.plan;
 
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
-import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
 /*************************** Holds the complete data model for a plan ****************************/
@@ -28,23 +27,21 @@ import rjc.table.undo.UndoStack;
 
 public class Plan
 {
-  private String    m_title;          // plan title as set in properties
-  private DateTime  m_start;          // plan start date-time as set in properties
-  private Calendar  m_calendar;       // plan's default calendar
-  private String    m_datetimeFormat; // format to display date-times
-  private String    m_dateFormat;     // format to display dates
-  private String    m_filename;       // filename when saved or loaded
-  private String    m_fileLocation;   // file location
-  private String    m_savedBy;        // who saved last
-  private DateTime  m_savedWhen;      // when was last saved
-  private String    m_notes;          // plan notes as on plan tab
+  private String   m_title;          // plan title
+  private DateTime m_start;          // plan default start date-time for scheduling
+  private Calendar m_calendar;       // plan default calendar
+  private String   m_datetimeFormat; // format to display date-times
+  private String   m_dateFormat;     // format to display dates
+  private String   m_filename;       // filename when saved or loaded
+  private String   m_fileLocation;   // file location
+  private String   m_savedBy;        // who saved last
+  private DateTime m_savedWhen;      // when was last saved
+  private String   m_notes;          // plan notes
 
-  private UndoStack m_undostack;      // undo stack for plan editing
-
-  public Tasks      tasks;            // list of plan tasks
-  public Resources  resources;        // list of plan resources
-  public Calendars  calendars;        // list of plan calendars
-  public Days       daytypes;         // list of plan day types
+  public Tasks     tasks;            // list of plan tasks
+  public Resources resources;        // list of plan resources
+  public Calendars calendars;        // list of plan calendars
+  public Days      daytypes;         // list of plan day types
 
   /**************************************** constructor ******************************************/
   public Plan()
@@ -54,8 +51,6 @@ public class Plan
     resources = new Resources();
     calendars = new Calendars();
     daytypes = new Days();
-
-    m_undostack = new UndoStack();
 
     m_title = "";
     m_datetimeFormat = "EEE dd/MM/yyyy HH:mm";
@@ -107,9 +102,9 @@ public class Plan
     return resources.get( index );
   }
 
-  public int getIndex( Resource res )
+  public int getIndex( Resource resource )
   {
-    return resources.indexOf( res );
+    return resources.indexOf( resource );
   }
 
   /****************************************** calendar *******************************************/
@@ -119,9 +114,9 @@ public class Plan
     return calendars.get( index );
   }
 
-  public int getIndex( Calendar cal )
+  public int getIndex( Calendar calendar )
   {
-    return calendars.indexOf( cal );
+    return calendars.indexOf( calendar );
   }
 
   /********************************************* day *********************************************/
@@ -131,9 +126,9 @@ public class Plan
     return daytypes.get( index );
   }
 
-  public int getIndex( Day day )
+  public int getIndex( Day dayType )
   {
-    return daytypes.indexOf( day );
+    return daytypes.indexOf( dayType );
   }
 
   /****************************************** getTitle *******************************************/
@@ -196,12 +191,6 @@ public class Plan
     return m_savedWhen;
   }
 
-  /**************************************** getUndostack *****************************************/
-  public UndoStack getUndostack()
-  {
-    return m_undostack;
-  }
-
   /******************************************* setNotes ******************************************/
   public void setNotes( String notes )
   {
@@ -221,9 +210,9 @@ public class Plan
   }
 
   /************************************** setDefaultCalendar *************************************/
-  public void setDefaultCalendar( Calendar cal )
+  public void setDefaultCalendar( Calendar calendar )
   {
-    m_calendar = cal;
+    m_calendar = calendar;
   }
 
   /*************************************** setDateTimeFormat *************************************/

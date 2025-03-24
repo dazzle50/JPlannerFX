@@ -34,11 +34,6 @@ public class Day
 
   private int                      m_workMS;  // pre-calculated number of worked milliseconds in day-type
 
-  public enum DefaultDayTypes
-  {
-    NONWORK, STANDARDWORK, SHORT, EVENING, TWENTYFOURHOURS
-  }
-
   /**************************************** constructor ******************************************/
   public Day()
   {
@@ -47,6 +42,37 @@ public class Day
     m_work = 0.0;
     m_periods = new ArrayList<>();
     m_workMS = 0;
+  }
+
+  /**************************************** constructor ******************************************/
+  public Day( String name, double work, double... periods )
+  {
+    // construct specified day type
+    if ( name == null )
+      throw new NullPointerException( "Name must not be null" );
+    m_name = name;
+
+    if ( work < 0.0 )
+      throw new IllegalArgumentException( "Work must not be negative (" + work + ")" );
+    m_work = work;
+
+    if ( periods.length % 2 == 1 )
+      throw new IllegalArgumentException( "Period times must be in pairs (" + periods.length + ")" );
+
+    int count = periods.length / 2;
+    double last = -0.0001;
+    m_periods = new ArrayList<>( count );
+    for ( int p = 0; p < count; p++ )
+    {
+      double start = periods[p * 2];
+      double end = periods[p * 2 + 1];
+      if ( start <= last || end <= start )
+        throw new IllegalArgumentException(
+            "Period times must be in assending order " + Utils.objectsString( periods ) );
+
+      m_periods.add( new DayWorkPeriod( start, end ) );
+      last = end;
+    }
   }
 
   /****************************************** toString *******************************************/
