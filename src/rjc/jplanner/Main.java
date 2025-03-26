@@ -27,6 +27,7 @@ import javafx.stage.Stage;
 import rjc.jplanner.gui.MainWindow;
 import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
+import rjc.table.signal.ObservableStatus;
 import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
@@ -38,11 +39,12 @@ import rjc.table.undo.UndoStack;
 
 public class Main extends Application
 {
-  public static final String VERSION = "v0.0.1 WIP";
+  public static final String      VERSION = "v0.0.1 WIP";
 
-  private Image              m_icon;                // icon for application
-  private static Plan        m_plan;                // current active plan
-  private static UndoStack   m_undostack;           // current active undostack
+  private Image                   m_icon;                // icon for application
+  private static Plan             m_plan;                // current active plan
+  private static ObservableStatus m_status;              // current application status
+  private static UndoStack        m_undostack;           // current active undostack
 
   /******************************************** main *********************************************/
   public static void main( String[] args )
@@ -70,6 +72,7 @@ public class Main extends Application
     m_icon = new Image( getClass().getResourceAsStream( "JPlannerFX-icon64.png" ) );
     m_undostack = new UndoStack();
     m_plan = new Plan();
+    m_plan.initialise();
 
     // close app when main window is closed (in case other windows are open)
     primaryStage.setOnHidden( event -> Platform.exit() );
@@ -90,6 +93,13 @@ public class Main extends Application
   {
     // return application current active plan
     return m_plan;
+  }
+
+  /****************************************** getStatus ******************************************/
+  public static ObservableStatus getStatus()
+  {
+    // return application current status property
+    return m_status;
   }
 
   /***************************************** getUndostack ****************************************/

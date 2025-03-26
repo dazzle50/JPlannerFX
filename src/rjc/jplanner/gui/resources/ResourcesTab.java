@@ -16,27 +16,24 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui.resources;
 
-import java.util.ArrayList;
-
-import rjc.jplanner.Main;
-import rjc.table.data.types.Date;
+import javafx.scene.control.Tab;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan calendars ****************************/
+/************************* Tab showing table of available plan resources *************************/
 /*************************************************************************************************/
 
-public class Calendars extends ArrayList<Calendar>
+public class ResourcesTab extends Tab
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /**************************************** initialise *******************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public ResourcesTab()
   {
-    // initialise list with default calendars
-    clear();
-    add( new Calendar( "Standard", new Date( 2000, 1, 1 ) ) );
-  }
+    // construct tab
+    super( "Resources" );
+    setClosable( false );
 
+    // showing table of available plan resources
+  }
 }

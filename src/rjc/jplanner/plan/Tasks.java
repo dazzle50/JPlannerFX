@@ -20,12 +20,15 @@ package rjc.jplanner.plan;
 
 import java.util.ArrayList;
 
+import rjc.jplanner.Main;
+
 /*************************************************************************************************/
 /**************************** Holds the complete list of plan tasks ******************************/
 /*************************************************************************************************/
 
 public class Tasks extends ArrayList<Task>
 {
+  private static final long serialVersionUID = Main.VERSION.hashCode();
 
   /****************************************** initialise *****************************************/
   public void initialise()

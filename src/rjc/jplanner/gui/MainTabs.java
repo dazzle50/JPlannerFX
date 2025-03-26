@@ -20,6 +20,11 @@ package rjc.jplanner.gui;
 
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import rjc.jplanner.gui.calendars.CalendarsTab;
+import rjc.jplanner.gui.days.DaysTab;
+import rjc.jplanner.gui.plan.PlanTab;
+import rjc.jplanner.gui.resources.ResourcesTab;
+import rjc.jplanner.gui.tasks.TasksTab;
 
 /*************************************************************************************************/
 /************** TabPane showing the Plan/Tasks&Gantt/Resources/Calendars/Days tabs ***************/
@@ -27,21 +32,21 @@ import javafx.scene.control.TabPane;
 
 public class MainTabs extends TabPane
 {
-  private Tab m_plan;
-  private Tab m_tasks;
-  private Tab m_resources;
-  private Tab m_calendars;
-  private Tab m_days;
+  private Tab m_plan;      // tab showing overall plan controls & information
+  private Tab m_tasks;     // tab showing table view of plan tasks and Gantt
+  private Tab m_resources; // tab showing table view of plan resources
+  private Tab m_calendars; // tab showing table view of plan calendars
+  private Tab m_days;      // tab showing table view of plan day-types
 
   /**************************************** constructor ******************************************/
   public MainTabs()
   {
     // construct main window tabs
-    m_plan = new Tab( "Plan" );
-    m_tasks = new Tab( "Tasks" );
-    m_resources = new Tab( "Resources" );
-    m_calendars = new Tab( "Calendars" );
-    m_days = new Tab( "Days" );
+    m_plan = new PlanTab();
+    m_tasks = new TasksTab();
+    m_resources = new ResourcesTab();
+    m_calendars = new CalendarsTab();
+    m_days = new DaysTab();
 
     getTabs().addAll( m_plan, m_tasks, m_resources, m_calendars, m_days );
   }

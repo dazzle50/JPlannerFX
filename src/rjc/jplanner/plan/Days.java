@@ -20,12 +20,15 @@ package rjc.jplanner.plan;
 
 import java.util.ArrayList;
 
+import rjc.jplanner.Main;
+
 /*************************************************************************************************/
 /************************** Holds the complete list of plan day-types ****************************/
 /*************************************************************************************************/
 
 public class Days extends ArrayList<Day>
 {
+  private static final long serialVersionUID = Main.VERSION.hashCode();
 
   /**************************************** initialise *******************************************/
   public void initialise()

@@ -34,6 +34,11 @@ public class Day
 
   private int                      m_workMS;  // pre-calculated number of worked milliseconds in day-type
 
+  public enum FIELD
+  {
+    Name, Work, Periods, Start, End
+  }
+
   /**************************************** constructor ******************************************/
   public Day()
   {
@@ -86,5 +91,45 @@ public class Day
   public String getName()
   {
     return m_name;
+  }
+
+  /******************************************* getWork *******************************************/
+  public double getWork()
+  {
+    return m_work;
+  }
+
+  /****************************************** getPeriods *****************************************/
+  public ArrayList<DayWorkPeriod> getPeriods()
+  {
+    return m_periods;
+  }
+
+  /******************************************* getValue ******************************************/
+  public Object getValue( int field )
+  {
+    // return value for the different fields
+    if ( field == FIELD.Name.ordinal() )
+      return m_name;
+
+    if ( field == FIELD.Work.ordinal() )
+      return m_work;
+
+    if ( field == FIELD.Periods.ordinal() )
+      return m_periods.size();
+
+    try
+    {
+      field -= FIELD.Start.ordinal();
+      if ( field % 2 == 0 )
+        return m_periods.get( field / 2 ).m_start;
+      else
+        return m_periods.get( field / 2 ).m_end;
+    }
+    catch ( IndexOutOfBoundsException e )
+    {
+      // if no work period, return blank
+      return null;
+    }
   }
 }
