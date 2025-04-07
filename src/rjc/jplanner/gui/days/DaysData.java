@@ -23,6 +23,10 @@ import rjc.jplanner.plan.Day.FIELD;
 import rjc.jplanner.plan.Days;
 import rjc.table.data.TableData;
 
+/*************************************************************************************************/
+/**************************** Table data source for showing day-types ****************************/
+/*************************************************************************************************/
+
 public class DaysData extends TableData
 {
   Days m_days;            // array of day-types to be shown on table

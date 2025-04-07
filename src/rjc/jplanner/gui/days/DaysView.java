@@ -18,36 +18,42 @@
 
 package rjc.jplanner.gui.days;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
+import rjc.jplanner.plan.Day;
+import rjc.table.data.TableData;
+import rjc.table.view.TableView;
+import rjc.table.view.cell.CellDrawer;
 
 /*************************************************************************************************/
-/************************* Tab showing table of available plan day-types *************************/
+/******************* Customised table-view for interacting with plan day-types *******************/
 /*************************************************************************************************/
 
-public class DaysTab extends Tab
+public class DaysView extends TableView
 {
-  private DaysView m_view;
 
   /**************************************** constructor ******************************************/
-  public DaysTab()
+  public DaysView( TableData data, String name )
   {
-    // construct tab
-    super( "Days" );
-    setClosable( false );
-
-    // showing table of available plan day-types
-    m_view = new DaysView( new DaysData( Main.getPlan().daytypes ), getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_view );
-      else
-        setContent( null );
-    } );
+    // construct the table view
+    super( data, name );
   }
+
+  /******************************************** reset ********************************************/
+  @Override
+  public void reset()
+  {
+    // reset table view to custom settings
+    super.reset();
+    getColumnsAxis().setHeaderSize( 35 );
+    getColumnsAxis().setDefaultSize( 60 );
+    getColumnsAxis().setIndexSize( Day.FIELD.Name.ordinal(), 150 );
+  }
+
+  /**************************************** getCellDrawer ****************************************/
+  @Override
+  public CellDrawer getCellDrawer()
+  {
+    // return new instance of class responsible for drawing the cells on canvas
+    return new DaysCellDrawer();
+  }
+
 }

@@ -39,7 +39,7 @@ import rjc.table.undo.UndoStack;
 
 public class Main extends Application
 {
-  public static final String      VERSION = "v0.0.1 WIP";
+  public static final String      VERSION = "v0.1.0 WIP";
 
   private Image                   m_icon;                // icon for application
   private static Plan             m_plan;                // current active plan

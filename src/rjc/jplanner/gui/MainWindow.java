@@ -24,8 +24,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-import rjc.jplanner.Main;
-import rjc.table.Utils;
 import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
@@ -57,9 +55,6 @@ public class MainWindow extends Scene
     grid.add( m_statusBar, 0, 2 );
     GridPane.setHgrow( m_tabs, Priority.ALWAYS );
     GridPane.setVgrow( m_tabs, Priority.ALWAYS );
-
-    Utils.trace( Main.getPlan() );
-    Utils.trace( Main.getUndostack() );
   }
 
 }
