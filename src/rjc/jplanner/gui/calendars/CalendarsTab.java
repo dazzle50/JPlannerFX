@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.calendars;
 
 import javafx.scene.control.Tab;
+import rjc.jplanner.Main;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan calendars *************************/
@@ -26,6 +27,7 @@ import javafx.scene.control.Tab;
 
 public class CalendarsTab extends Tab
 {
+  private CalendarsView m_view;
 
   /**************************************** constructor ******************************************/
   public CalendarsTab()
@@ -35,5 +37,18 @@ public class CalendarsTab extends Tab
     setClosable( false );
 
     // showing table of available plan calendars
+    m_view = new CalendarsView( new CalendarsData( Main.getPlan().calendars ), getText() );
+    m_view.setUndostack( Main.getUndostack() );
+    m_view.setStatus( Main.getStatus() );
+
+    // only have tab contents set if tab selected
+    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    {
+      if ( newValue )
+        setContent( m_view );
+      else
+        setContent( null );
+    } );
+
   }
 }

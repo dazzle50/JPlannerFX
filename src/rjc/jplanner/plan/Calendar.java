@@ -19,6 +19,7 @@
 package rjc.jplanner.plan;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import rjc.table.Utils;
@@ -35,10 +36,10 @@ public class Calendar
   private ArrayList<Day>     m_normal;      // normal basic cycle days
   private HashMap<Date, Day> m_exceptions;  // exceptions override normal days
 
-  public enum DefaultCalendarTypes
+  public enum FIELD
   {
-    STANDARD, FULLTIME, FANCY
-  };
+    Name, Anchor, Exceptions, Cycle, Normal
+  }
 
   /**************************************** constructor ******************************************/
   public Calendar()
@@ -51,12 +52,12 @@ public class Calendar
   }
 
   /**************************************** constructor ******************************************/
-  public Calendar( String name, Date date )
+  public Calendar( String name, Date date, Day... normal )
   {
     // construct new calendar
     m_name = name;
     m_cycleAnchor = date;
-    m_normal = new ArrayList<>();
+    m_normal = new ArrayList<>( Arrays.asList( normal ) );
     m_exceptions = new HashMap<>();
   }
 
@@ -77,6 +78,46 @@ public class Calendar
   public Date getAnchor()
   {
     return m_cycleAnchor;
+  }
+
+  /***************************************** getNormals ******************************************/
+  public ArrayList<Day> getNormals()
+  {
+    return m_normal;
+  }
+
+  /**************************************** getExceptions ****************************************/
+  public HashMap<Date, Day> getExceptions()
+  {
+    return m_exceptions;
+  }
+
+  /******************************************* getValue ******************************************/
+  public Object getValue( int field )
+  {
+    // return value for the different fields
+    if ( field == FIELD.Name.ordinal() )
+      return m_name;
+
+    if ( field == FIELD.Anchor.ordinal() )
+      return m_cycleAnchor;
+
+    if ( field == FIELD.Exceptions.ordinal() )
+      return m_exceptions.size();
+
+    if ( field == FIELD.Cycle.ordinal() )
+      return m_normal.size();
+
+    try
+    {
+      field -= FIELD.Normal.ordinal();
+      return m_normal.get( field ).getName();
+    }
+    catch ( IndexOutOfBoundsException e )
+    {
+      // beyond cycle, return blank
+      return null;
+    }
   }
 
 }

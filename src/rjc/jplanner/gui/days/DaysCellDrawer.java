@@ -18,7 +18,6 @@
 
 package rjc.jplanner.gui.days;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.paint.Paint;
 import rjc.jplanner.plan.Day;
@@ -27,12 +26,11 @@ import rjc.table.view.Colours;
 import rjc.table.view.cell.CellDrawer;
 
 /*************************************************************************************************/
-/*************************** Draws table-view cell for plan day-types ****************************/
+/*************************** Draws table-view cells for plan day-types ***************************/
 /*************************************************************************************************/
 
 public class DaysCellDrawer extends CellDrawer
 {
-  protected final static Insets CELL_TEXT_INSERTS = new Insets( 0.0, 5.0, 1.0, 4.0 );
 
   /************************************ getTextAlignment *************************************/
   @Override
@@ -44,14 +42,6 @@ public class DaysCellDrawer extends CellDrawer
 
     // otherwise centre alignment
     return Pos.CENTER;
-  }
-
-  /************************************** getTextInsets **************************************/
-  @Override
-  protected Insets getTextInsets()
-  {
-    // return cell text insets with wider right & left margins to give nicer look
-    return CELL_TEXT_INSERTS;
   }
 
   /********************************** getBackgroundPaintDefault **********************************/
@@ -67,8 +57,7 @@ public class DaysCellDrawer extends CellDrawer
 
     // return disabled cell background for unused periods
     if ( col >= 2 * periods + Day.FIELD.Start.ordinal() )
-      if ( true )
-        return Colours.CELL_DISABLED_BACKGROUND;
+      return Colours.CELL_DISABLED_BACKGROUND;
 
     // default table cell background
     return Colours.CELL_DEFAULT_BACKGROUND;

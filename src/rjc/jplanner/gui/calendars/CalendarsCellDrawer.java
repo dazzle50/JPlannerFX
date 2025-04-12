@@ -16,30 +16,47 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui.calendars;
 
-import java.util.ArrayList;
-
-import rjc.jplanner.Main;
+import javafx.geometry.Pos;
+import javafx.scene.paint.Paint;
+import rjc.jplanner.plan.Calendar;
+import rjc.table.view.Colours;
+import rjc.table.view.axis.TableAxis;
+import rjc.table.view.cell.CellDrawer;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan day-types ****************************/
+/*************************** Draws table-view cells for plan calendars ***************************/
 /*************************************************************************************************/
 
-public class Days extends ArrayList<Day>
+public class CalendarsCellDrawer extends CellDrawer
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /**************************************** initialise *******************************************/
-  public void initialise()
+  /************************************ getTextAlignment *************************************/
+  @Override
+  protected Pos getTextAlignment()
   {
-    // initialise list with default day-types, used by Calendars initialise()
-    clear();
-    add( new Day( "Non working", 0.0 ) );
-    add( new Day( "Standard work day", 1.0, 9.0, 13.0, 14.0, 18.0 ) );
-    add( new Day( "Morning only", 0.5, 9.0, 13.0 ) );
-    add( new Day( "Evening shift", 0.6, 18.0, 22.0 ) );
-    add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
+    // return centre alignment for headers
+    if ( viewColumn == TableAxis.HEADER || viewRow == TableAxis.HEADER )
+      return Pos.CENTER;
+
+    // otherwise centre-left alignment
+    return Pos.CENTER_LEFT;
+  }
+
+  /********************************** getBackgroundPaintDefault **********************************/
+  @Override
+  protected Paint getBackgroundPaintDefault()
+  {
+    // return disabled cell background for empty normal cells
+    int col = getDataColumn();
+    int row = getDataRow();
+    int cycle = (int) view.getData().getValue( col, Calendar.FIELD.Cycle.ordinal() );
+    if ( row >= cycle + Calendar.FIELD.Normal.ordinal() )
+      return Colours.CELL_DISABLED_BACKGROUND;
+
+    // otherwise default table cell background
+    return Colours.CELL_DEFAULT_BACKGROUND;
   }
 
 }

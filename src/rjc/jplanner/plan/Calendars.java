@@ -34,9 +34,23 @@ public class Calendars extends ArrayList<Calendar>
   /**************************************** initialise *******************************************/
   public void initialise()
   {
+    // these day-types should reflect the default created in Days initialise()
+    Day nonWorking = Plan.getDay( 0 );
+    Day working = Plan.getDay( 1 );
+    Day shortDay = Plan.getDay( 2 );
+    Day evening = Plan.getDay( 3 );
+    Day fullTime = Plan.getDay( 4 );
+
     // initialise list with default calendars
     clear();
-    add( new Calendar( "Standard", new Date( 2000, 1, 1 ) ) );
+    Date anchor = new Date( 2000, 1, 1 );
+    add( new Calendar( "Standard", anchor, nonWorking, nonWorking, working, working, working, working, working ) );
+
+    anchor = new Date( 2025, 1, 1 );
+    add( new Calendar( "Full time", anchor, fullTime ) );
+
+    add( new Calendar( "Fancy", anchor, nonWorking, nonWorking, nonWorking, shortDay, shortDay, evening, evening,
+        fullTime, nonWorking, fullTime ) );
   }
 
 }

@@ -18,6 +18,7 @@
 
 package rjc.jplanner.plan;
 
+import rjc.jplanner.Main;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 
@@ -84,51 +85,51 @@ public class Plan
   }
 
   /******************************************** task *********************************************/
-  public Task getTask( int index )
+  static public Task getTask( int index )
   {
     // return task corresponding to index
-    return tasks.get( index );
+    return Main.getPlan().tasks.get( index );
   }
 
-  public int getIndex( Task task )
+  static public int getIndex( Task task )
   {
-    return tasks.indexOf( task );
+    return Main.getPlan().tasks.indexOf( task );
   }
 
   /****************************************** resource *******************************************/
-  public Resource getResource( int index )
+  static public Resource getResource( int index )
   {
     // return resource corresponding to index
-    return resources.get( index );
+    return Main.getPlan().resources.get( index );
   }
 
-  public int getIndex( Resource resource )
+  static public int getIndex( Resource resource )
   {
-    return resources.indexOf( resource );
+    return Main.getPlan().resources.indexOf( resource );
   }
 
   /****************************************** calendar *******************************************/
-  public Calendar getCalendar( int index )
+  static public Calendar getCalendar( int index )
   {
     // return calendar corresponding to index
-    return calendars.get( index );
+    return Main.getPlan().calendars.get( index );
   }
 
-  public int getIndex( Calendar calendar )
+  static public int getIndex( Calendar calendar )
   {
-    return calendars.indexOf( calendar );
+    return Main.getPlan().calendars.indexOf( calendar );
   }
 
   /********************************************* day *********************************************/
-  public Day getDay( int index )
+  static public Day getDay( int index )
   {
     // return day-type corresponding to index
-    return daytypes.get( index );
+    return Main.getPlan().daytypes.get( index );
   }
 
-  public int getIndex( Day dayType )
+  static public int getIndex( Day dayType )
   {
-    return daytypes.indexOf( dayType );
+    return Main.getPlan().daytypes.indexOf( dayType );
   }
 
   /****************************************** getTitle *******************************************/
