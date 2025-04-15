@@ -40,6 +40,11 @@ public class Resource
   private Calendar m_calendar;     // calendar for resource
   private String   m_comment;      // free text
 
+  public enum FIELD
+  {
+    Initials, Name, Organisation, Group, Role, Alias, Start, End, Availability, Cost, Calendar, Comment, MAX
+  }
+
   /**************************************** constructor ******************************************/
   public Resource()
   {
@@ -61,6 +66,41 @@ public class Resource
     // string summary
     return Utils.name( this ) + "[" + m_initials + ", " + m_name + ", " + m_org + ", " + m_group + ", " + m_role + ", "
         + m_alias + ", " + m_start + ", " + m_end + ", " + m_availability + "]";
+  }
+
+  /******************************************* getValue ******************************************/
+  public Object getValue( int field )
+  {
+    // return value for the different fields
+    switch ( FIELD.values()[field] )
+    {
+      case Initials:
+        return m_initials;
+      case Alias:
+        return m_alias;
+      case Availability:
+        return m_availability;
+      case Calendar:
+        return m_calendar;
+      case Comment:
+        return m_comment;
+      case Cost:
+        return m_cost;
+      case Group:
+        return m_group;
+      case Name:
+        return m_name;
+      case Organisation:
+        return m_org;
+      case Role:
+        return m_role;
+      case Start:
+        return m_start;
+      case End:
+        return m_end;
+      default:
+        throw new IllegalArgumentException( "Unrecognised field " + field );
+    }
   }
 
 }

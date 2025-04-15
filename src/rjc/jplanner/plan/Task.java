@@ -49,10 +49,20 @@ public class Task
     ASAP_FIXED_DURATION, ASAP_FIXED_WORK, START_ON_DURATION, START_ON_WORK, FIXED_PERIOD
   }
 
+  public enum FIELD
+  {
+    Title, Duration, Start, End, Work, Predecessors, Resources, Type, Priority, Deadline, Cost, Comment, MAX
+  }
+
   /**************************************** constructor ******************************************/
   public Task()
   {
     // initialise
+    m_duration = new TimeSpan( "1d" );
+    m_type = TaskType.ASAP_FIXED_DURATION;
+    m_priority = 100;
+    m_indent = 0;
+    m_summaryStart = 0;
     m_summaryEnd = -1;
   }
 
@@ -64,19 +74,39 @@ public class Task
     return Utils.name( this ) + "['" + m_title + "' " + m_type + " " + m_priority + "]";
   }
 
-  /***************************************** initialise ******************************************/
-  public void initialise()
+  /******************************************* getValue ******************************************/
+  public Object getValue( int field )
   {
-    // initialise private variables
-    m_duration = new TimeSpan( "1d" );
-    m_predecessors = new Predecessors( "" );
-    m_resources = new TaskResources();
-    m_type = TaskType.ASAP_FIXED_DURATION;
-    m_predecessors = new Predecessors();
-    m_priority = 100;
-    m_indent = 0;
-    m_summaryStart = 0;
-    m_summaryEnd = -1;
+    // return value for the different fields
+    switch ( FIELD.values()[field] )
+    {
+      case Comment:
+        return m_comment;
+      case Cost:
+        return m_cost;
+      case Deadline:
+        return m_deadline;
+      case Duration:
+        return m_duration;
+      case End:
+        return m_end;
+      case Predecessors:
+        return m_predecessors;
+      case Priority:
+        return m_priority;
+      case Resources:
+        return m_resources;
+      case Start:
+        return m_start;
+      case Title:
+        return m_title;
+      case Type:
+        return m_type;
+      case Work:
+        return m_work;
+      default:
+        throw new IllegalArgumentException( "Unrecognised field " + field );
+    }
   }
 
 }

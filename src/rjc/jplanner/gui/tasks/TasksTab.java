@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.tasks;
 
 import javafx.scene.control.Tab;
+import rjc.jplanner.Main;
 
 /*************************************************************************************************/
 /**************************** Tab showing table of plan tasks & Gantt ****************************/
@@ -26,14 +27,28 @@ import javafx.scene.control.Tab;
 
 public class TasksTab extends Tab
 {
+  private TasksView m_view;
 
   /**************************************** constructor ******************************************/
   public TasksTab()
   {
     // construct tab
-    super( "Tasks & Gantt" );
+    super( "Tasks" );
     setClosable( false );
 
-    // showing table of plan tasks and Gantt diagram
+    // showing table of available plan resources
+    m_view = new TasksView( new TasksData( Main.getPlan().tasks ), getText() );
+    m_view.setUndostack( Main.getUndostack() );
+    m_view.setStatus( Main.getStatus() );
+
+    // only have tab contents set if tab selected
+    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    {
+      if ( newValue )
+        setContent( m_view );
+      else
+        setContent( null );
+    } );
+
   }
 }

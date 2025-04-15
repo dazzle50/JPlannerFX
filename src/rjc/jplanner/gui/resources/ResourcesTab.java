@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.resources;
 
 import javafx.scene.control.Tab;
+import rjc.jplanner.Main;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan resources *************************/
@@ -26,6 +27,7 @@ import javafx.scene.control.Tab;
 
 public class ResourcesTab extends Tab
 {
+  private ResourcesView m_view;
 
   /**************************************** constructor ******************************************/
   public ResourcesTab()
@@ -35,5 +37,17 @@ public class ResourcesTab extends Tab
     setClosable( false );
 
     // showing table of available plan resources
+    m_view = new ResourcesView( new ResourcesData( Main.getPlan().resources ), getText() );
+    m_view.setUndostack( Main.getUndostack() );
+    m_view.setStatus( Main.getStatus() );
+
+    // only have tab contents set if tab selected
+    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    {
+      if ( newValue )
+        setContent( m_view );
+      else
+        setContent( null );
+    } );
   }
 }

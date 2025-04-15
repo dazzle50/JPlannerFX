@@ -108,28 +108,26 @@ public class Day
   /******************************************* getValue ******************************************/
   public Object getValue( int field )
   {
+    // adjust field for period start & end counter
+    int period = ( field - FIELD.Start.ordinal() ) / 2;
+    if ( field >= FIELD.Start.ordinal() )
+      field -= period * 2;
+
     // return value for the different fields
-    if ( field == FIELD.Name.ordinal() )
-      return m_name;
-
-    if ( field == FIELD.Work.ordinal() )
-      return m_work;
-
-    if ( field == FIELD.Periods.ordinal() )
-      return m_periods.size();
-
-    try
+    switch ( FIELD.values()[field] )
     {
-      field -= FIELD.Start.ordinal();
-      if ( field % 2 == 0 )
-        return m_periods.get( field / 2 ).m_start;
-      else
-        return m_periods.get( field / 2 ).m_end;
-    }
-    catch ( IndexOutOfBoundsException e )
-    {
-      // if no work period, return blank
-      return null;
+      case Name:
+        return m_name;
+      case Work:
+        return m_periods.size() > 0 ? m_work : null;
+      case Periods:
+        return m_periods.size();
+      case Start:
+        return period < m_periods.size() ? m_periods.get( period ).m_start : null;
+      case End:
+        return period < m_periods.size() ? m_periods.get( period ).m_end : null;
+      default:
+        throw new IllegalArgumentException( "Unrecognised field " + field );
     }
   }
 }

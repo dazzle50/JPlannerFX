@@ -16,35 +16,23 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui.resources;
 
-import java.util.ArrayList;
-
-import rjc.jplanner.Main;
+import rjc.table.data.TableData;
+import rjc.table.view.TableView;
 
 /*************************************************************************************************/
-/**************************** Holds the complete list of plan tasks ******************************/
+/******************* Customised table-view for interacting with plan resources *******************/
 /*************************************************************************************************/
 
-public class Tasks extends ArrayList<Task>
+public class ResourcesView extends TableView
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /****************************************** initialise *****************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public ResourcesView( TableData data, String name )
   {
-    // initialise list with default tasks (including special task 0 which is summary task for whole plan)
-    clear();
-    for ( int count = 0; count <= 20; count++ )
-      add( new Task() );
-
-    setupTaskZero();
-  }
-
-  /**************************************** setupTaskZero ****************************************/
-  public void setupTaskZero()
-  {
-    // setup special task 0
+    // construct the table view
+    super( data, name );
   }
 
 }

@@ -16,35 +16,47 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.gui.resources;
 
-import java.util.ArrayList;
-
-import rjc.jplanner.Main;
+import rjc.jplanner.plan.Resource.FIELD;
+import rjc.jplanner.plan.Resources;
+import rjc.table.data.TableData;
 
 /*************************************************************************************************/
-/**************************** Holds the complete list of plan tasks ******************************/
+/**************************** Table data source for showing resources ****************************/
 /*************************************************************************************************/
 
-public class Tasks extends ArrayList<Task>
+public class ResourcesData extends TableData
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
+  Resources m_resources;
 
-  /****************************************** initialise *****************************************/
-  public void initialise()
+  /**************************************** constructor ******************************************/
+  public ResourcesData( Resources resources )
   {
-    // initialise list with default tasks (including special task 0 which is summary task for whole plan)
-    clear();
-    for ( int count = 0; count <= 20; count++ )
-      add( new Task() );
-
-    setupTaskZero();
+    // construct data model
+    m_resources = resources;
+    setRowCount( m_resources.size() );
+    setColumnCount( FIELD.MAX.ordinal() );
   }
 
-  /**************************************** setupTaskZero ****************************************/
-  public void setupTaskZero()
+  /****************************************** getValue *******************************************/
+  @Override
+  public Object getValue( int dataColumn, int dataRow )
   {
-    // setup special task 0
+    // return blank for corner cell
+    if ( dataRow == HEADER && dataColumn == HEADER )
+      return null;
+
+    // return column header
+    if ( dataRow == HEADER )
+      return FIELD.values()[dataColumn];
+
+    // return row header
+    if ( dataColumn == HEADER )
+      return dataRow;
+
+    // otherwise return value from resources array
+    return m_resources.get( dataRow ).getValue( dataColumn );
   }
 
 }

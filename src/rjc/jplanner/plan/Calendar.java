@@ -95,28 +95,24 @@ public class Calendar
   /******************************************* getValue ******************************************/
   public Object getValue( int field )
   {
+    // determine which normal field is wanted
+    int normal = field >= FIELD.Normal.ordinal() ? field - FIELD.Normal.ordinal() : 0;
+
     // return value for the different fields
-    if ( field == FIELD.Name.ordinal() )
-      return m_name;
-
-    if ( field == FIELD.Anchor.ordinal() )
-      return m_cycleAnchor;
-
-    if ( field == FIELD.Exceptions.ordinal() )
-      return m_exceptions.size();
-
-    if ( field == FIELD.Cycle.ordinal() )
-      return m_normal.size();
-
-    try
+    switch ( FIELD.values()[field - normal] )
     {
-      field -= FIELD.Normal.ordinal();
-      return m_normal.get( field ).getName();
-    }
-    catch ( IndexOutOfBoundsException e )
-    {
-      // beyond cycle, return blank
-      return null;
+      case Name:
+        return m_name;
+      case Anchor:
+        return m_cycleAnchor;
+      case Cycle:
+        return m_normal.size();
+      case Exceptions:
+        return m_exceptions.size();
+      case Normal:
+        return normal < m_normal.size() ? m_normal.get( normal ).getName() : null;
+      default:
+        throw new IllegalArgumentException( "Unrecognised field " + field );
     }
   }
 

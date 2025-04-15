@@ -80,7 +80,8 @@ public class Plan
     resources.initialise();
     tasks.initialise();
 
-    // TODO m_calendar = getCalendar( 0 );
+    // default calendar to first calendar (should be standard week)
+    m_calendar = getCalendar( 0 );
     m_start = DateTime.now();
   }
 
