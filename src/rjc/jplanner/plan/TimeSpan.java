@@ -38,5 +38,44 @@ public class TimeSpan
   /**************************************** constructor ******************************************/
   public TimeSpan( String str )
   {
+    // construct time-span from string, start with default
+    this();
   }
+
+  /**************************************** constructor ******************************************/
+  public TimeSpan( double num, char units )
+  {
+    // construct time-span from parameters, rounding number based on units
+
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    // return time-span as string
+    return m_num + " " + m_units;
+  }
+
+  /****************************************** getUnits *******************************************/
+  public char getUnits()
+  {
+    // return time-span units
+    return m_units;
+  }
+
+  /****************************************** getNumber ******************************************/
+  public double getNumber()
+  {
+    // return time-span number
+    return m_num;
+  }
+
+  /******************************************** minus ********************************************/
+  public TimeSpan minus()
+  {
+    // return a new time-span with minus number
+    return new TimeSpan( -m_num, m_units );
+  }
+
 }

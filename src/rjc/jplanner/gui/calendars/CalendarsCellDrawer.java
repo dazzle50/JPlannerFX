@@ -19,9 +19,6 @@
 package rjc.jplanner.gui.calendars;
 
 import javafx.geometry.Pos;
-import javafx.scene.paint.Paint;
-import rjc.jplanner.plan.Calendar;
-import rjc.table.view.Colours;
 import rjc.table.view.axis.TableAxis;
 import rjc.table.view.cell.CellDrawer;
 
@@ -42,21 +39,6 @@ public class CalendarsCellDrawer extends CellDrawer
 
     // otherwise centre-left alignment
     return Pos.CENTER_LEFT;
-  }
-
-  /********************************** getBackgroundPaintDefault **********************************/
-  @Override
-  protected Paint getBackgroundPaintDefault()
-  {
-    // return disabled cell background for empty normal cells
-    int col = getDataColumn();
-    int row = getDataRow();
-    int cycle = (int) view.getData().getValue( col, Calendar.FIELD.Cycle.ordinal() );
-    if ( row >= cycle + Calendar.FIELD.Normal.ordinal() )
-      return Colours.CELL_DISABLED_BACKGROUND;
-
-    // otherwise default table cell background
-    return Colours.CELL_DEFAULT_BACKGROUND;
   }
 
 }

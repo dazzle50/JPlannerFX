@@ -21,6 +21,8 @@ package rjc.jplanner.gui.tasks;
 import rjc.jplanner.plan.Task.FIELD;
 import rjc.jplanner.plan.Tasks;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
+import rjc.table.view.cell.CellVisual;
 
 /*************************************************************************************************/
 /*************************** Table data source for showing plan tasks ****************************/
@@ -28,7 +30,8 @@ import rjc.table.data.TableData;
 
 public class TasksData extends TableData
 {
-  Tasks m_tasks;
+  private Tasks      m_tasks;          // array of tasks to be shown on table
+  private CellVisual m_disabledVisual; // cell visuals for disabled cells
 
   /**************************************** constructor ******************************************/
   public TasksData( Tasks tasks )
@@ -37,6 +40,11 @@ public class TasksData extends TableData
     m_tasks = tasks;
     setRowCount( m_tasks.size() );
     setColumnCount( FIELD.MAX.ordinal() );
+
+    // visual for disabled cells
+    m_disabledVisual = new CellVisual();
+    m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_disabledVisual.textPaint = null;
   }
 
   /****************************************** getValue *******************************************/
@@ -57,6 +65,19 @@ public class TasksData extends TableData
 
     // otherwise return value from tasks array
     return m_tasks.get( dataRow ).getValue( dataColumn );
+  }
+
+  /***************************************** getVisual *******************************************/
+  @Override
+  public CellVisual getVisual( int dataColumn, int dataRow )
+  {
+    // return disabled-cells-visual for non-initials field if initials is blank
+    if ( dataRow > HEADER && dataColumn > FIELD.Title.ordinal() )
+      if ( m_tasks.get( dataRow ).isBlank() )
+        return m_disabledVisual;
+
+    // otherwise return default cell visuals
+    return super.getVisual( dataColumn, dataRow );
   }
 
 }

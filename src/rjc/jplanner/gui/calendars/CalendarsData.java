@@ -22,6 +22,8 @@ import rjc.jplanner.plan.Calendar;
 import rjc.jplanner.plan.Calendar.FIELD;
 import rjc.jplanner.plan.Calendars;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
+import rjc.table.view.cell.CellVisual;
 
 /*************************************************************************************************/
 /**************************** Table data source for showing calendars ****************************/
@@ -29,8 +31,9 @@ import rjc.table.data.TableData;
 
 public class CalendarsData extends TableData
 {
-  Calendars m_calendars;      // array of calendars to be shown on table
-  int       m_maxCycles = -1; // highest number of cycles that calendars have (or -1 if TBD)
+  private Calendars  m_calendars;      // array of calendars to be shown on table
+  private int        m_maxCycles = -1; // highest number of cycles that calendars have (or -1 if TBD)
+  private CellVisual m_disabledVisual; // cell visuals for disabled cells
 
   /**************************************** constructor ******************************************/
   public CalendarsData( Calendars calendars )
@@ -39,6 +42,11 @@ public class CalendarsData extends TableData
     m_calendars = calendars;
     setColumnCount( m_calendars.size() );
     setRowCount( calculateRowCount() );
+
+    // visual for disabled cells
+    m_disabledVisual = new CellVisual();
+    m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_disabledVisual.textPaint = null;
   }
 
   /************************************** calculateRowCount **************************************/
@@ -80,6 +88,19 @@ public class CalendarsData extends TableData
 
     // otherwise return value from calendars array
     return m_calendars.get( dataColumn ).getValue( dataRow );
+  }
+
+  /***************************************** getVisual *******************************************/
+  @Override
+  public CellVisual getVisual( int dataColumn, int dataRow )
+  {
+    // return disabled-cells-visual for non-initials field if initials is blank
+    if ( dataColumn > HEADER && dataRow > FIELD.Normal.ordinal() )
+      if ( m_calendars.get( dataColumn ).isBlank( dataRow ) )
+        return m_disabledVisual;
+
+    // otherwise return default cell visuals
+    return super.getVisual( dataColumn, dataRow );
   }
 
 }

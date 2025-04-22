@@ -119,7 +119,7 @@ public class Day
       case Name:
         return m_name;
       case Work:
-        return m_periods.size() > 0 ? m_work : null;
+        return m_work;
       case Periods:
         return m_periods.size();
       case Start:
@@ -130,4 +130,15 @@ public class Day
         throw new IllegalArgumentException( "Unrecognised field " + field );
     }
   }
+
+  /******************************************** isBlank ******************************************/
+  public boolean isBlank( int field )
+  {
+    // work field is blank if no periods, and start/end fields are blank if beyond periods
+    if ( field == FIELD.Work.ordinal() && m_periods.size() == 0 )
+      return true;
+
+    return field >= FIELD.Start.ordinal() + ( 2 * m_periods.size() );
+  }
+
 }

@@ -103,4 +103,11 @@ public class Resource
     }
   }
 
+  /******************************************** isBlank ******************************************/
+  public boolean isBlank()
+  {
+    // resource record is blank if initials are null
+    return m_initials == null;
+  }
+
 }

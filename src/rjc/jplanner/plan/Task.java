@@ -109,4 +109,11 @@ public class Task
     }
   }
 
+  /******************************************** isBlank ******************************************/
+  public boolean isBlank()
+  {
+    // task record is blank if title is null
+    return m_title == null;
+  }
+
 }

@@ -116,4 +116,11 @@ public class Calendar
     }
   }
 
+  /******************************************** isBlank ******************************************/
+  public boolean isBlank( int field )
+  {
+    // normal is blank if beyond cycle
+    return field >= FIELD.Normal.ordinal() + m_normal.size();
+  }
+
 }

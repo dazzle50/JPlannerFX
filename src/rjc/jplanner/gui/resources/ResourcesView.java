@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.resources;
 
+import rjc.jplanner.plan.Resource.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
 
@@ -33,6 +34,17 @@ public class ResourcesView extends TableView
   {
     // construct the table view
     super( data, name );
+  }
+
+  /******************************************** reset ********************************************/
+  @Override
+  public void reset()
+  {
+    // reset table view to custom settings
+    super.reset();
+    getColumnsAxis().setIndexSize( FIELD.Availability.ordinal(), 70 );
+    getColumnsAxis().setIndexSize( FIELD.Cost.ordinal(), 70 );
+    getColumnsAxis().setIndexSize( FIELD.Comment.ordinal(), 250 );
   }
 
 }

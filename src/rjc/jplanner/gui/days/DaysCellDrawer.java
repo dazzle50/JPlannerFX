@@ -18,11 +18,7 @@
 
 package rjc.jplanner.gui.days;
 
-import javafx.geometry.Pos;
-import javafx.scene.paint.Paint;
-import rjc.jplanner.plan.Day;
 import rjc.table.data.types.Time;
-import rjc.table.view.Colours;
 import rjc.table.view.cell.CellDrawer;
 
 /*************************************************************************************************/
@@ -32,43 +28,12 @@ import rjc.table.view.cell.CellDrawer;
 public class DaysCellDrawer extends CellDrawer
 {
 
-  /************************************ getTextAlignment *************************************/
-  @Override
-  protected Pos getTextAlignment()
-  {
-    // return left alignment for Name column
-    if ( getDataColumn() == Day.FIELD.Name.ordinal() )
-      return Pos.CENTER_LEFT;
-
-    // otherwise centre alignment
-    return Pos.CENTER;
-  }
-
-  /********************************** getBackgroundPaintDefault **********************************/
-  @Override
-  protected Paint getBackgroundPaintDefault()
-  {
-    // return disabled cell background for Work if no periods
-    int col = getDataColumn();
-    int row = getDataRow();
-    int periods = (int) view.getData().getValue( Day.FIELD.Periods.ordinal(), row );
-    if ( periods == 0 && col == Day.FIELD.Work.ordinal() )
-      return Colours.CELL_DISABLED_BACKGROUND;
-
-    // return disabled cell background for unused periods
-    if ( col >= 2 * periods + Day.FIELD.Start.ordinal() )
-      return Colours.CELL_DISABLED_BACKGROUND;
-
-    // default table cell background
-    return Colours.CELL_DEFAULT_BACKGROUND;
-  }
-
   /****************************************** getText ********************************************/
   @Override
   protected String getText()
   {
     // return cell value as string
-    Object value = getData();
+    Object value = getValue();
     if ( value instanceof Time time )
       return time.toStringShort();
 

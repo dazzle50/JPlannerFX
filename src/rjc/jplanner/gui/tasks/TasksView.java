@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.tasks;
 
+import rjc.jplanner.plan.Task.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
 
@@ -33,6 +34,19 @@ public class TasksView extends TableView
   {
     // construct the table view
     super( data, name );
+  }
+
+  /******************************************** reset ********************************************/
+  @Override
+  public void reset()
+  {
+    // reset table view to custom settings
+    super.reset();
+    getColumnsAxis().setIndexSize( FIELD.Title.ordinal(), 200 );
+    getColumnsAxis().setIndexSize( FIELD.Duration.ordinal(), 60 );
+    getColumnsAxis().setIndexSize( FIELD.Start.ordinal(), 140 );
+    getColumnsAxis().setIndexSize( FIELD.End.ordinal(), 140 );
+    getColumnsAxis().setIndexSize( FIELD.Comment.ordinal(), 250 );
   }
 
 }

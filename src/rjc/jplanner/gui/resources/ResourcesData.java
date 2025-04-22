@@ -21,6 +21,8 @@ package rjc.jplanner.gui.resources;
 import rjc.jplanner.plan.Resource.FIELD;
 import rjc.jplanner.plan.Resources;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
+import rjc.table.view.cell.CellVisual;
 
 /*************************************************************************************************/
 /**************************** Table data source for showing resources ****************************/
@@ -28,7 +30,8 @@ import rjc.table.data.TableData;
 
 public class ResourcesData extends TableData
 {
-  Resources m_resources;
+  private Resources  m_resources;
+  private CellVisual m_disabledVisual;
 
   /**************************************** constructor ******************************************/
   public ResourcesData( Resources resources )
@@ -37,6 +40,11 @@ public class ResourcesData extends TableData
     m_resources = resources;
     setRowCount( m_resources.size() );
     setColumnCount( FIELD.MAX.ordinal() );
+
+    // visual for disabled cells
+    m_disabledVisual = new CellVisual();
+    m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_disabledVisual.textPaint = null;
   }
 
   /****************************************** getValue *******************************************/
@@ -57,6 +65,19 @@ public class ResourcesData extends TableData
 
     // otherwise return value from resources array
     return m_resources.get( dataRow ).getValue( dataColumn );
+  }
+
+  /***************************************** getVisual *******************************************/
+  @Override
+  public CellVisual getVisual( int dataColumn, int dataRow )
+  {
+    // return disabled-cells-visual for non-initials field if initials is blank
+    if ( dataRow > HEADER && dataColumn > FIELD.Initials.ordinal() )
+      if ( m_resources.get( dataRow ).isBlank() )
+        return m_disabledVisual;
+
+    // otherwise return default cell visuals
+    return super.getVisual( dataColumn, dataRow );
   }
 
 }

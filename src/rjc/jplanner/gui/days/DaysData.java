@@ -18,10 +18,13 @@
 
 package rjc.jplanner.gui.days;
 
+import javafx.geometry.Pos;
 import rjc.jplanner.plan.Day;
 import rjc.jplanner.plan.Day.FIELD;
 import rjc.jplanner.plan.Days;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
+import rjc.table.view.cell.CellVisual;
 
 /*************************************************************************************************/
 /**************************** Table data source for showing day-types ****************************/
@@ -29,8 +32,9 @@ import rjc.table.data.TableData;
 
 public class DaysData extends TableData
 {
-  Days m_days;            // array of day-types to be shown on table
-  int  m_maxPeriods = -1; // highest number of periods that day-types have (or -1 if TBD)
+  private Days       m_days;            // array of day-types to be shown on table
+  private int        m_maxPeriods = -1; // highest number of periods that day-types have (or -1 if TBD)
+  private CellVisual m_disabledVisual;  // cell visuals for disabled cells
 
   /**************************************** constructor ******************************************/
   public DaysData( Days days )
@@ -39,6 +43,11 @@ public class DaysData extends TableData
     m_days = days;
     setRowCount( m_days.size() );
     setColumnCount( calculateColumnCount() );
+
+    // visual for disabled cells
+    m_disabledVisual = new CellVisual();
+    m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_disabledVisual.textPaint = null;
   }
 
   /************************************ calculateColumnCount *************************************/
@@ -82,6 +91,25 @@ public class DaysData extends TableData
 
     // otherwise return value from day-types array
     return m_days.get( dataRow ).getValue( dataColumn );
+  }
+
+  /***************************************** getVisual *******************************************/
+  @Override
+  public CellVisual getVisual( int dataColumn, int dataRow )
+  {
+    // return disabled-cells-visual for period starts/ends beyond those defined
+    if ( dataRow > HEADER )
+      if ( m_days.get( dataRow ).isBlank( dataColumn ) )
+        return m_disabledVisual;
+
+    // otherwise return default cell visuals
+    var visual = super.getVisual( dataColumn, dataRow );
+    if ( dataColumn == Day.FIELD.Name.ordinal() )
+      visual.textAlignment = Pos.CENTER_LEFT;
+    else
+      visual.textAlignment = Pos.CENTER;
+
+    return visual;
   }
 
 }
