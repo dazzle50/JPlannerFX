@@ -16,46 +16,15 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui.plan;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
+import javafx.scene.control.ScrollPane;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/******************* Controls for displaying & editing various plan properties *******************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+public class PlanProperties extends ScrollPane
 {
-  private TasksView  m_view;
-  private Gantt      m_gantt;
-  private XSplitPane m_split;
 
-  /**************************************** constructor ******************************************/
-  public TasksTab()
-  {
-    // construct tab
-    super( "Tasks" );
-    setClosable( false );
-
-    // showing table of available plan resources
-    m_view = new TasksView( new TasksData( Main.getPlan().tasks ), getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
-    } );
-
-  }
 }

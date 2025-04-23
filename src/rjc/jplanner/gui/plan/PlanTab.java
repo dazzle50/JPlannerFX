@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.plan;
 
 import javafx.scene.control.Tab;
+import rjc.jplanner.gui.XSplitPane;
 
 /*************************************************************************************************/
 /************************* Tab for overall plan control and information **************************/
@@ -26,6 +27,8 @@ import javafx.scene.control.Tab;
 
 public class PlanTab extends Tab
 {
+  private PlanNotes      m_notes      = new PlanNotes();
+  private PlanProperties m_properties = new PlanProperties();
 
   /**************************************** constructor ******************************************/
   public PlanTab()
@@ -34,6 +37,27 @@ public class PlanTab extends Tab
     super( "Plan" );
     setClosable( false );
 
-    // showing overall plan control and information
+    XSplitPane split = new XSplitPane( m_properties, m_notes );
+
+    // only have tab contents set if tab selected
+    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    {
+      if ( newValue )
+        setContent( split );
+      else
+        setContent( null );
+    } );
+  }
+
+  /**************************************** getPlanNotes *****************************************/
+  public PlanNotes getPlanNotes()
+  {
+    return m_notes;
+  }
+
+  /************************************** getPlanProperties **************************************/
+  public PlanProperties getPlanProperties()
+  {
+    return m_properties;
   }
 }

@@ -33,7 +33,7 @@ public class Tasks extends ArrayList<Task>
   /****************************************** initialise *****************************************/
   public void initialise()
   {
-    // initialise list with default tasks (including special task 0 which is summary task for whole plan)
+    // initialise list with default tasks (including special task 0 which is overall project summary)
     clear();
     for ( int count = 0; count <= 20; count++ )
       add( new Task() );

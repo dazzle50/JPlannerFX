@@ -16,46 +16,41 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
+import javafx.scene.Node;
+import javafx.scene.control.SplitPane;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/*************** Extended version of SplitPane with preferred left-most node width ***************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+public class XSplitPane extends SplitPane
 {
-  private TasksView  m_view;
-  private Gantt      m_gantt;
-  private XSplitPane m_split;
+  public int      preferredLeftNodeWidth = 600;
+  private boolean m_splitResize          = false;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public XSplitPane( Node... items )
   {
-    // construct tab
-    super( "Tasks" );
-    setClosable( false );
+    // create enhanced split-pane
+    super( items );
 
-    // showing table of available plan resources
-    m_view = new TasksView( new TasksData( Main.getPlan().tasks ), getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    // add listener to ensure divider is at preferred position when pane resized
+    widthProperty().addListener( ( observable, oldWidth, newWidth ) ->
     {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
+      m_splitResize = true;
+      setDividerPosition( 0, preferredLeftNodeWidth / newWidth.doubleValue() );
+    } );
+
+    // add listener to ensure preferred position is updated when divider manually moved
+    getDividers().get( 0 ).positionProperty().addListener( ( observable, oldPos, newPos ) ->
+    {
+      if ( !m_splitResize )
+        preferredLeftNodeWidth = (int) ( getWidth() * newPos.doubleValue() );
+      m_splitResize = false;
     } );
 
   }
+
 }

@@ -18,44 +18,19 @@
 
 package rjc.jplanner.gui.tasks;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
+import javafx.scene.layout.Region;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/********************** Gantt shows tasks in a gantt plot with gantt scales **********************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+public class Gantt extends Region
 {
-  private TasksView  m_view;
-  private Gantt      m_gantt;
-  private XSplitPane m_split;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public Gantt( TasksView view )
   {
-    // construct tab
-    super( "Tasks" );
-    setClosable( false );
-
-    // showing table of available plan resources
-    m_view = new TasksView( new TasksData( Main.getPlan().tasks ), getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
-    } );
-
+    // TODO Auto-generated constructor stub
   }
+
 }
