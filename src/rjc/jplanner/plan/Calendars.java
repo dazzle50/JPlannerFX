@@ -31,7 +31,7 @@ public class Calendars extends ArrayList<Calendar>
 {
   private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /**************************************** initialise *******************************************/
+  /***************************************** initialise ******************************************/
   public void initialise()
   {
     // these day-types should reflect the default created in Days initialise()
@@ -45,12 +45,33 @@ public class Calendars extends ArrayList<Calendar>
     clear();
     Date anchor = new Date( 2000, 1, 1 );
     add( new Calendar( "Standard", anchor, nonWorking, nonWorking, working, working, working, working, working ) );
+    getLast().addException( 5, 5, 2025, nonWorking );
+    getLast().addException( 26, 5, 2025, nonWorking );
+    getLast().addException( 25, 8, 2025, nonWorking );
+    getLast().addException( 25, 12, 2025, nonWorking );
+    getLast().addException( 26, 12, 2025, nonWorking );
+    getLast().addException( 1, 1, 2026, nonWorking );
+    getLast().addException( 3, 4, 2026, nonWorking );
+    getLast().addException( 6, 4, 2026, nonWorking );
 
     anchor = new Date( 2025, 1, 1 );
     add( new Calendar( "Full time", anchor, fullTime ) );
 
     add( new Calendar( "Fancy", anchor, nonWorking, nonWorking, nonWorking, shortDay, shortDay, evening, evening,
         fullTime, nonWorking, fullTime ) );
+    getLast().addException( 25, 12, 2025, nonWorking );
+    getLast().addException( 26, 12, 2025, nonWorking );
+  }
+
+  /**************************************** getNameArray *****************************************/
+  public Object[] getNameArray()
+  {
+    // return array of calendar names
+    var names = new String[size()];
+    for ( int index = 0; index < size(); index++ )
+      names[index] = get( index ).getName();
+
+    return names;
   }
 
 }

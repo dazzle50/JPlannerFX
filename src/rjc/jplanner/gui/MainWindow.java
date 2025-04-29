@@ -37,11 +37,19 @@ public class MainWindow extends Scene
   private TextField       m_statusBar;  // status bar at bottom of MainWindow
   private UndoStackWindow m_undoWindow; // window to show undo-plan
 
+  public static String    STYLE_TOOLTIP;
+
   /**************************************** constructor ******************************************/
   public MainWindow()
   {
     // main window based on grid layout
     super( new GridPane() );
+
+    // set style for tool tips
+    STYLE_TOOLTIP = "-fx-text-fill: black;";
+    STYLE_TOOLTIP += "-fx-background-color: lightyellow;";
+    STYLE_TOOLTIP += "-fx-padding: 0.2em 1em 0.2em 0.5em;";
+    STYLE_TOOLTIP += "-fx-background-radius: 3px;";
 
     // prepare components
     m_menus = new MainMenus();

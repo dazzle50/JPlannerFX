@@ -16,39 +16,31 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.resources;
+package rjc.jplanner.gui;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
 import rjc.jplanner.plan.Plan;
+import rjc.table.Utils;
+import rjc.table.control.ChooseField;
 
 /*************************************************************************************************/
-/************************* Tab showing table of available plan resources *************************/
+/****************** Control for choosing a plan calendar from a drop-down list *******************/
 /*************************************************************************************************/
 
-public class ResourcesTab extends Tab
+public class CalendarChoose extends ChooseField
 {
-  private ResourcesView m_view;
 
   /**************************************** constructor ******************************************/
-  public ResourcesTab()
+  public CalendarChoose()
   {
-    // construct tab
-    super( "Resources" );
-    setClosable( false );
-
-    // showing table of available plan resources
-    m_view = new ResourcesView( new ResourcesData( Plan.getResources() ), getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_view );
-      else
-        setContent( null );
-    } );
+    // create a choose-field populated with the plan calendar names
+    super( Plan.getCalendars().getNameArray() );
   }
+
+  /*************************************** refreshChoices ****************************************/
+  public void refreshChoices()
+  {
+    // TODO refresh choices as list of calendar names might have changed
+    Utils.trace( "NOT YET IMPLEMENTED" );
+  }
+
 }

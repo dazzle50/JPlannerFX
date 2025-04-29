@@ -20,6 +20,7 @@ package rjc.jplanner.gui.days;
 
 import javafx.scene.control.Tab;
 import rjc.jplanner.Main;
+import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan day-types *************************/
@@ -37,7 +38,7 @@ public class DaysTab extends Tab
     setClosable( false );
 
     // showing table of available plan day-types
-    m_view = new DaysView( new DaysData( Main.getPlan().daytypes ), getText() );
+    m_view = new DaysView( new DaysData( Plan.getDays() ), getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
 

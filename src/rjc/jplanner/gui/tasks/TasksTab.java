@@ -21,6 +21,7 @@ package rjc.jplanner.gui.tasks;
 import javafx.scene.control.Tab;
 import rjc.jplanner.Main;
 import rjc.jplanner.gui.XSplitPane;
+import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
 /******************** Tab showing table of the plan tasks alongside the gantt ********************/
@@ -40,7 +41,7 @@ public class TasksTab extends Tab
     setClosable( false );
 
     // showing table of available plan resources
-    m_view = new TasksView( new TasksData( Main.getPlan().tasks ), getText() );
+    m_view = new TasksView( new TasksData( Plan.getTasks() ), getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
 

@@ -28,21 +28,21 @@ import rjc.table.data.types.DateTime;
 
 public class Plan
 {
-  private String   m_title;          // plan title
-  private DateTime m_start;          // plan default start date-time for scheduling
-  private Calendar m_calendar;       // plan default calendar
-  private String   m_datetimeFormat; // format to display date-times
-  private String   m_dateFormat;     // format to display dates
-  private String   m_filename;       // filename when saved or loaded
-  private String   m_fileLocation;   // file location
-  private String   m_savedBy;        // who saved last
-  private DateTime m_savedWhen;      // when was last saved
-  private String   m_notes;          // plan notes
+  private String    m_title;          // plan title
+  private DateTime  m_start;          // plan default start date-time for scheduling
+  private Calendar  m_calendar;       // plan default calendar
+  private String    m_datetimeFormat; // format to display date-times
+  private String    m_dateFormat;     // format to display dates
+  private String    m_filename;       // filename when saved or loaded
+  private String    m_fileLocation;   // file location
+  private String    m_savedBy;        // who saved last
+  private DateTime  m_savedWhen;      // when was last saved
+  private String    m_notes;          // plan notes
 
-  public Tasks     tasks;            // list of plan tasks
-  public Resources resources;        // list of plan resources
-  public Calendars calendars;        // list of plan calendars
-  public Days      daytypes;         // list of plan day types
+  private Tasks     tasks;            // list of plan tasks
+  private Resources resources;        // list of plan resources
+  private Calendars calendars;        // list of plan calendars
+  private Days      daytypes;         // list of plan day types
 
   /**************************************** constructor ******************************************/
   public Plan()
@@ -97,6 +97,11 @@ public class Plan
     return Main.getPlan().tasks.indexOf( task );
   }
 
+  public static Tasks getTasks()
+  {
+    return Main.getPlan().tasks;
+  }
+
   /****************************************** resource *******************************************/
   static public Resource getResource( int index )
   {
@@ -107,6 +112,11 @@ public class Plan
   static public int getIndex( Resource resource )
   {
     return Main.getPlan().resources.indexOf( resource );
+  }
+
+  public static Resources getResources()
+  {
+    return Main.getPlan().resources;
   }
 
   /****************************************** calendar *******************************************/
@@ -121,6 +131,11 @@ public class Plan
     return Main.getPlan().calendars.indexOf( calendar );
   }
 
+  public static Calendars getCalendars()
+  {
+    return Main.getPlan().calendars;
+  }
+
   /********************************************* day *********************************************/
   static public Day getDay( int index )
   {
@@ -131,6 +146,11 @@ public class Plan
   static public int getIndex( Day dayType )
   {
     return Main.getPlan().daytypes.indexOf( dayType );
+  }
+
+  public static Days getDays()
+  {
+    return Main.getPlan().daytypes;
   }
 
   /****************************************** getTitle *******************************************/

@@ -61,6 +61,13 @@ public class Calendar
     m_exceptions = new HashMap<>();
   }
 
+  /**************************************** addException *****************************************/
+  public void addException( int day, int month, int year, Day daytype )
+  {
+    // add exception to this calendar
+    m_exceptions.put( new Date( year, month, day ), daytype );
+  }
+
   /****************************************** toString *******************************************/
   @Override
   public String toString()

@@ -41,7 +41,7 @@ public class Main extends Application
 {
   public static final String      VERSION = "v0.1.0 WIP";
 
-  private Image                   m_icon;                // icon for application
+  private static Image            m_icon;                // icon for application
   private static Plan             m_plan;                // current active plan
   private static ObservableStatus m_status;              // current application status
   private static UndoStack        m_undostack;           // current active undostack
@@ -58,6 +58,14 @@ public class Main extends Application
     Utils.trace( "JPlannerFX  VERSION = '" + VERSION + "'", args );
     Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
 
+    // prepare application
+    m_icon = new Image( Main.class.getResourceAsStream( "JPlannerFX-icon64.png" ) );
+    m_status = new ObservableStatus();
+    m_undostack = new UndoStack();
+    m_plan = new Plan();
+    m_plan.initialise();
+    Utils.trace( "PLAN INITIALISED : ", m_plan );
+
     // launch application display
     launch( args );
 
@@ -68,19 +76,13 @@ public class Main extends Application
   @Override
   public void start( Stage primaryStage ) throws Exception
   {
-    // prepare application
-    m_icon = new Image( getClass().getResourceAsStream( "JPlannerFX-icon64.png" ) );
-    m_undostack = new UndoStack();
-    m_plan = new Plan();
-    m_plan.initialise();
+    // prepare application display
+    primaryStage.setTitle( "JPlannerFX  " + VERSION );
+    primaryStage.getIcons().add( m_icon );
+    primaryStage.setScene( new MainWindow() );
 
     // close app when main window is closed (in case other windows are open)
     primaryStage.setOnHidden( event -> Platform.exit() );
-
-    // create app main window
-    primaryStage.setScene( new MainWindow() );
-    primaryStage.setTitle( "JPlannerFX  " + VERSION );
-    primaryStage.getIcons().add( m_icon );
 
     // open app window
     primaryStage.setWidth( 1000 );

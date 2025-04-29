@@ -20,6 +20,7 @@ package rjc.jplanner.gui.calendars;
 
 import javafx.scene.control.Tab;
 import rjc.jplanner.Main;
+import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan calendars *************************/
@@ -37,7 +38,7 @@ public class CalendarsTab extends Tab
     setClosable( false );
 
     // showing table of available plan calendars
-    m_view = new CalendarsView( new CalendarsData( Main.getPlan().calendars ), getText() );
+    m_view = new CalendarsView( new CalendarsData( Plan.getCalendars() ), getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
 
