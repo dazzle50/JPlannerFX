@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.tasks;
 
+import javafx.geometry.Pos;
 import rjc.jplanner.plan.Task.FIELD;
 import rjc.jplanner.plan.Tasks;
 import rjc.table.data.TableData;
@@ -76,8 +77,27 @@ public class TasksData extends TableData
       if ( m_tasks.get( dataRow ).isBlank() )
         return m_disabledVisual;
 
-    // otherwise return default cell visuals
-    return super.getVisual( dataColumn, dataRow );
+    // different fields have different text alignments
+    var visual = super.getVisual( dataColumn, dataRow );
+    if ( dataRow > HEADER && dataColumn > HEADER )
+      visual.textAlignment = switch ( FIELD.values()[dataColumn] )
+      {
+        case Title, Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
+        case Work -> Pos.CENTER_RIGHT;
+        default -> Pos.CENTER;
+      };
+    else
+      visual.textAlignment = Pos.CENTER;
+
+    return visual;
+  }
+
+  /***************************************** processValue ****************************************/
+  @Override
+  protected String processValue( int dataColumn, int dataRow, Object newValue, Boolean setValue )
+  {
+    // test if value can/could be set
+    return m_tasks.get( dataRow ).processValue( dataColumn, newValue, setValue );
   }
 
 }

@@ -18,9 +18,16 @@
 
 package rjc.jplanner.gui.resources;
 
+import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.Resource.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
+import rjc.table.view.cell.CellDrawer;
+import rjc.table.view.editor.AbstractCellEditor;
+import rjc.table.view.editor.EditorChoose;
+import rjc.table.view.editor.EditorDate;
+import rjc.table.view.editor.EditorDouble;
+import rjc.table.view.editor.EditorText;
 
 /*************************************************************************************************/
 /******************* Customised table-view for interacting with plan resources *******************/
@@ -42,9 +49,34 @@ public class ResourcesView extends TableView
   {
     // reset table view to custom settings
     super.reset();
-    getColumnsAxis().setIndexSize( FIELD.Availability.ordinal(), 70 );
+    getColumnsAxis().setIndexSize( FIELD.Available.ordinal(), 70 );
     getColumnsAxis().setIndexSize( FIELD.Cost.ordinal(), 70 );
     getColumnsAxis().setIndexSize( FIELD.Comment.ordinal(), 250 );
+  }
+
+  /**************************************** getCellEditor ****************************************/
+  @Override
+  public AbstractCellEditor getCellEditor( CellDrawer cell )
+  {
+    // if cell is disabled (e.g. textPaint is null) then can't edit
+    cell.getValueVisual();
+    if ( cell.visual.textPaint == null )
+      return null;
+
+    // determine editor appropriate for cell
+    switch ( FIELD.values()[cell.dataColumn] )
+    {
+      case Initials, Name, Organisation, Group, Role, Alias, Comment:
+        return new EditorText();
+      case Start, End:
+        return new EditorDate();
+      case Available:
+        return new EditorDouble();
+      case Calendar:
+        return new EditorChoose( Plan.getCalendars().getNameArray() );
+      default:
+        return null;
+    }
   }
 
 }

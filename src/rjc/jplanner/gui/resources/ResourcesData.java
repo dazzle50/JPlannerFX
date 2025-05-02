@@ -80,4 +80,12 @@ public class ResourcesData extends TableData
     return super.getVisual( dataColumn, dataRow );
   }
 
+  /***************************************** processValue ****************************************/
+  @Override
+  protected String processValue( int dataColumn, int dataRow, Object newValue, Boolean setValue )
+  {
+    // test if value can/could be set
+    return m_resources.get( dataRow ).processValue( dataColumn, newValue, setValue );
+  }
+
 }

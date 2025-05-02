@@ -24,6 +24,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import rjc.jplanner.Main;
+import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
@@ -54,7 +56,7 @@ public class MainWindow extends Scene
     // prepare components
     m_menus = new MainMenus();
     m_tabs = new MainTabs();
-    m_statusBar = new TextField();
+    m_statusBar = getStatusBar();
 
     // arrange the grid
     GridPane grid = (GridPane) getRoot();
@@ -65,4 +67,24 @@ public class MainWindow extends Scene
     GridPane.setVgrow( m_tabs, Priority.ALWAYS );
   }
 
+  /**************************************** getStatusBar *****************************************/
+  private TextField getStatusBar()
+  {
+    // create status-bar for displaying status messages
+    TextField statusBar = new TextField();
+    statusBar.setFocusTraversable( false );
+    statusBar.setEditable( false );
+
+    // display status changes on status-bar using runLater so can handle signals from other threads
+    var status = Main.getStatus();
+    status.addLaterListener( ( sender, msg ) ->
+    {
+      statusBar.setText( status.getMessage() );
+      statusBar.setStyle( status.getStyle() );
+    } );
+    status.update( Level.NORMAL, "JPlannerFX has started" );
+    status.clearAfterMillisecs( 2500 );
+
+    return statusBar;
+  }
 }

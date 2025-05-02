@@ -116,4 +116,66 @@ public class Task
     return m_title == null;
   }
 
+  /***************************************** processValue ****************************************/
+  public String processValue( int field, Object newValue, Boolean setValue )
+  {
+    // set/check field value and return null if successful/possible
+    switch ( FIELD.values()[field] )
+    {
+      case Title:
+        // new value can be of any type
+        if ( setValue )
+          m_title = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Start:
+        // check new value is date-time
+        if ( newValue instanceof DateTime dt )
+        {
+          if ( setValue )
+            m_start = dt;
+          return null;
+        }
+        return "Not Date-time: " + Utils.objectsString( newValue );
+
+      case End:
+        // check new value is date-time
+        if ( newValue instanceof DateTime dt )
+        {
+          if ( setValue )
+            m_end = dt;
+          return null;
+        }
+        return "Not Date-time: " + Utils.objectsString( newValue );
+
+      case Priority:
+        // check new value is integer and in range
+        if ( newValue instanceof Integer newInt )
+        {
+          if ( newInt < 0 || newInt > 999 )
+            return "Value not between 0 and 999";
+          if ( setValue )
+            m_priority = newInt;
+          return null;
+        }
+        return "Not integer: " + Utils.objectsString( newValue );
+
+      case Comment:
+        // new value can be of any type
+        if ( setValue )
+          m_comment = newValue == null ? null : newValue.toString();
+        return null;
+
+      case Cost:
+      case Deadline:
+      case Duration:
+      case Predecessors:
+      case Resources:
+      case Type:
+      case Work:
+      default:
+        return "Not implemented";
+    }
+  }
+
 }

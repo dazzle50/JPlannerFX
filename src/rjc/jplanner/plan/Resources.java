@@ -35,7 +35,7 @@ public class Resources extends ArrayList<Resource>
   {
     // initialise list with default resources (including resource 0 the special 'unassigned' resource)
     clear();
-    for ( int count = 0; count <= 10; count++ )
+    for ( int count = 0; count <= 20; count++ )
       add( new Resource() );
   }
 }

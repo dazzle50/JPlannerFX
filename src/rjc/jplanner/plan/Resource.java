@@ -27,29 +27,29 @@ import rjc.table.data.types.Date;
 
 public class Resource
 {
-  private String   m_initials;     // must be unique across all resources in model
-  private String   m_name;         // free text
-  private String   m_org;          // free text
-  private String   m_group;        // free text
-  private String   m_role;         // free text
-  private String   m_alias;        // free text
-  private Date     m_start;        // date availability starts inclusive
-  private Date     m_end;          // date availability end inclusive
-  private double   m_availability; // number available
-  private double   m_cost;         // cost TODO
-  private Calendar m_calendar;     // calendar for resource
-  private String   m_comment;      // free text
+  private String   m_initials;  // must be unique across all resources in model
+  private String   m_name;      // free text
+  private String   m_org;       // free text
+  private String   m_group;     // free text
+  private String   m_role;      // free text
+  private String   m_alias;     // free text
+  private Date     m_start;     // date availability starts inclusive
+  private Date     m_end;       // date availability end inclusive
+  private double   m_available; // number available
+  private double   m_cost;      // cost TODO
+  private Calendar m_calendar;  // calendar for resource
+  private String   m_comment;   // free text
 
   public enum FIELD
   {
-    Initials, Name, Organisation, Group, Role, Alias, Start, End, Availability, Cost, Calendar, Comment, MAX
+    Initials, Name, Organisation, Group, Role, Alias, Start, End, Available, Cost, Calendar, Comment, MAX
   }
 
   /**************************************** constructor ******************************************/
   public Resource()
   {
     // initialise private variables
-    m_availability = 1.0;
+    m_available = 1.0;
   }
 
   /**************************************** toStringShort ****************************************/
@@ -65,7 +65,7 @@ public class Resource
   {
     // string summary
     return Utils.name( this ) + "[" + m_initials + ", " + m_name + ", " + m_org + ", " + m_group + ", " + m_role + ", "
-        + m_alias + ", " + m_start + ", " + m_end + ", " + m_availability + "]";
+        + m_alias + ", " + m_start + ", " + m_end + ", " + m_available + "]";
   }
 
   /******************************************* getValue ******************************************/
@@ -78,8 +78,8 @@ public class Resource
         return m_initials;
       case Alias:
         return m_alias;
-      case Availability:
-        return m_availability;
+      case Available:
+        return m_available;
       case Calendar:
         return m_calendar;
       case Comment:
@@ -108,6 +108,94 @@ public class Resource
   {
     // resource record is blank if initials are null
     return m_initials == null;
+  }
+
+  /***************************************** processValue ****************************************/
+  public String processValue( int field, Object newValue, Boolean setValue )
+  {
+    // set/check field value and return null if successful/possible
+    switch ( FIELD.values()[field] )
+    {
+      case Initials:
+        // new value can be of any type
+        if ( setValue )
+          m_initials = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Alias:
+        // new value can be of any type
+        if ( setValue )
+          m_alias = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Group:
+        // new value can be of any type
+        if ( setValue )
+          m_group = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Name:
+        // new value can be of any type
+        if ( setValue )
+          m_name = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Organisation:
+        // new value can be of any type
+        if ( setValue )
+          m_org = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Role:
+        // new value can be of any type
+        if ( setValue )
+          m_role = newValue == null ? null : Utils.clean( newValue.toString() );
+        return null;
+
+      case Start:
+        // check new value is date
+        if ( newValue instanceof Date date )
+        {
+          if ( setValue )
+            m_start = date;
+          return null;
+        }
+        return "Not Date: " + Utils.objectsString( newValue );
+
+      case End:
+        // check new value is date
+        if ( newValue instanceof Date date )
+        {
+          if ( setValue )
+            m_end = date;
+          return null;
+        }
+        return "Not Date: " + Utils.objectsString( newValue );
+
+      case Available:
+        // check new value is double and in range
+        if ( newValue instanceof Double avail )
+        {
+          if ( avail < 0 || avail > 99999.99 )
+            return "Value not between 0 and 99999.99";
+          if ( setValue )
+            m_available = avail;
+          return null;
+        }
+        return "Not float: " + Utils.objectsString( newValue );
+
+      case Comment:
+        // new value can be of any type
+        if ( setValue )
+          m_comment = newValue == null ? null : newValue.toString();
+        return null;
+
+      case Cost:
+      case Calendar:
+
+      default:
+        return "Not implemented";
+    }
   }
 
 }

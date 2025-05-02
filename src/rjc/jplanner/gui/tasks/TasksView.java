@@ -21,6 +21,11 @@ package rjc.jplanner.gui.tasks;
 import rjc.jplanner.plan.Task.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
+import rjc.table.view.cell.CellDrawer;
+import rjc.table.view.editor.AbstractCellEditor;
+import rjc.table.view.editor.EditorDateTime;
+import rjc.table.view.editor.EditorInteger;
+import rjc.table.view.editor.EditorText;
 
 /*************************************************************************************************/
 /********************* Customised table-view for interacting with plan tasks *********************/
@@ -54,6 +59,29 @@ public class TasksView extends TableView
   public void relocate( double x, double y )
   {
     // do nothing when relocate called - to prevent jitter when using split-pane
+  }
+
+  /**************************************** getCellEditor ****************************************/
+  @Override
+  public AbstractCellEditor getCellEditor( CellDrawer cell )
+  {
+    // if cell is disabled (e.g. textPaint is null) then can't edit
+    cell.getValueVisual();
+    if ( cell.visual.textPaint == null )
+      return null;
+
+    // determine editor appropriate for cell
+    switch ( FIELD.values()[cell.dataColumn] )
+    {
+      case Title, Comment:
+        return new EditorText();
+      case Start, End:
+        return new EditorDateTime();
+      case Priority:
+        return new EditorInteger();
+      default:
+        return null;
+    }
   }
 
 }
