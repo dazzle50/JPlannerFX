@@ -18,9 +18,11 @@
 
 package rjc.jplanner.gui.plan;
 
+import javafx.application.Platform;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -42,6 +44,7 @@ import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.view.Colours;
+import rjc.table.view.TableScrollBar;
 
 /*************************************************************************************************/
 /******************* Controls for displaying & editing various plan properties *******************/
@@ -61,7 +64,7 @@ public class PlanProperties extends ScrollPane
   private ExpandingField    m_fileLocation    = new ExpandingField();
   private ExpandingField    m_savedBy         = new ExpandingField();
   private ExpandingField    m_savedWhen       = new ExpandingField();
-  // private NumberOf m_numberOf = new NumberOf();
+  private NumberOf          m_numberOf        = new NumberOf();
 
   private static Background READONLY          = new Background(
       new BackgroundFill( Colours.CELL_DISABLED_BACKGROUND, null, null ) );
@@ -71,6 +74,13 @@ public class PlanProperties extends ScrollPane
   {
     // setup scrolling properties panel
     setMinWidth( 0.0 );
+
+    // set scroll-bar width (later when it has been created)
+    Platform.runLater( () ->
+    {
+      if ( lookup( ".scroll-bar:vertical" ) instanceof ScrollBar scrollbar )
+        scrollbar.setPrefWidth( TableScrollBar.SIZE );
+    } );
 
     // grid for properties layout
     m_grid.setVgap( 5.0 );
@@ -96,9 +106,9 @@ public class PlanProperties extends ScrollPane
 
     // add number of
     row++;
-    // m_grid.add( m_numberOf, 0, row, 2, 1 );
-    // GridPane.setHgrow( m_numberOf, Priority.ALWAYS );
-    // GridPane.setVgrow( m_numberOf, Priority.ALWAYS );
+    m_grid.add( m_numberOf, 0, row, 2, 1 );
+    GridPane.setHgrow( m_numberOf, Priority.ALWAYS );
+    GridPane.setVgrow( m_numberOf, Priority.ALWAYS );
 
     // set tool tips
     Tooltip DTtip = new Tooltip(
@@ -141,9 +151,9 @@ public class PlanProperties extends ScrollPane
     m_Dformat.setTooltip( Dtip );
 
     // show updated examples of formats
-    m_DTformat.textProperty().addListener( ( observable, oldValue, newValue ) -> dateTimeFormatChange() );
+    m_DTformat.textProperty().addListener( ( property, oldText, newText ) -> dateTimeFormatChange() );
     m_DTformat.setOnKeyPressed( event -> keyPressed( event ) );
-    m_Dformat.textProperty().addListener( ( observable, oldValue, newValue ) -> dateFormatChange() );
+    m_Dformat.textProperty().addListener( ( property, oldText, newText ) -> dateFormatChange() );
     m_Dformat.setOnKeyPressed( event -> keyPressed( event ) );
 
     // if escape pressed, revert, if return, commit
@@ -277,7 +287,7 @@ public class PlanProperties extends ScrollPane
     displayDateTime( m_savedWhen, Main.getPlan().getSavedWhen() );
 
     // update the gui "number of" pane
-    // m_numberOf.redraw();
+    m_numberOf.redraw();
   }
 
   /***************************************** updatePlan ******************************************/

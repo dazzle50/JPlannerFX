@@ -47,4 +47,16 @@ public class Tasks extends ArrayList<Task>
     // setup special task 0
   }
 
+  /*************************************** getNotNullCount ***************************************/
+  public int getNotNullCount()
+  {
+    // return number of not-null tasks in plan (skipping special task 0)
+    int count = 0;
+    for ( int id = 1; id < size(); id++ )
+      if ( !get( id ).isBlank() )
+        count++;
+
+    return count;
+  }
+
 }

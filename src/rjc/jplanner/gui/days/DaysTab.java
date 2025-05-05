@@ -43,7 +43,7 @@ public class DaysTab extends Tab
     m_view.setStatus( Main.getStatus() );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, oldValue, newValue ) ->
     {
       if ( newValue )
         setContent( m_view );

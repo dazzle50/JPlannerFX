@@ -22,35 +22,48 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 
 /*************************************************************************************************/
-/*************** Extended version of SplitPane with preferred left-most node width ***************/
+/*************** Extended version of SplitPane with preferred first split position ***************/
 /*************************************************************************************************/
 
 public class XSplitPane extends SplitPane
 {
-  public int      preferredLeftNodeWidth = 600;
-  private boolean m_splitResize          = false;
+  private int     m_preferredDividerPosition = 750;
+  private boolean m_splitResize;
 
-  /**************************************** constructor ******************************************/
+  /***************************************** constructor *****************************************/
   public XSplitPane( Node... items )
   {
     // create enhanced split-pane
     super( items );
 
     // add listener to ensure divider is at preferred position when pane resized
-    widthProperty().addListener( ( observable, oldWidth, newWidth ) ->
+    widthProperty().addListener( ( property, oldWidth, newWidth ) ->
     {
       m_splitResize = true;
-      setDividerPosition( 0, preferredLeftNodeWidth / newWidth.doubleValue() );
+      setDividerPosition( 0, m_preferredDividerPosition / newWidth.doubleValue() );
     } );
 
     // add listener to ensure preferred position is updated when divider manually moved
-    getDividers().get( 0 ).positionProperty().addListener( ( observable, oldPos, newPos ) ->
+    getDividers().get( 0 ).positionProperty().addListener( ( property, oldPos, newPos ) ->
     {
       if ( !m_splitResize )
-        preferredLeftNodeWidth = (int) ( getWidth() * newPos.doubleValue() );
+        m_preferredDividerPosition = (int) ( getWidth() * newPos.doubleValue() );
       m_splitResize = false;
     } );
+  }
 
+  /********************************* getPreferredDividerPosition *********************************/
+  public int getPreferredDividerPosition()
+  {
+    // return preferred divider position
+    return m_preferredDividerPosition;
+  }
+
+  /********************************* setPreferredDividerPosition *********************************/
+  public void setPreferredDividerPosition( int position )
+  {
+    // set preferred divider position
+    m_preferredDividerPosition = position;
   }
 
 }

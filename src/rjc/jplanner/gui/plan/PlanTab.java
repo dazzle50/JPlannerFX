@@ -38,9 +38,10 @@ public class PlanTab extends Tab
     setClosable( false );
 
     XSplitPane split = new XSplitPane( m_properties, m_notes );
+    split.setPreferredDividerPosition( 300 );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( observable, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, oldValue, newValue ) ->
     {
       if ( newValue )
         setContent( split );

@@ -18,13 +18,48 @@
 
 package rjc.jplanner.gui.plan;
 
-import javafx.scene.layout.GridPane;
+import javafx.geometry.Insets;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 /*************************************************************************************************/
 /************************ Control for displaying & editing of plan notes *************************/
 /*************************************************************************************************/
 
-public class PlanNotes extends GridPane
+public class PlanNotes extends VBox
 {
+  private TextArea m_notes = new TextArea();
+
+  /**************************************** constructor ******************************************/
+  public PlanNotes()
+  {
+    // setup notes panel
+    setPadding( new Insets( 5.0 ) );
+    setSpacing( 5.0 );
+    setMinWidth( 0.0 );
+
+    // notes area
+    m_notes.setWrapText( true );
+    getChildren().addAll( new Label( "Notes" ), m_notes );
+
+    // notes area should grow to fill all available space
+    setVgrow( m_notes, Priority.ALWAYS );
+  }
+
+  /****************************************** getText ********************************************/
+  public String getText()
+  {
+    // return notes text
+    return m_notes.getText();
+  }
+
+  /****************************************** setText ********************************************/
+  public void setText( String txt )
+  {
+    // set notes text
+    m_notes.setText( txt );
+  }
 
 }

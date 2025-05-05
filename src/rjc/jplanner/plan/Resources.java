@@ -30,7 +30,7 @@ public class Resources extends ArrayList<Resource>
 {
   private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /**************************************** initialise *******************************************/
+  /***************************************** initialise ******************************************/
   public void initialise()
   {
     // initialise list with default resources (including resource 0 the special 'unassigned' resource)
@@ -38,4 +38,17 @@ public class Resources extends ArrayList<Resource>
     for ( int count = 0; count <= 20; count++ )
       add( new Resource() );
   }
+
+  /*************************************** getNotNullCount ***************************************/
+  public int getNotNullCount()
+  {
+    // return number of not-null resources in plan (skipping special resource 0)
+    int count = 0;
+    for ( int id = 1; id < size(); id++ )
+      if ( !get( id ).isBlank() )
+        count++;
+
+    return count;
+  }
+
 }

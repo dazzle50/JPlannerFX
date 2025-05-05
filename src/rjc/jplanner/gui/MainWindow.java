@@ -22,8 +22,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 import rjc.jplanner.Main;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.undo.UndoStackWindow;
@@ -74,6 +77,7 @@ public class MainWindow extends Scene
     TextField statusBar = new TextField();
     statusBar.setFocusTraversable( false );
     statusBar.setEditable( false );
+    statusBar.setBackground( new Background( new BackgroundFill( Color.gray( 0.96 ), null, null ) ) );
 
     // display status changes on status-bar using runLater so can handle signals from other threads
     var status = Main.getStatus();
