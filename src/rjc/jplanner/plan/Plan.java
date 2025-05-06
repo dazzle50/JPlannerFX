@@ -171,6 +171,22 @@ public class Plan
     return m_start;
   }
 
+  /************************************ getEarliestTaskStart *************************************/
+  public DateTime getEarliestTaskStart()
+  {
+    // TODO return start date-time of earliest starting plan task, or null if no tasks
+    DateTime earliest = null;
+    return earliest;
+  }
+
+  /************************************** getLatestTaskEnd ***************************************/
+  public DateTime getLatestTaskEnd()
+  {
+    // TODO return end date-time of latest ending plan task, or null if no tasks
+    DateTime latest = null;
+    return latest;
+  }
+
   /************************************** getDefaultCalendar *************************************/
   public Calendar getDefaultCalendar()
   {

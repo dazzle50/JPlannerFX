@@ -37,7 +37,7 @@ public class TasksTab extends Tab
   public TasksTab()
   {
     // construct tab
-    super( "Tasks" );
+    super( "Tasks & Gantt" );
     setClosable( false );
 
     // showing table of available plan resources

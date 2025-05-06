@@ -152,8 +152,10 @@ public class PlanProperties extends ScrollPane
 
     // show updated examples of formats
     m_DTformat.textProperty().addListener( ( property, oldText, newText ) -> dateTimeFormatChange() );
+    m_DTformat.focusedProperty().addListener( ( property, oldFocus, newFocus ) -> dateTimeFocusChange() );
     m_DTformat.setOnKeyPressed( event -> keyPressed( event ) );
     m_Dformat.textProperty().addListener( ( property, oldText, newText ) -> dateFormatChange() );
+    m_Dformat.focusedProperty().addListener( ( property, oldFocus, newFocus ) -> dateFocusChange() );
     m_Dformat.setOnKeyPressed( event -> keyPressed( event ) );
 
     // if escape pressed, revert, if return, commit
@@ -226,19 +228,31 @@ public class PlanProperties extends ScrollPane
 
       m_DTformat.getStatus().update( Level.NORMAL,
           "Date-time format example: " + DateTime.now().toString( m_DTformat.getText() ) );
+      m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
     {
       String err = exception.getMessage();
       m_DTformat.getStatus().update( Level.ERROR, "Date-time format error '" + err + "'" );
+      m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
     }
 
-    // displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
-    // displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
+    displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
+    displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
     displayDateTime( m_savedWhen, Main.getPlan().getSavedWhen() );
   }
 
-  /*************************************** dateFormatChange **************************************/
+  /************************************* dateTimeFocusChange *************************************/
+  private void dateTimeFocusChange()
+  {
+    // react to focus change
+    if ( m_DTformat.isFocused() )
+      dateTimeFormatChange();
+    else
+      m_DTformat.getStatus().clear();
+  }
+
+  /************************************** dateFormatChange ***************************************/
   private void dateFormatChange()
   {
     // update display for date format change
@@ -249,12 +263,24 @@ public class PlanProperties extends ScrollPane
 
       m_Dformat.getStatus().update( Level.NORMAL,
           "Date format example: " + Date.now().toString( m_Dformat.getText() ) );
+      m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
     {
       String err = exception.getMessage();
       m_Dformat.getStatus().update( Level.ERROR, "Date format error '" + err + "'" );
+      m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
     }
+  }
+
+  /*************************************** dateFocusChange ***************************************/
+  private void dateFocusChange()
+  {
+    // react to focus change
+    if ( m_Dformat.isFocused() )
+      dateFormatChange();
+    else
+      m_Dformat.getStatus().clear();
   }
 
   /*************************************** displayDateTime ***************************************/
@@ -274,7 +300,7 @@ public class PlanProperties extends ScrollPane
   {
     // update the gui property widgets with values from plan
     m_title.setText( Main.getPlan().getTitle() );
-    m_defaultCalendar.setSelected( Main.getPlan().getDefaultCalendar() );
+    m_defaultCalendar.setSelected( Main.getPlan().getDefaultCalendar().getName() );
     m_DTformat.setText( Main.getPlan().getDateTimeFormat() );
     m_Dformat.setText( Main.getPlan().getDateFormat() );
     m_fileName.setText( Main.getPlan().getFilename() );
@@ -282,8 +308,8 @@ public class PlanProperties extends ScrollPane
     m_savedBy.setText( Main.getPlan().getSavedBy() );
 
     m_defaultStart.setDateTime( Main.getPlan().getDefaultStart() );
-    // displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
-    // displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
+    displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
+    displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
     displayDateTime( m_savedWhen, Main.getPlan().getSavedWhen() );
 
     // update the gui "number of" pane
@@ -293,7 +319,7 @@ public class PlanProperties extends ScrollPane
   /***************************************** updatePlan ******************************************/
   public void updatePlan()
   {
-    // get values from gui editors
+    // TODO get values from gui editors
   }
 
 }

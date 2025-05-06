@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.plan;
 
 import javafx.scene.control.Tab;
+import rjc.jplanner.Main;
 import rjc.jplanner.gui.XSplitPane;
 
 /*************************************************************************************************/
@@ -44,9 +45,17 @@ public class PlanTab extends Tab
     selectedProperty().addListener( ( property, oldValue, newValue ) ->
     {
       if ( newValue )
+      {
+        m_properties.updateFromPlan();
+        m_notes.setText( Main.getPlan().getNotes() );
         setContent( split );
+      }
       else
+      {
         setContent( null );
+        m_properties.updatePlan();
+        Main.getPlan().setNotes( m_notes.getText() );
+      }
     } );
   }
 
