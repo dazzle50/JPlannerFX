@@ -41,13 +41,24 @@ public class MainTabs extends TabPane
   /**************************************** constructor ******************************************/
   public MainTabs()
   {
-    // construct main window tabs
-    m_plan = new PlanTab();
+    // construct main window tabs with plan-tabs
+    this( true );
+  }
+
+  /**************************************** constructor ******************************************/
+  public MainTabs( boolean showPlanTab )
+  {
+    // construct main window tabs with optional plan-tabs
+    if ( showPlanTab )
+      m_plan = new PlanTab();
     m_tasks = new TasksTab();
     m_resources = new ResourcesTab();
     m_calendars = new CalendarsTab();
     m_days = new DaysTab();
 
-    getTabs().addAll( m_plan, m_tasks, m_resources, m_calendars, m_days );
+    if ( showPlanTab )
+      getTabs().addAll( m_plan );
+    getTabs().addAll( m_tasks, m_resources, m_calendars, m_days );
   }
+
 }

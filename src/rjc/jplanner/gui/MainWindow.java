@@ -29,7 +29,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 import rjc.jplanner.Main;
 import rjc.table.signal.ObservableStatus.Level;
-import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
 /************************** Main JPlannerFX application window contents **************************/
@@ -37,12 +36,11 @@ import rjc.table.undo.UndoStackWindow;
 
 public class MainWindow extends Scene
 {
-  private MenuBar         m_menus;      // menus at top of MainWindow
-  private TabPane         m_tabs;       // tabs containing application functionality
-  private TextField       m_statusBar;  // status bar at bottom of MainWindow
-  private UndoStackWindow m_undoWindow; // window to show undo-plan
+  private MenuBar      m_menus;      // menus at top of MainWindow
+  private TabPane      m_tabs;       // tabs containing application functionality
+  private TextField    m_statusBar;  // status bar at bottom of MainWindow
 
-  public static String    STYLE_TOOLTIP;
+  public static String STYLE_TOOLTIP;
 
   /**************************************** constructor ******************************************/
   public MainWindow()

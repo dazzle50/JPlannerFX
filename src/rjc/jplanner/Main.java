@@ -29,6 +29,7 @@ import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.undo.UndoStack;
+import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
 // Aims to be a project planner similar to M$Project with table entry of tasks & Gantt chart
@@ -45,6 +46,7 @@ public class Main extends Application
   private static Plan             m_plan;                // current active plan
   private static ObservableStatus m_status;              // current application status
   private static UndoStack        m_undostack;           // current active undostack
+  private static UndoStackWindow  m_undoWindow;          // window to show current undostack
 
   /******************************************** main *********************************************/
   public static void main( String[] args )
@@ -110,4 +112,20 @@ public class Main extends Application
     // return application current active undo-stack
     return m_undostack;
   }
+
+  /******************************************* getIcon *******************************************/
+  public static Image getIcon()
+  {
+    // return application icon
+    return m_icon;
+  }
+
+  /*************************************** undoStackWindow ***************************************/
+  public static UndoStackWindow getUndoWindow()
+  {
+    // return application undostack window
+    m_undoWindow = m_undoWindow == null ? new UndoStackWindow( getUndostack() ) : m_undoWindow;
+    return m_undoWindow;
+  }
+
 }
