@@ -28,7 +28,9 @@ import rjc.jplanner.plan.Plan;
 
 public class CalendarsTab extends Tab
 {
-  private CalendarsView m_view;
+  private CalendarsView        m_view;
+
+  private static CalendarsData m_data;
 
   /**************************************** constructor ******************************************/
   public CalendarsTab()
@@ -38,9 +40,11 @@ public class CalendarsTab extends Tab
     setClosable( false );
 
     // showing table of available plan calendars
-    m_view = new CalendarsView( new CalendarsData( Plan.getCalendars() ), getText() );
+    m_data = m_data == null ? new CalendarsData( Plan.getCalendars() ) : m_data;
+    m_view = new CalendarsView( m_data, getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
+    m_view.setFocusTraversable( true );
 
     // only have tab contents set if tab selected
     selectedProperty().addListener( ( property, oldValue, newValue ) ->

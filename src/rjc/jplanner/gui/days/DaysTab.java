@@ -28,7 +28,9 @@ import rjc.jplanner.plan.Plan;
 
 public class DaysTab extends Tab
 {
-  private DaysView m_view;
+  private DaysView        m_view;
+
+  private static DaysData m_data;
 
   /**************************************** constructor ******************************************/
   public DaysTab()
@@ -38,9 +40,11 @@ public class DaysTab extends Tab
     setClosable( false );
 
     // showing table of available plan day-types
-    m_view = new DaysView( new DaysData( Plan.getDays() ), getText() );
+    m_data = m_data == null ? new DaysData( Plan.getDays() ) : m_data;
+    m_view = new DaysView( m_data, getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
+    m_view.setFocusTraversable( true );
 
     // only have tab contents set if tab selected
     selectedProperty().addListener( ( property, oldValue, newValue ) ->

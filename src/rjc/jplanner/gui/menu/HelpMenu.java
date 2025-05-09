@@ -16,43 +16,35 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.resources;
+package rjc.jplanner.gui.menu;
 
-import javafx.scene.control.Tab;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import rjc.jplanner.Main;
-import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
-/************************* Tab showing table of available plan resources *************************/
+/**************************** Help menu for main application menu bar ****************************/
 /*************************************************************************************************/
 
-public class ResourcesTab extends Tab
+public class HelpMenu extends Menu
 {
-  private ResourcesView        m_view;
 
-  private static ResourcesData m_data;
-
-  /**************************************** constructor ******************************************/
-  public ResourcesTab()
+  /***************************************** constructor *****************************************/
+  public HelpMenu()
   {
-    // construct tab
-    super( "Resources" );
-    setClosable( false );
+    // construct help menu for main window menu bar
+    setText( "Help" );
 
-    // showing table of available plan resources
-    m_data = m_data == null ? new ResourcesData( Plan.getResources() ) : m_data;
-    m_view = new ResourcesView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-    m_view.setFocusTraversable( true );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_view );
-      else
-        setContent( null );
-    } );
+    getItems().add( about() );
   }
+
+  /******************************************** about ********************************************/
+  private MenuItem about()
+  {
+    // TODO simple about dialog
+    MenuItem helpAbout = new MenuItem( "About JPlannerFX " + Main.VERSION );
+    helpAbout.setDisable( true );
+    return helpAbout;
+  }
+
 }

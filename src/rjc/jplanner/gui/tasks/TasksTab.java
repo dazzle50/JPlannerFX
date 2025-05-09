@@ -29,9 +29,11 @@ import rjc.jplanner.plan.Plan;
 
 public class TasksTab extends Tab
 {
-  private TasksView  m_view;
-  private Gantt      m_gantt;
-  private XSplitPane m_split;
+  private TasksView        m_view;
+  private Gantt            m_gantt;
+  private XSplitPane       m_split;
+
+  private static TasksData m_data;
 
   /**************************************** constructor ******************************************/
   public TasksTab()
@@ -40,10 +42,12 @@ public class TasksTab extends Tab
     super( "Tasks & Gantt" );
     setClosable( false );
 
-    // showing table of available plan resources
-    m_view = new TasksView( new TasksData( Plan.getTasks() ), getText() );
+    // showing table of available plan tasks
+    m_data = m_data == null ? new TasksData( Plan.getTasks() ) : m_data;
+    m_view = new TasksView( m_data, getText() );
     m_view.setUndostack( Main.getUndostack() );
     m_view.setStatus( Main.getStatus() );
+    m_view.setFocusTraversable( true );
 
     // alongside the gantt
     m_gantt = new Gantt( m_view );
