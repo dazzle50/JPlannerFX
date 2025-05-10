@@ -33,9 +33,10 @@ public class DaysCellDrawer extends CellDrawer
   protected String getText()
   {
     // return cell value as string
-    Object value = getValue();
     if ( value instanceof Time time )
       return time.toStringShort();
+    if ( value instanceof Double work )
+      return String.format( "%.2f", work );
 
     return value == null ? null : value.toString();
   }

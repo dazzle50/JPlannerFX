@@ -141,4 +141,50 @@ public class Day
     return field >= FIELD.Start.ordinal() + ( 2 * m_periods.size() );
   }
 
+  /***************************************** processValue ****************************************/
+  public String processValue( int field, Object newValue, Boolean setValue )
+  {
+    // set/check field value and return null if successful/possible
+    switch ( FIELD.values()[field] )
+    {
+      case Name:
+        // new value can be of any type
+        String newName = newValue == null ? null : Utils.clean( newValue.toString() );
+        String problem = Plan.getDays().nameValidity( newName, this );
+        if ( problem != null )
+          return problem;
+        if ( setValue )
+          m_name = newName;
+        return null;
+
+      case Work:
+        // check new value is double and in range
+        if ( newValue instanceof Double newWork )
+        {
+          if ( newWork < 0 || newWork > 9.99 )
+            return "Value not between 0 and 9.99";
+          if ( setValue )
+            m_work = newWork;
+          return null;
+        }
+        return "Not double: " + Utils.objectsString( newValue );
+
+      case Periods:
+        // check new value is integer and in range
+        if ( newValue instanceof Integer newPeriods )
+        {
+          if ( newPeriods < 0 || newPeriods > 8 )
+            return "Value not between 0 and 8";
+          if ( setValue )
+            Utils.trace( "SETTING PERIODS NOT IMPLEMENTED !!!" );
+          return null;
+        }
+        return "Not integer: " + Utils.objectsString( newValue );
+
+      default:
+        // either a period start or end
+        return "Not implemented";
+    }
+  }
+
 }

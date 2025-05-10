@@ -19,9 +19,15 @@
 package rjc.jplanner.gui.days;
 
 import rjc.jplanner.plan.Day;
+import rjc.jplanner.plan.Day.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
+import rjc.table.view.editor.AbstractCellEditor;
+import rjc.table.view.editor.EditorDouble;
+import rjc.table.view.editor.EditorInteger;
+import rjc.table.view.editor.EditorText;
+import rjc.table.view.editor.EditorTime;
 
 /*************************************************************************************************/
 /******************* Customised table-view for interacting with plan day-types *******************/
@@ -54,6 +60,36 @@ public class DaysView extends TableView
   {
     // return new instance of class responsible for drawing the cells on canvas
     return new DaysCellDrawer();
+  }
+
+  /**************************************** getCellEditor ****************************************/
+  @Override
+  public AbstractCellEditor getCellEditor( CellDrawer cell )
+  {
+    // if cell is disabled (e.g. textPaint is null) then can't edit
+    cell.getValueVisual();
+    if ( cell.visual.textPaint == null )
+      return null;
+
+    // determine editor appropriate for cell
+    switch ( FIELD.values()[cell.dataColumn] )
+    {
+      case Name:
+        return new EditorText();
+      case Work:
+        var editorD = new EditorDouble();
+        editorD.setRange( 0.0, 9.99 );
+        editorD.setFormat( "0.00", 1, 2 );
+        editorD.setStepPage( 0.1, 1.0 );
+        return editorD;
+      case Periods:
+        var editorI = new EditorInteger();
+        editorI.setRange( 0, 8 );
+        editorI.setStepPage( 1, 1 );
+        return editorI;
+      default:
+        return new EditorTime();
+    }
   }
 
 }
