@@ -92,12 +92,12 @@ public class TasksData extends TableData
     return visual;
   }
 
-  /***************************************** processValue ****************************************/
+  /****************************************** setValue *******************************************/
   @Override
-  protected String processValue( int dataColumn, int dataRow, Object newValue, Boolean setValue )
+  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
   {
     // test if value can/could be set
-    return m_tasks.get( dataRow ).processValue( dataColumn, newValue, setValue );
+    return m_tasks.get( dataRow ).setValue( dataColumn, newValue, commit );
   }
 
 }

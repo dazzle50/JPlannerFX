@@ -110,45 +110,45 @@ public class Resource
     return m_initials == null;
   }
 
-  /***************************************** processValue ****************************************/
-  public String processValue( int field, Object newValue, Boolean setValue )
+  /****************************************** setValue *******************************************/
+  public String setValue( int field, Object newValue, Boolean commit )
   {
     // set/check field value and return null if successful/possible
     switch ( FIELD.values()[field] )
     {
       case Initials:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_initials = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
       case Alias:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_alias = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
       case Group:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_group = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
       case Name:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_name = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
       case Organisation:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_org = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
       case Role:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_role = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
@@ -156,7 +156,7 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
-          if ( setValue )
+          if ( commit )
             m_start = date;
           return null;
         }
@@ -166,7 +166,7 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
-          if ( setValue )
+          if ( commit )
             m_end = date;
           return null;
         }
@@ -178,7 +178,7 @@ public class Resource
         {
           if ( avail < 0 || avail > 99999.99 )
             return "Value not between 0 and 99999.99";
-          if ( setValue )
+          if ( commit )
             m_available = avail;
           return null;
         }
@@ -186,7 +186,7 @@ public class Resource
 
       case Comment:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_comment = newValue == null ? null : newValue.toString();
         return null;
 

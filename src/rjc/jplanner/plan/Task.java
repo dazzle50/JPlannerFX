@@ -116,15 +116,15 @@ public class Task
     return m_title == null;
   }
 
-  /***************************************** processValue ****************************************/
-  public String processValue( int field, Object newValue, Boolean setValue )
+  /****************************************** setValue *******************************************/
+  public String setValue( int field, Object newValue, Boolean commit )
   {
     // set/check field value and return null if successful/possible
     switch ( FIELD.values()[field] )
     {
       case Title:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_title = newValue == null ? null : Utils.clean( newValue.toString() );
         return null;
 
@@ -132,7 +132,7 @@ public class Task
         // check new value is date-time
         if ( newValue instanceof DateTime dt )
         {
-          if ( setValue )
+          if ( commit )
             m_start = dt;
           return null;
         }
@@ -142,7 +142,7 @@ public class Task
         // check new value is date-time
         if ( newValue instanceof DateTime dt )
         {
-          if ( setValue )
+          if ( commit )
             m_end = dt;
           return null;
         }
@@ -154,7 +154,7 @@ public class Task
         {
           if ( newInt < 0 || newInt > 999 )
             return "Value not between 0 and 999";
-          if ( setValue )
+          if ( commit )
             m_priority = newInt;
           return null;
         }
@@ -162,7 +162,7 @@ public class Task
 
       case Comment:
         // new value can be of any type
-        if ( setValue )
+        if ( commit )
           m_comment = newValue == null ? null : newValue.toString();
         return null;
 

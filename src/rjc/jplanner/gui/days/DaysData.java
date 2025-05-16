@@ -56,8 +56,8 @@ public class DaysData extends TableData
     // if max periods not yet determined, check each day-type to find most
     if ( m_maxPeriods < 0 )
       for ( Day day : m_days )
-        if ( day.getPeriods().size() > m_maxPeriods )
-          m_maxPeriods = day.getPeriods().size();
+        if ( day.getWorkPeriods().size() > m_maxPeriods )
+          m_maxPeriods = day.getWorkPeriods().size();
 
     // return calculated column count
     return Day.FIELD.Start.ordinal() + 2 * m_maxPeriods;
@@ -112,12 +112,12 @@ public class DaysData extends TableData
     return visual;
   }
 
-  /***************************************** processValue ****************************************/
+  /****************************************** setValue *******************************************/
   @Override
-  protected String processValue( int dataColumn, int dataRow, Object newValue, Boolean setValue )
+  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
   {
     // test if value can/could be set
-    return m_days.get( dataRow ).processValue( dataColumn, newValue, setValue );
+    return m_days.get( dataRow ).setValue( dataColumn, newValue, commit );
   }
 
 }

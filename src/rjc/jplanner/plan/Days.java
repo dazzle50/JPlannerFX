@@ -42,20 +42,4 @@ public class Days extends ArrayList<Day>
     add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
   }
 
-  /*************************************** nameValidity ******************************************/
-  public String nameValidity( String newName, Day day )
-  {
-    // check name is not too long
-    if ( newName.length() > 40 )
-      return "Name too long";
-
-    // check name is not a duplicate
-    for ( int index = 0; index < size(); index++ )
-      if ( get( index ) != day && get( index ).getName().equals( newName ) )
-        return "Name not unique";
-
-    // no problem so return null
-    return null;
-  }
-
 }

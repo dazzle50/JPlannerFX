@@ -72,21 +72,31 @@ public class DaysView extends TableView
       return null;
 
     // determine editor appropriate for cell
-    switch ( FIELD.values()[cell.dataColumn] )
+    int field = cell.dataColumn;
+    while ( field > FIELD.End.ordinal() )
+      field -= 2;
+
+    switch ( FIELD.values()[field] )
     {
       case Name:
         return new EditorText();
+
       case Work:
         var editorD = new EditorDouble();
         editorD.setRange( 0.0, 9.99 );
         editorD.setFormat( "0.00", 1, 2 );
         editorD.setStepPage( 0.1, 1.0 );
         return editorD;
+
       case Periods:
-        var editorI = new EditorInteger();
+        var editorI = new EditorInteger()
+        {
+          // TODO override commit() to use different undo command
+        };
         editorI.setRange( 0, 8 );
         editorI.setStepPage( 1, 1 );
         return editorI;
+
       default:
         return new EditorTime();
     }

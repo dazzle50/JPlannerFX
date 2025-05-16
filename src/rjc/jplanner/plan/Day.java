@@ -21,6 +21,7 @@ package rjc.jplanner.plan;
 import java.util.ArrayList;
 
 import rjc.table.Utils;
+import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
 /***************************** Single day type as used by calendars ******************************/
@@ -99,8 +100,8 @@ public class Day
     return m_work;
   }
 
-  /****************************************** getPeriods *****************************************/
-  public ArrayList<DayWorkPeriod> getPeriods()
+  /**************************************** getWorkPeriods ***************************************/
+  public ArrayList<DayWorkPeriod> getWorkPeriods()
   {
     return m_periods;
   }
@@ -110,7 +111,7 @@ public class Day
   {
     // adjust field for period start & end counter
     int period = ( field - FIELD.Start.ordinal() ) / 2;
-    if ( field >= FIELD.Start.ordinal() )
+    if ( period > 0 )
       field -= period * 2;
 
     // return value for the different fields
@@ -141,19 +142,23 @@ public class Day
     return field >= FIELD.Start.ordinal() + ( 2 * m_periods.size() );
   }
 
-  /***************************************** processValue ****************************************/
-  public String processValue( int field, Object newValue, Boolean setValue )
+  /****************************************** setValue *******************************************/
+  public String setValue( int field, Object newValue, Boolean commit )
   {
     // set/check field value and return null if successful/possible
+    int period = ( field - FIELD.Start.ordinal() ) / 2;
+    if ( period > 0 )
+      field -= period * 2;
+
     switch ( FIELD.values()[field] )
     {
       case Name:
         // new value can be of any type
         String newName = newValue == null ? null : Utils.clean( newValue.toString() );
-        String problem = Plan.getDays().nameValidity( newName, this );
+        String problem = nameValidity( newName );
         if ( problem != null )
           return problem;
-        if ( setValue )
+        if ( commit )
           m_name = newName;
         return null;
 
@@ -163,7 +168,7 @@ public class Day
         {
           if ( newWork < 0 || newWork > 9.99 )
             return "Value not between 0 and 9.99";
-          if ( setValue )
+          if ( commit )
             m_work = newWork;
           return null;
         }
@@ -175,16 +180,69 @@ public class Day
         {
           if ( newPeriods < 0 || newPeriods > 8 )
             return "Value not between 0 and 8";
-          if ( setValue )
+          if ( commit )
             Utils.trace( "SETTING PERIODS NOT IMPLEMENTED !!!" );
           return null;
         }
         return "Not integer: " + Utils.objectsString( newValue );
 
       default:
-        // either a period start or end
-        return "Not implemented";
+        // either a period start or end time
+        if ( newValue instanceof Time time )
+        {
+          boolean isStart = ( ( field - FIELD.Start.ordinal() ) & 1 ) == 0;
+          problem = timeValidity( period, field, time );
+          if ( problem != null )
+            return problem;
+          if ( commit )
+          {
+            // set period start or end time;
+            if ( isStart )
+              m_periods.get( period ).m_start = time;
+            else
+              m_periods.get( period ).m_end = time;
+          }
+          return null;
+        }
+        return "Not time: " + Utils.objectsString( newValue );
     }
+  }
+
+  /*************************************** nameValidity ******************************************/
+  public String nameValidity( String newName )
+  {
+    // check name is not too long
+    if ( newName.length() > 40 )
+      return "Name too long (max 40 characters)";
+
+    // check name is not a duplicate
+    for ( int index = 0; index < Plan.getDays().size(); index++ )
+      if ( Plan.getDay( index ) != this && Plan.getDay( index ).getName().equals( newName ) )
+        return "Name not unique (clash with day-type " + ( index + 1 ) + ")";
+
+    // no problem so return null
+    return null;
+  }
+
+  /*************************************** timeValidity  ******************************************/
+  private String timeValidity( int period, int field, Time time )
+  {
+    // check is valid period
+    if ( period < 0 || period >= m_periods.size() )
+      return "Invalid work period (" + period + ")";
+
+    // check time is between previous and next
+    Object previousTime = getValue( field + period * 2 - 1 );
+    int previousMS = ( previousTime instanceof Time t ) ? t.getDayMilliseconds() : Integer.MIN_VALUE;
+    Object nextTime = getValue( field + period * 2 + 1 );
+    int nextMS = ( nextTime instanceof Time t ) ? t.getDayMilliseconds() : Integer.MAX_VALUE;
+    int ms = time.getDayMilliseconds();
+
+    if ( previousMS >= ms || ms >= nextMS )
+      return "Start/End times not in ascending order";
+
+    // no problem found so return null
+    return null;
   }
 
 }
