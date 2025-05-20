@@ -42,4 +42,27 @@ public class Days extends ArrayList<Day>
     add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
   }
 
+  /**************************************** getNameArray *****************************************/
+  public Object[] getNameArray()
+  {
+    // return array of calendar names
+    var names = new String[size()];
+    for ( int index = 0; index < size(); index++ )
+      names[index] = get( index ).getName();
+
+    return names;
+  }
+
+  /***************************************** findByName ******************************************/
+  public Day findByName( Object name )
+  {
+    // return day-type with this name
+    for ( Day day : this )
+      if ( day.getName().equals( name ) )
+        return day;
+
+    // no day-type found, so return null
+    return null;
+  }
+
 }

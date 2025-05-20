@@ -20,68 +20,41 @@ package rjc.jplanner.commands;
 
 import java.util.ArrayList;
 
+import rjc.jplanner.plan.Calendar;
 import rjc.jplanner.plan.Day;
-import rjc.jplanner.plan.DayWorkPeriod;
 import rjc.jplanner.plan.Plan;
-import rjc.table.data.types.Time;
 import rjc.table.undo.IUndoCommand;
 
 /*************************************************************************************************/
-/****************** UndoCommand for updating day-types number of work periods ********************/
+/************************ UndoCommand for updating calendar cycle length *************************/
 /*************************************************************************************************/
 
-public class CommandDaySetNumPeriods implements IUndoCommand
+public class CommandCalendarSetCycleLength implements IUndoCommand
 {
-  private Day                      m_day;        // day in plan
-  private ArrayList<DayWorkPeriod> m_newPeriods; // new list of work-periods after command
-  private ArrayList<DayWorkPeriod> m_oldPeriods; // old list of work-periods before command
+  private Calendar       m_calendar;   // calendar being updated
+  private ArrayList<Day> m_newNormals; // new list of normal-cycle-days after command
+  private ArrayList<Day> m_oldNormals; // old list of normal-cycle-days before command
 
   /**************************************** constructor ******************************************/
-  public CommandDaySetNumPeriods( Day day, int newNum, int oldNum )
+  public CommandCalendarSetCycleLength( Calendar cal, int newLength, int oldLength )
   {
     // initialise private variables
-    m_day = day;
-    m_oldPeriods = new ArrayList<DayWorkPeriod>( day.getWorkPeriods() );
-    m_newPeriods = new ArrayList<DayWorkPeriod>( day.getWorkPeriods() );
+    m_calendar = cal;
+    m_oldNormals = new ArrayList<Day>( cal.getNormals() );
+    m_newNormals = new ArrayList<Day>( cal.getNormals() );
 
-    if ( newNum > oldNum )
+    if ( newLength > oldLength )
     {
-      // need to add new work-periods
-      double remainingHours = 24.0;
-      if ( !m_newPeriods.isEmpty() )
-        remainingHours -= 24.0 * m_newPeriods.get( oldNum - 1 ).m_end.getDayMilliseconds() / Time.MILLISECONDS_IN_DAY;
-
-      double increment = remainingHours / ( 1 + 2 * ( newNum - oldNum ) );
-      if ( increment >= 8.0 )
-        increment = 8.0;
-      else if ( increment >= 4.0 )
-        increment = 4.0;
-      else if ( increment >= 2.0 )
-        increment = 2.0;
-      else if ( increment >= 1.0 )
-        increment = 1.0;
-      else if ( increment >= 0.5 )
-        increment = 0.5;
-      else if ( increment >= 10.0 / 60.0 )
-        increment = 10.0 / 60.0;
-      else if ( increment >= 5.0 / 60.0 )
-        increment = 5.0 / 60.0;
-      else
-        increment = 1.0 / 60.0;
-
-      double start = 24.0 - remainingHours + increment;
-
-      for ( int count = oldNum; count < newNum; count++ )
-      {
-        m_newPeriods.add( new DayWorkPeriod( start, start + increment ) );
-        start += 2 * increment;
-      }
+      // need to add new normal-cycle-days
+      Day day = Plan.getDay( 0 );
+      for ( int count = oldLength; count < newLength; count++ )
+        m_newNormals.add( day );
     }
     else
     {
-      // need to reduce number of work-periods
-      for ( int count = oldNum - 1; count >= newNum; count-- )
-        m_newPeriods.remove( count );
+      // need to reduce number of normal-cycle-days
+      for ( int count = oldLength - 1; count >= newLength; count-- )
+        m_newNormals.remove( count );
     }
   }
 
@@ -90,7 +63,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public void redo()
   {
     // action command
-    m_day.setValue( Day.FIELD.Periods.ordinal(), m_newPeriods, true );
+    // m_calendar.setNormals( m_newNormals );
   }
 
   /******************************************* undo **********************************************/
@@ -98,7 +71,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public void undo()
   {
     // revert command
-    m_day.setValue( Day.FIELD.Periods.ordinal(), m_oldPeriods, true );
+    // m_calendar.setNormals( m_oldNormals );
   }
 
   /******************************************* text **********************************************/
@@ -106,6 +79,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public String text()
   {
     // text description of command
-    return "Day " + ( Plan.getIndex( m_day ) + 1 ) + " Periods = " + m_newPeriods.size();
+    return "Calendar " + ( Plan.getIndex( m_calendar ) + 1 ) + " Cycle = " + m_newNormals.size();
   }
+
 }

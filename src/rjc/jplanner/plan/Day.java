@@ -154,7 +154,7 @@ public class Day
     {
       case Name:
         // new value can be of any type
-        String newName = newValue == null ? null : Utils.clean( newValue.toString() );
+        String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
         String problem = nameValidity( newName );
         if ( problem != null )
           return problem;
@@ -211,9 +211,9 @@ public class Day
   /*************************************** nameValidity ******************************************/
   public String nameValidity( String newName )
   {
-    // check name is not too long
-    if ( newName.length() > 40 )
-      return "Name too long (max 40 characters)";
+    // check name is not too short or long
+    if ( newName.length() < 1 || newName.length() > 40 )
+      return "Name length not between 1 and 40 characters";
 
     // check name is not a duplicate
     for ( int index = 0; index < Plan.getDays().size(); index++ )

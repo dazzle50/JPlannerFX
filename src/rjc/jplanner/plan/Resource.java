@@ -68,6 +68,12 @@ public class Resource
         + m_alias + ", " + m_start + ", " + m_end + ", " + m_available + "]";
   }
 
+  /***************************************** getInitials *****************************************/
+  public String getInitials()
+  {
+    return m_initials;
+  }
+
   /******************************************* getValue ******************************************/
   public Object getValue( int field )
   {
@@ -118,38 +124,57 @@ public class Resource
     {
       case Initials:
         // new value can be of any type
+        String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
+        String problem = initialsValidity( newInitials );
+        if ( problem != null )
+          return problem;
         if ( commit )
-          m_initials = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_initials = newInitials;
         return null;
 
       case Alias:
         // new value can be of any type
+        String newAlias = newValue == null ? "" : Utils.clean( newValue.toString() );
+        if ( newAlias.length() > 50 )
+          return "Alias too long (max 50 characters)";
         if ( commit )
-          m_alias = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_alias = newAlias;
         return null;
 
       case Group:
         // new value can be of any type
+        String newGroup = newValue == null ? "" : Utils.clean( newValue.toString() );
+        if ( newGroup.length() > 50 )
+          return "Group too long (max 50 characters)";
         if ( commit )
-          m_group = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_group = newGroup;
         return null;
 
       case Name:
         // new value can be of any type
+        String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
+        if ( newName.length() > 50 )
+          return "Name too long (max 50 characters)";
         if ( commit )
-          m_name = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_name = newName;
         return null;
 
       case Organisation:
         // new value can be of any type
+        String newOrg = newValue == null ? "" : Utils.clean( newValue.toString() );
+        if ( newOrg.length() > 50 )
+          return "Organisation too long (max 50 characters)";
         if ( commit )
-          m_org = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_org = newOrg;
         return null;
 
       case Role:
         // new value can be of any type
+        String newRole = newValue == null ? "" : Utils.clean( newValue.toString() );
+        if ( newRole.length() > 50 )
+          return "Role too long (max 50 characters)";
         if ( commit )
-          m_role = newValue == null ? null : Utils.clean( newValue.toString() );
+          m_role = newRole;
         return null;
 
       case Start:
@@ -196,6 +221,22 @@ public class Resource
       default:
         return "Not implemented";
     }
+  }
+
+  /************************************* initialsValidity ****************************************/
+  private String initialsValidity( String newInitials )
+  {
+    // check initials are not too short or long
+    if ( newInitials.length() < 1 || newInitials.length() > 20 )
+      return "Initials length not between 1 and 20 characters";
+
+    // check name is not a duplicate
+    for ( int index = 0; index < Plan.getResources().size(); index++ )
+      if ( Plan.getResource( index ) != this && newInitials.equals( Plan.getResource( index ).getInitials() ) )
+        return "Initials not unique (clash with resource " + index + ")";
+
+    // no problem so return null
+    return null;
   }
 
 }

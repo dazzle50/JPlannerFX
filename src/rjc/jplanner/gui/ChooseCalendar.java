@@ -26,11 +26,11 @@ import rjc.table.control.ChooseField;
 /****************** Control for choosing a plan calendar from a drop-down list *******************/
 /*************************************************************************************************/
 
-public class CalendarChoose extends ChooseField
+public class ChooseCalendar extends ChooseField
 {
 
   /**************************************** constructor ******************************************/
-  public CalendarChoose()
+  public ChooseCalendar()
   {
     // create a choose-field populated with the plan calendar names
     super( Plan.getCalendars().getNameArray() );

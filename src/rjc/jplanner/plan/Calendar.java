@@ -130,4 +130,78 @@ public class Calendar
     return field >= FIELD.Normal.ordinal() + m_normal.size();
   }
 
+  /****************************************** setValue *******************************************/
+  public String setValue( int field, Object newValue, Boolean commit )
+  {
+    // set/check field value and return null if successful/possible
+    int normal = field >= FIELD.Normal.ordinal() ? field - FIELD.Normal.ordinal() : 0;
+
+    switch ( FIELD.values()[field - normal] )
+    {
+      case Name:
+        // new value can be of any type
+        String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
+        String problem = nameValidity( newName );
+        if ( problem != null )
+          return problem;
+        if ( commit )
+          m_name = newName;
+        return null;
+
+      case Anchor:
+        // any valid date can be used as cycle anchor
+        if ( newValue instanceof Date date )
+        {
+          if ( commit )
+            m_cycleAnchor = date;
+          return null;
+        }
+        return "Not date: " + Utils.objectsString( newValue );
+
+      case Exceptions:
+        // TODO setting calendar exceptions
+        return "Not implemented: " + Utils.objectsString( newValue );
+
+      case Cycle:
+        // check new value is integer and in range
+        if ( newValue instanceof Integer length )
+        {
+          if ( length < 1 || length > 99 )
+            return "Value not between 1 and 99";
+          if ( commit )
+            Utils.trace( "SETTING CYCLE LENGTH NOT IMPLEMENTED !!!" );
+          return null;
+        }
+        return "Not integer: " + Utils.objectsString( newValue );
+
+      default:
+        // setting normal day-types
+        if ( normal >= m_normal.size() )
+          return "Normal beyond cycle length";
+        Day day = Plan.getDays().findByName( newValue );
+        if ( day == null )
+          return "Not day-type: " + Utils.objectsString( newValue );
+        if ( commit )
+          m_normal.set( normal, day );
+        return null;
+
+    }
+  }
+
+  /*************************************** nameValidity ******************************************/
+  public String nameValidity( String newName )
+  {
+    // check name is not too short or long
+    if ( newName.length() < 1 || newName.length() > 40 )
+      return "Name length not between 1 and 40 characters";
+
+    // check name is not a duplicate
+    for ( int index = 0; index < Plan.getCalendars().size(); index++ )
+      if ( Plan.getCalendar( index ) != this && newName.equals( Plan.getCalendar( index ).getName() ) )
+        return "Name not unique (clash with calendar " + ( index + 1 ) + ")";
+
+    // no problem so return null
+    return null;
+  }
+
 }

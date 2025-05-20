@@ -103,4 +103,12 @@ public class CalendarsData extends TableData
     return super.getVisual( dataColumn, dataRow );
   }
 
+  /****************************************** setValue *******************************************/
+  @Override
+  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
+  {
+    // test if value can/could be set
+    return m_calendars.get( dataColumn ).setValue( dataRow, newValue, commit );
+  }
+
 }

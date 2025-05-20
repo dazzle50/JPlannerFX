@@ -35,7 +35,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.Duration;
 import rjc.jplanner.Main;
-import rjc.jplanner.gui.CalendarChoose;
+import rjc.jplanner.gui.ChooseCalendar;
 import rjc.jplanner.gui.MainWindow;
 import rjc.table.control.DateTimeField;
 import rjc.table.control.ExpandingField;
@@ -57,7 +57,7 @@ public class PlanProperties extends ScrollPane
   private DateTimeField     m_defaultStart    = new DateTimeField();
   private ExpandingField    m_actualStart     = new ExpandingField();
   private ExpandingField    m_end             = new ExpandingField();
-  private CalendarChoose    m_defaultCalendar = new CalendarChoose();
+  private ChooseCalendar    m_defaultCalendar = new ChooseCalendar();
   private ExpandingField    m_DTformat        = new ExpandingField();
   private ExpandingField    m_Dformat         = new ExpandingField();
   private ExpandingField    m_fileName        = new ExpandingField();

@@ -18,9 +18,17 @@
 
 package rjc.jplanner.gui.calendars;
 
+import rjc.jplanner.plan.Calendar.FIELD;
+import rjc.jplanner.plan.Plan;
+import rjc.table.Utils;
 import rjc.table.data.TableData;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
+import rjc.table.view.editor.AbstractCellEditor;
+import rjc.table.view.editor.EditorChoose;
+import rjc.table.view.editor.EditorDate;
+import rjc.table.view.editor.EditorInteger;
+import rjc.table.view.editor.EditorText;
 
 /*************************************************************************************************/
 /******************* Customised table-view for interacting with plan calendars *******************/
@@ -52,6 +60,45 @@ public class CalendarsView extends TableView
   {
     // return new instance of class responsible for drawing the cells on canvas
     return new CalendarsCellDrawer();
+  }
+
+  /**************************************** getCellEditor ****************************************/
+  @Override
+  public AbstractCellEditor getCellEditor( CellDrawer cell )
+  {
+    // if cell is disabled (e.g. textPaint is null) then can't edit
+    cell.getValueVisual();
+    if ( cell.visual.textPaint == null )
+      return null;
+
+    // determine editor appropriate for cell
+    int field = cell.dataRow > FIELD.Normal.ordinal() ? FIELD.Normal.ordinal() : cell.dataRow;
+
+    switch ( FIELD.values()[field] )
+    {
+      case Name:
+        return new EditorText();
+
+      case Anchor:
+        return new EditorDate();
+
+      case Exceptions:
+        Utils.trace( "EDIT EXCEPTIONS - NOT YET IMPLEMENTED" );
+        return null;
+
+      case Cycle:
+        var editorInteger = new EditorInteger()
+        {
+          // TODO override commit() to use different undo command
+        };
+        editorInteger.setRange( 1, 99 );
+        editorInteger.setStepPage( 1, 1 );
+        return editorInteger;
+
+      default:
+        // normals - select day-types
+        return new EditorChoose( Plan.getDays().getNameArray() );
+    }
   }
 
 }
