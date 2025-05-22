@@ -77,17 +77,30 @@ public class TasksData extends TableData
       if ( m_tasks.get( dataRow ).isBlank() )
         return m_disabledVisual;
 
-    // different fields have different text alignments
     var visual = super.getVisual( dataColumn, dataRow );
+    visual.textAlignment = Pos.CENTER;
+
     if ( dataRow > HEADER && dataColumn > HEADER )
+    {
+      // different fields have different text alignments
       visual.textAlignment = switch ( FIELD.values()[dataColumn] )
       {
         case Title, Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
         case Work -> Pos.CENTER_RIGHT;
         default -> Pos.CENTER;
       };
-    else
-      visual.textAlignment = Pos.CENTER;
+
+      // different task types have different fields read-only (shown by cell background colour)
+      var type = m_tasks.get( dataRow ).getTaskType();
+      visual.cellBackground = switch ( FIELD.values()[dataColumn] )
+      {
+        case Duration -> type.durationBackground();
+        case Start -> type.startBackground();
+        case End -> type.endBackground();
+        case Work -> type.workBackground();
+        default -> Colours.CELL_DEFAULT_BACKGROUND;
+      };
+    }
 
     return visual;
   }

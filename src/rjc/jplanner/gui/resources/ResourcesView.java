@@ -66,14 +66,24 @@ public class ResourcesView extends TableView
     // determine editor appropriate for cell
     switch ( FIELD.values()[cell.dataColumn] )
     {
-      case Initials, Name, Organisation, Group, Role, Alias, Comment:
+      case Initials:
+        // allow any non-whitespace characters except square brackets and comma
+        var editor = new EditorText();
+        editor.setAllowed( "^[^\\s\\[\\],]*$" );
+        return editor;
+
+      case Name, Organisation, Group, Role, Alias, Comment:
         return new EditorText();
+
       case Start, End:
         return new EditorDate();
+
       case Available:
         return new EditorDouble();
+
       case Calendar:
         return new EditorChoose( Plan.getCalendars().getNameArray() );
+
       default:
         return null;
     }

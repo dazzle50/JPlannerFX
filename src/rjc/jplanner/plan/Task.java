@@ -44,11 +44,6 @@ public class Task
   private int           m_summaryStart; // index of this task's summary, ultimately task 0
   private int           m_summaryEnd;   // if summary, index of summary end, otherwise -1
 
-  public enum TaskType
-  {
-    ASAP_FIXED_DURATION, ASAP_FIXED_WORK, START_ON_DURATION, START_ON_WORK, FIXED_PERIOD
-  }
-
   public enum FIELD
   {
     Title, Duration, Start, End, Work, Predecessors, Resources, Type, Priority, Deadline, Cost, Comment, MAX
@@ -74,7 +69,14 @@ public class Task
     return Utils.name( this ) + "['" + m_title + "' " + m_type + " " + m_priority + "]";
   }
 
-  /******************************************* getValue ******************************************/
+  /**************************************** getTaskType ******************************************/
+  public TaskType getTaskType()
+  {
+    // return task-type
+    return m_type;
+  }
+
+  /****************************************** getValue *******************************************/
   public Object getValue( int field )
   {
     // return value for the different fields
@@ -166,12 +168,21 @@ public class Task
           m_comment = newValue == null ? null : newValue.toString();
         return null;
 
+      case Type:
+        // check new value is a task-type
+        if ( newValue instanceof TaskType type )
+        {
+          if ( commit )
+            m_type = type;
+          return null;
+        }
+        return "Not task-type: " + Utils.objectsString( newValue );
+
       case Cost:
       case Deadline:
       case Duration:
       case Predecessors:
       case Resources:
-      case Type:
       case Work:
       default:
         return "Not implemented";

@@ -19,10 +19,13 @@
 package rjc.jplanner.gui.tasks;
 
 import rjc.jplanner.plan.Task.FIELD;
+import rjc.jplanner.plan.TaskType;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
+import rjc.table.view.editor.EditorChoose;
 import rjc.table.view.editor.EditorDateTime;
 import rjc.table.view.editor.EditorInteger;
 import rjc.table.view.editor.EditorText;
@@ -67,7 +70,7 @@ public class TasksView extends TableView
   {
     // if cell is disabled (e.g. textPaint is null) then can't edit
     cell.getValueVisual();
-    if ( cell.visual.textPaint == null )
+    if ( cell.visual.cellBackground == Colours.CELL_DISABLED_BACKGROUND )
       return null;
 
     // determine editor appropriate for cell
@@ -79,6 +82,8 @@ public class TasksView extends TableView
         return new EditorDateTime();
       case Priority:
         return new EditorInteger();
+      case Type:
+        return new EditorChoose( TaskType.values() );
       default:
         return null;
     }

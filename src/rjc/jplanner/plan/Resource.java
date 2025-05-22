@@ -20,6 +20,8 @@ package rjc.jplanner.plan;
 
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
+import rjc.table.data.types.DateTime;
+import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
 /************************************* Single plan resource **************************************/
@@ -48,8 +50,7 @@ public class Resource
   /**************************************** constructor ******************************************/
   public Resource()
   {
-    // initialise private variables
-    m_available = 1.0;
+    // nothing needs doing
   }
 
   /**************************************** toStringShort ****************************************/
@@ -74,6 +75,38 @@ public class Resource
     return m_initials;
   }
 
+  /****************************************** getStart *******************************************/
+  public DateTime getStart()
+  {
+    // return date-time when this resource starts being available
+    if ( m_start == null )
+      return DateTime.MIN_VALUE;
+    return new DateTime( m_start, Time.MIN_VALUE );
+  }
+
+  /******************************************* getEnd ********************************************/
+  public DateTime getEnd()
+  {
+    // return date-time when this resource stops being available
+    if ( m_end == null )
+      return DateTime.MAX_VALUE;
+    return new DateTime( m_end, Time.MAX_VALUE );
+  }
+
+  /***************************************** getCalendar *****************************************/
+  public Calendar getCalendar()
+  {
+    // return resource calendar
+    return m_calendar;
+  }
+
+  /**************************************** getAvailable *****************************************/
+  public double getAvailable()
+  {
+    // return the number of these resource's available
+    return m_available;
+  }
+
   /******************************************* getValue ******************************************/
   public Object getValue( int field )
   {
@@ -82,38 +115,46 @@ public class Resource
     {
       case Initials:
         return m_initials;
-      case Alias:
-        return m_alias;
-      case Available:
-        return m_available;
-      case Calendar:
-        return m_calendar;
-      case Comment:
-        return m_comment;
-      case Cost:
-        return m_cost;
-      case Group:
-        return m_group;
       case Name:
         return m_name;
       case Organisation:
         return m_org;
+      case Group:
+        return m_group;
       case Role:
         return m_role;
+      case Alias:
+        return m_alias;
       case Start:
         return m_start;
       case End:
         return m_end;
+      case Available:
+        return m_available;
+      case Calendar:
+        return m_calendar == null ? null : m_calendar.getName();
+      case Comment:
+        return m_comment;
+      case Cost:
+        return m_cost;
       default:
         throw new IllegalArgumentException( "Unrecognised field " + field );
     }
   }
 
-  /******************************************** isBlank ******************************************/
+  /******************************************* isBlank *******************************************/
   public boolean isBlank()
   {
     // resource record is blank if initials are null
     return m_initials == null;
+  }
+
+  /******************************************** reset ********************************************/
+  private void reset()
+  {
+    // prepare blank resource when initials are first set
+    m_available = 1.0;
+    m_calendar = Plan.getCalendar( 0 );
   }
 
   /****************************************** setValue *******************************************/
@@ -129,7 +170,11 @@ public class Resource
         if ( problem != null )
           return problem;
         if ( commit )
+        {
+          if ( m_initials == null )
+            reset();
           m_initials = newInitials;
+        }
         return null;
 
       case Alias:
@@ -181,6 +226,8 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
+          if ( m_end != null && m_end.getEpochday() < date.getEpochday() )
+            return "Start must be before or equal to end date";
           if ( commit )
             m_start = date;
           return null;
@@ -191,6 +238,8 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
+          if ( m_start != null && m_start.getEpochday() > date.getEpochday() )
+            return "End must be after or equal to start date";
           if ( commit )
             m_end = date;
           return null;
@@ -215,9 +264,15 @@ public class Resource
           m_comment = newValue == null ? null : newValue.toString();
         return null;
 
-      case Cost:
       case Calendar:
+        Calendar calendar = Plan.getCalendars().findByName( newValue );
+        if ( calendar == null )
+          return "Not calendar: " + Utils.objectsString( newValue );
+        if ( commit )
+          m_calendar = calendar;
+        return null;
 
+      case Cost:
       default:
         return "Not implemented";
     }

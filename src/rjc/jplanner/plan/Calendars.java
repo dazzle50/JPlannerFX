@@ -74,4 +74,16 @@ public class Calendars extends ArrayList<Calendar>
     return names;
   }
 
+  /***************************************** findByName ******************************************/
+  public Calendar findByName( Object name )
+  {
+    // return calendar with this name
+    for ( Calendar cal : this )
+      if ( cal.getName().equals( name ) )
+        return cal;
+
+    // no calendar found, so return null
+    return null;
+  }
+
 }

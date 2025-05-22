@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.resources;
 
+import javafx.geometry.Pos;
 import rjc.jplanner.plan.Resource.FIELD;
 import rjc.jplanner.plan.Resources;
 import rjc.table.data.TableData;
@@ -77,7 +78,13 @@ public class ResourcesData extends TableData
         return m_disabledVisual;
 
     // otherwise return default cell visuals
-    return super.getVisual( dataColumn, dataRow );
+    CellVisual visual = super.getVisual( dataColumn, dataRow );
+    if ( dataRow > HEADER && dataColumn == FIELD.Comment.ordinal() )
+      visual.textAlignment = Pos.CENTER_LEFT;
+    else
+      visual.textAlignment = Pos.CENTER;
+
+    return visual;
   }
 
   /****************************************** setValue *******************************************/
