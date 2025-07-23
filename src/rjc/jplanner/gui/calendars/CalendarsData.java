@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.calendars;
 
+import javafx.application.Platform;
 import rjc.jplanner.plan.Calendar;
 import rjc.jplanner.plan.Calendar.FIELD;
 import rjc.jplanner.plan.Calendars;
@@ -32,7 +33,6 @@ import rjc.table.view.cell.CellVisual;
 public class CalendarsData extends TableData
 {
   private Calendars  m_calendars;      // array of calendars to be shown on table
-  private int        m_maxCycles = -1; // highest number of cycles that calendars have (or -1 if TBD)
   private CellVisual m_disabledVisual; // cell visuals for disabled cells
 
   /**************************************** constructor ******************************************/
@@ -53,13 +53,13 @@ public class CalendarsData extends TableData
   private int calculateRowCount()
   {
     // if max cycles not yet determined, check each calendar to find most
-    if ( m_maxCycles < 0 )
-      for ( Calendar cal : m_calendars )
-        if ( cal.getNormals().size() > m_maxCycles )
-          m_maxCycles = cal.getNormals().size();
+    int maxCycles = -1;
+    for ( Calendar cal : m_calendars )
+      if ( cal.getNormals().size() > maxCycles )
+        maxCycles = cal.getNormals().size();
 
     // return calculated column count
-    return FIELD.Normal.ordinal() + m_maxCycles;
+    return FIELD.Normal.ordinal() + maxCycles;
   }
 
   /****************************************** getValue *******************************************/
@@ -107,6 +107,10 @@ public class CalendarsData extends TableData
   @Override
   protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
   {
+    // after committing new cycle-length recalculate table row count
+    if ( commit && dataRow == Calendar.FIELD.Cycle.ordinal() )
+      Platform.runLater( () -> setRowCount( calculateRowCount() ) );
+
     // test if value can/could be set
     return m_calendars.get( dataColumn ).setValue( dataRow, newValue, commit );
   }

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import rjc.jplanner.plan.Day;
 import rjc.jplanner.plan.DayWorkPeriod;
 import rjc.jplanner.plan.Plan;
+import rjc.table.data.TableData;
 import rjc.table.data.types.Time;
 import rjc.table.undo.IUndoCommand;
 
@@ -32,18 +33,23 @@ import rjc.table.undo.IUndoCommand;
 
 public class CommandDaySetNumPeriods implements IUndoCommand
 {
-  private Day                      m_day;        // day in plan
+  private TableData                m_data;       // table data
+  private int                      m_dataRow;    // row in table data (Day)
   private ArrayList<DayWorkPeriod> m_newPeriods; // new list of work-periods after command
   private ArrayList<DayWorkPeriod> m_oldPeriods; // old list of work-periods before command
+  private String                   m_text;       // text describing command
 
   /**************************************** constructor ******************************************/
-  public CommandDaySetNumPeriods( Day day, int newNum, int oldNum )
+  public CommandDaySetNumPeriods( TableData tableData, int dataRow, int newNum )
   {
     // initialise private variables
-    m_day = day;
-    m_oldPeriods = new ArrayList<DayWorkPeriod>( day.getWorkPeriods() );
-    m_newPeriods = new ArrayList<DayWorkPeriod>( day.getWorkPeriods() );
+    Day day = Plan.getDay( dataRow ); // TODO IN FUTURE Day day = tableData.getDataSource() ....
+    m_oldPeriods = day.getWorkPeriods();
+    m_newPeriods = new ArrayList<DayWorkPeriod>( m_oldPeriods );
+    int oldNum = m_oldPeriods.size();
 
+    if ( newNum == oldNum )
+      return;
     if ( newNum > oldNum )
     {
       // need to add new work-periods
@@ -83,6 +89,11 @@ public class CommandDaySetNumPeriods implements IUndoCommand
       for ( int count = oldNum - 1; count >= newNum; count-- )
         m_newPeriods.remove( count );
     }
+
+    // initialise private variables and action the command
+    m_data = tableData;
+    m_dataRow = dataRow;
+    redo();
   }
 
   /******************************************* redo **********************************************/
@@ -90,7 +101,8 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public void redo()
   {
     // action command
-    m_day.setValue( Day.FIELD.Periods.ordinal(), m_newPeriods, true );
+    m_data.setValue( Day.FIELD.Periods.ordinal(), m_dataRow, m_newPeriods );
+
   }
 
   /******************************************* undo **********************************************/
@@ -98,7 +110,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public void undo()
   {
     // revert command
-    m_day.setValue( Day.FIELD.Periods.ordinal(), m_oldPeriods, true );
+    m_data.setValue( Day.FIELD.Periods.ordinal(), m_dataRow, m_oldPeriods );
   }
 
   /******************************************* text **********************************************/
@@ -106,6 +118,18 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public String text()
   {
     // text description of command
-    return "Day " + ( Plan.getIndex( m_day ) + 1 ) + " Periods = " + m_newPeriods.size();
+    if ( m_text == null )
+      m_text = "Day " + ( m_dataRow + 1 ) + " periods = " + m_newPeriods.size();
+
+    return m_text;
   }
+
+  /******************************************* isValid *******************************************/
+  @Override
+  public boolean isValid()
+  {
+    // command is only ready and valid when pointer to data is set
+    return m_data != null;
+  }
+
 }

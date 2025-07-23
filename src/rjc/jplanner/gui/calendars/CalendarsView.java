@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.calendars;
 
+import rjc.jplanner.commands.CommandCalendarSetCycleLength;
 import rjc.jplanner.plan.Calendar.FIELD;
 import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
@@ -89,7 +90,15 @@ public class CalendarsView extends TableView
       case Cycle:
         var editorInteger = new EditorInteger()
         {
-          // TODO override commit() to use different undo command
+          @Override
+          protected boolean commit()
+          {
+            // push new command on undo-stack to update cycle-length
+            TableData data = cell.view.getData();
+            int dataColumn = cell.dataColumn;
+            var command = new CommandCalendarSetCycleLength( data, dataColumn, (int) getValue() );
+            return cell.view.getUndoStack().push( command );
+          }
         };
         editorInteger.setRange( 1, 99 );
         editorInteger.setStepPage( 1, 1 );

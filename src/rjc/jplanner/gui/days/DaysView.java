@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.days;
 
+import rjc.jplanner.commands.CommandDaySetNumPeriods;
 import rjc.jplanner.plan.Day;
 import rjc.jplanner.plan.Day.FIELD;
 import rjc.table.data.TableData;
@@ -91,7 +92,15 @@ public class DaysView extends TableView
       case Periods:
         var editorI = new EditorInteger()
         {
-          // TODO override commit() to use different undo command
+          @Override
+          protected boolean commit()
+          {
+            // push new command on undo-stack to update work-periods count
+            TableData data = cell.view.getData();
+            int dataRow = cell.dataRow;
+            var command = new CommandDaySetNumPeriods( data, dataRow, (int) getValue() );
+            return cell.view.getUndoStack().push( command );
+          }
         };
         editorI.setRange( 0, 8 );
         editorI.setStepPage( 1, 1 );

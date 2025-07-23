@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import rjc.jplanner.plan.Calendar;
 import rjc.jplanner.plan.Day;
 import rjc.jplanner.plan.Plan;
+import rjc.table.data.TableData;
 import rjc.table.undo.IUndoCommand;
 
 /*************************************************************************************************/
@@ -31,22 +32,27 @@ import rjc.table.undo.IUndoCommand;
 
 public class CommandCalendarSetCycleLength implements IUndoCommand
 {
-  private Calendar       m_calendar;   // calendar being updated
+  private TableData      m_data;       // table data
+  private int            m_dataColumn; // column in table data (Calendar)
   private ArrayList<Day> m_newNormals; // new list of normal-cycle-days after command
   private ArrayList<Day> m_oldNormals; // old list of normal-cycle-days before command
+  private String         m_text;       // text describing command
 
   /**************************************** constructor ******************************************/
-  public CommandCalendarSetCycleLength( Calendar cal, int newLength, int oldLength )
+  public CommandCalendarSetCycleLength( TableData tableData, int dataColumn, int newLength )
   {
     // initialise private variables
-    m_calendar = cal;
-    m_oldNormals = new ArrayList<Day>( cal.getNormals() );
-    m_newNormals = new ArrayList<Day>( cal.getNormals() );
+    Calendar calendar = Plan.getCalendar( dataColumn ); // TODO IN FUTURE Day day = tableData.getDataSource() ....
+    m_oldNormals = calendar.getNormals();
+    m_newNormals = new ArrayList<Day>( m_oldNormals );
+    int oldLength = m_oldNormals.size();
 
+    if ( newLength == oldLength )
+      return;
     if ( newLength > oldLength )
     {
       // need to add new normal-cycle-days
-      Day day = Plan.getDay( 0 );
+      Day day = m_oldNormals.getLast();
       for ( int count = oldLength; count < newLength; count++ )
         m_newNormals.add( day );
     }
@@ -56,6 +62,11 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
       for ( int count = oldLength - 1; count >= newLength; count-- )
         m_newNormals.remove( count );
     }
+
+    // initialise private variables and action the command
+    m_data = tableData;
+    m_dataColumn = dataColumn;
+    redo();
   }
 
   /******************************************* redo **********************************************/
@@ -63,7 +74,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   public void redo()
   {
     // action command
-    // m_calendar.setNormals( m_newNormals );
+    m_data.setValue( m_dataColumn, Calendar.FIELD.Cycle.ordinal(), m_newNormals );
   }
 
   /******************************************* undo **********************************************/
@@ -72,6 +83,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   {
     // revert command
     // m_calendar.setNormals( m_oldNormals );
+    m_data.setValue( m_dataColumn, Calendar.FIELD.Cycle.ordinal(), m_oldNormals );
   }
 
   /******************************************* text **********************************************/
@@ -79,7 +91,18 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   public String text()
   {
     // text description of command
-    return "Calendar " + ( Plan.getIndex( m_calendar ) + 1 ) + " Cycle = " + m_newNormals.size();
+    if ( m_text == null )
+      m_text = "Calendar " + ( m_dataColumn + 1 ) + " Cycle = " + m_newNormals.size();
+
+    return m_text;
+  }
+
+  /******************************************* isValid *******************************************/
+  @Override
+  public boolean isValid()
+  {
+    // command is only ready and valid when pointer to data is set
+    return m_data != null;
   }
 
 }

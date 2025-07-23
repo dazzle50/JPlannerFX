@@ -181,10 +181,25 @@ public class Day
           if ( newPeriods < 0 || newPeriods > 8 )
             return "Value not between 0 and 8";
           if ( commit )
-            Utils.trace( "SETTING PERIODS NOT IMPLEMENTED !!!" );
+            return "Cannot commit integer";
           return null;
         }
-        return "Not integer: " + Utils.objectsString( newValue );
+
+        // check new value is ArrayList<DayWorkPeriod> and reasonable size
+        try
+        {
+          @SuppressWarnings( "unchecked" )
+          var newPeriods = (ArrayList<DayWorkPeriod>) newValue;
+          if ( newPeriods.size() > 8 )
+            return "Array size not between 0 and 8";
+          if ( commit )
+            m_periods = newPeriods;
+          return null;
+        }
+        catch ( Exception exception )
+        {
+          return "Invalid: " + Utils.objectsString( newValue ) + " [" + exception + "]";
+        }
 
       default:
         // either a period start or end time

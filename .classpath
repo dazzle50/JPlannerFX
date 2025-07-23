@@ -6,6 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/rjcro/eclipseWS/JPlannerFX/lib/JTableFX v0.1.0.jar" sourcepath="/JTableFX/src"/>
+	<classpathentry kind="lib" path="C:/Users/rjcro/eclipseWS/JPlannerFX/lib/JTableFX v0.1.1.jar" sourcepath="/JTableFX/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

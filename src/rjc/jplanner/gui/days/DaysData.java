@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.days;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import rjc.jplanner.plan.Day;
 import rjc.jplanner.plan.Day.FIELD;
@@ -32,9 +33,8 @@ import rjc.table.view.cell.CellVisual;
 
 public class DaysData extends TableData
 {
-  private Days       m_days;            // array of day-types to be shown on table
-  private int        m_maxPeriods = -1; // highest number of periods that day-types have (or -1 if TBD)
-  private CellVisual m_disabledVisual;  // cell visuals for disabled cells
+  private Days       m_days;           // array of day-types to be shown on table
+  private CellVisual m_disabledVisual; // cell visuals for disabled cells
 
   /**************************************** constructor ******************************************/
   public DaysData( Days days )
@@ -54,13 +54,13 @@ public class DaysData extends TableData
   private int calculateColumnCount()
   {
     // if max periods not yet determined, check each day-type to find most
-    if ( m_maxPeriods < 0 )
-      for ( Day day : m_days )
-        if ( day.getWorkPeriods().size() > m_maxPeriods )
-          m_maxPeriods = day.getWorkPeriods().size();
+    int maxPeriods = -1;
+    for ( Day day : m_days )
+      if ( day.getWorkPeriods().size() > maxPeriods )
+        maxPeriods = day.getWorkPeriods().size();
 
     // return calculated column count
-    return Day.FIELD.Start.ordinal() + 2 * m_maxPeriods;
+    return Day.FIELD.Start.ordinal() + 2 * maxPeriods;
   }
 
   /****************************************** getValue *******************************************/
@@ -116,6 +116,10 @@ public class DaysData extends TableData
   @Override
   protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
   {
+    // after committing new work-periods recalculate table column count
+    if ( commit && dataColumn == Day.FIELD.Periods.ordinal() )
+      Platform.runLater( () -> setColumnCount( calculateColumnCount() ) );
+
     // test if value can/could be set
     return m_days.get( dataRow ).setValue( dataColumn, newValue, commit );
   }

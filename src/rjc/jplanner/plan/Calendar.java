@@ -169,10 +169,25 @@ public class Calendar
           if ( length < 1 || length > 99 )
             return "Value not between 1 and 99";
           if ( commit )
-            Utils.trace( "SETTING CYCLE LENGTH NOT IMPLEMENTED !!!" );
+            return "Cannot commit integer";
           return null;
         }
-        return "Not integer: " + Utils.objectsString( newValue );
+
+        // check new value is ArrayList<Day> and reasonable size
+        try
+        {
+          @SuppressWarnings( "unchecked" )
+          var newNormal = (ArrayList<Day>) newValue;
+          if ( newNormal.isEmpty() || newNormal.size() > 99 )
+            return "Array size not between 1 and 99";
+          if ( commit )
+            m_normal = newNormal;
+          return null;
+        }
+        catch ( Exception exception )
+        {
+          return "Invalid: " + Utils.objectsString( newValue ) + " [" + exception + "]";
+        }
 
       default:
         // setting normal day-types
