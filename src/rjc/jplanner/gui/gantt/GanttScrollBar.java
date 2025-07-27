@@ -16,21 +16,15 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui.gantt;
 
-import javafx.scene.layout.Region;
+import javafx.scene.control.ScrollBar;
 
 /*************************************************************************************************/
-/********************** Gantt shows tasks in a gantt plot with gantt scales **********************/
+/*************** Extended version of ScrollBar with special increment & decrement ****************/
 /*************************************************************************************************/
 
-public class Gantt extends Region
+class GanttScrollBar extends ScrollBar
 {
-
-  /**************************************** constructor ******************************************/
-  public Gantt( TasksView view )
-  {
-    // TODO Auto-generated constructor stub
-  }
 
 }

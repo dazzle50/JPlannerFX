@@ -16,52 +16,39 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui.gantt;
 
-import javafx.scene.control.Tab;
+import java.util.ArrayList;
+
+import javafx.scene.layout.VBox;
 import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
-import rjc.jplanner.gui.gantt.Gantt;
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.tasks.TasksView;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/********************** Gantt shows tasks in a gantt plot with gantt scales **********************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+public class Gantt extends VBox
 {
-  private TasksView        m_view;
-  private Gantt            m_gantt;
-  private XSplitPane       m_split;
+  private ArrayList<GanttAxis> m_axes;                // list of gantt-axes showing timeline
+  private GanttScale           m_scale;               // scale defines starts and scaling size
+  private GanttPlot            m_plot;                // gantt plot chart showing the tasks
+  private GanttScrollBar       m_scrollBar;           // horizontal scroll bar
 
-  private static TasksData m_data;
+  final public static int      SCROLLBAR_SIZE    = 18;
+  final public static int      GANTTSCALE_HEIGHT = 15;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public Gantt( TasksView view )
   {
-    // construct tab
-    super( "Tasks & Gantt" );
-    setClosable( false );
+    // construct the gantt
+    m_scrollBar = new GanttScrollBar();
+    m_scale = new GanttScale( Main.getPlan().getDefaultStart(), m_scrollBar.valueProperty() );
+    m_axes = new ArrayList<>( 2 );
+    m_axes.add( new GanttAxis( m_scale ) );
+    m_axes.add( new GanttAxis( m_scale ) );
+    m_plot = new GanttPlot( view, m_scale );
 
-    // showing table of available plan tasks
-    m_data = m_data == null ? new TasksData( Plan.getTasks() ) : m_data;
-    m_view = new TasksView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-    m_view.setFocusTraversable( true );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
-    } );
-
+    getChildren().addAll( m_axes.get( 0 ), m_axes.get( 1 ), m_plot, m_scrollBar );
   }
 }

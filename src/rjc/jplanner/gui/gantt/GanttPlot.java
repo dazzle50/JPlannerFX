@@ -16,52 +16,22 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui.gantt;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
-import rjc.jplanner.gui.gantt.Gantt;
-import rjc.jplanner.plan.Plan;
+import javafx.scene.canvas.Canvas;
+import rjc.jplanner.gui.tasks.TasksView;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/***************** GanttPlot provides a view of the plan tasks and dependencies ******************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+class GanttPlot extends Canvas
 {
-  private TasksView        m_view;
-  private Gantt            m_gantt;
-  private XSplitPane       m_split;
-
-  private static TasksData m_data;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public GanttPlot( TasksView view, GanttScale scale )
   {
-    // construct tab
-    super( "Tasks & Gantt" );
-    setClosable( false );
-
-    // showing table of available plan tasks
-    m_data = m_data == null ? new TasksData( Plan.getTasks() ) : m_data;
-    m_view = new TasksView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-    m_view.setFocusTraversable( true );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
-    } );
-
+    // TODO Auto-generated constructor stub
   }
+
 }

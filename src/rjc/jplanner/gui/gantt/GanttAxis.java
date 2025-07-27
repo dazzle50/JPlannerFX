@@ -16,52 +16,48 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.tasks;
+package rjc.jplanner.gui.gantt;
 
-import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.gui.XSplitPane;
-import rjc.jplanner.gui.gantt.Gantt;
-import rjc.jplanner.plan.Plan;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import rjc.table.data.types.DateTime.Interval;
 
 /*************************************************************************************************/
-/******************** Tab showing table of the plan tasks alongside the gantt ********************/
+/************************* Provides visual timeline showing gantt scale **************************/
 /*************************************************************************************************/
 
-public class TasksTab extends Tab
+class GanttAxis extends Canvas
 {
-  private TasksView        m_view;
-  private Gantt            m_gantt;
-  private XSplitPane       m_split;
-
-  private static TasksData m_data;
+  private Interval m_interval;
+  private String   m_format;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public GanttAxis( GanttScale m_scale )
   {
-    // construct tab
-    super( "Tasks & Gantt" );
-    setClosable( false );
+    // construct gantt-scale
+    super( 0.0, Gantt.GANTTSCALE_HEIGHT );
+    m_interval = Interval.MONTH;
+    m_format = "mmm";
 
-    // showing table of available plan tasks
-    m_data = m_data == null ? new TasksData( Plan.getTasks() ) : m_data;
-    m_view = new TasksView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
-    m_view.setFocusTraversable( true );
-
-    // alongside the gantt
-    m_gantt = new Gantt( m_view );
-    m_split = new XSplitPane( m_view, m_gantt );
-
-    // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
-    {
-      if ( newValue )
-        setContent( m_split );
-      else
-        setContent( null );
-    } );
-
+    widthProperty().addListener( ( observable, oldW, newW ) -> widthChange( oldW.intValue(), newW.intValue() ) );
   }
+
+  /******************************************* redraw ********************************************/
+  public void redraw()
+  {
+    // redraw whole gantt-scale
+    widthChange( 0, (int) getWidth() );
+  }
+
+  /***************************************** widthChange *****************************************/
+  private void widthChange( int oldW, int newW )
+  {
+    // draw only if increase in width
+    if ( getHeight() <= 0.0 || newW <= oldW )
+      return;
+
+    // draw gantt scale between old-width and new-width
+    GraphicsContext gc = getGraphicsContext2D();
+  }
+
 }
