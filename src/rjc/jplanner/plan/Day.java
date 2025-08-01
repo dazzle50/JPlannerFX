@@ -260,4 +260,11 @@ public class Day
     return null;
   }
 
+  /***************************************** isWorking *******************************************/
+  public boolean isWorking()
+  {
+    // return if day has work periods
+    return m_periods.size() > 0;
+  }
+
 }

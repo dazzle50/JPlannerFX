@@ -219,4 +219,25 @@ public class Calendar
     return null;
   }
 
+  /***************************************** isWorking *******************************************/
+  public boolean isWorking( Date date )
+  {
+    // return whether date is working or not
+    return getDay( date ).isWorking();
+  }
+
+  /******************************************* getDay ********************************************/
+  public Day getDay( Date date )
+  {
+    // if exception exists return it, otherwise return normal cycle day
+    Day day = m_exceptions.get( date );
+    if ( day != null )
+      return day;
+
+    int normal = ( date.getEpochday() - m_cycleAnchor.getEpochday() ) % m_normal.size();
+    if ( normal < 0 )
+      normal += m_normal.size();
+
+    return m_normal.get( normal );
+  }
 }

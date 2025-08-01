@@ -53,6 +53,7 @@ public class TasksTab extends Tab
     // alongside the gantt
     m_gantt = new Gantt( m_view );
     m_split = new XSplitPane( m_view, m_gantt );
+    m_view.getRowsAxis().setHeaderSize( m_gantt.axesHeightProperty().get() );
 
     // only have tab contents set if tab selected
     selectedProperty().addListener( ( property, oldValue, newValue ) ->

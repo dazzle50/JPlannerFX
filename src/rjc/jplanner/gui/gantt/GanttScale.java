@@ -38,7 +38,7 @@ public class GanttScale
     // initialise the gantt scale
     m_start = start.getMilliseconds();
     m_offset = scrollBarOffset;
-    m_millisecondsPP = 6 * Time.ONE_HOUR; // default to 6 hours per pixel
+    m_millisecondsPP = 4 * Time.ONE_HOUR; // default to 4 hours per pixel
   }
 
   /****************************************** setScale *******************************************/
@@ -68,6 +68,20 @@ public class GanttScale
   {
     // return date-time for specified x-coordinate
     return new DateTime( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
+  }
+
+  /****************************************** getMsPP *******************************************/
+  public long getMsPP()
+  {
+    // return milliseconds per pixel
+    return m_millisecondsPP;
+  }
+
+  /************************************ getStartMilliseconds ************************************/
+  public long getStartMilliseconds()
+  {
+    // return start date-time in milliseconds
+    return m_start;
   }
 
 }

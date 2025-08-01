@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.gantt;
 
 import javafx.scene.control.ScrollBar;
+import rjc.table.view.TableScrollBar;
 
 /*************************************************************************************************/
 /*************** Extended version of ScrollBar with special increment & decrement ****************/
@@ -26,5 +27,27 @@ import javafx.scene.control.ScrollBar;
 
 class GanttScrollBar extends ScrollBar
 {
+  /**************************************** constructor ******************************************/
+  public GanttScrollBar()
+  {
+    // construct gantt scroll-bar
+    setPrefHeight( TableScrollBar.SIZE );
+  }
+
+  /****************************************** increment ******************************************/
+  @Override
+  public void increment()
+  {
+    // make gantt end later if scroll-bar at maximum
+    super.increment();
+  }
+
+  /****************************************** decrement ******************************************/
+  @Override
+  public void decrement()
+  {
+    // make gantt start earlier if scroll-bar at minimum
+    super.decrement();
+  }
 
 }
