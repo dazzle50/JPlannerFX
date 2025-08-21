@@ -27,17 +27,37 @@ public class TimeSpan
   private double m_num;   // number of unit periods (max 2 decimal places, except only whole seconds)
   private UNITS  m_units; // type of periods (first letter shown in string version)
 
-  public enum UNITS
+  public enum UNITS // duration units with their single-character abbreviations
   {
-    SECONDS, MINUTES, HOURS, days, weeks, months, years
+    SECONDS( 'S' ), MINUTES( 'M' ), HOURS( 'H' ), DAYS( 'd' ), WEEKS( 'w' ), MONTHS( 'm' ), YEARS( 'y' );
+
+    private final char abbreviation;
+
+    UNITS( char letter )
+    {
+      abbreviation = letter;
+    }
+
+    public char abbreviation()
+    {
+      return abbreviation;
+    }
+
+    public static UNITS fromChar( char ch )
+    {
+      for ( UNITS unit : values() )
+        if ( unit.abbreviation == ch )
+          return unit;
+      return null;
+    }
   }
 
   /**************************************** constructor ******************************************/
   public TimeSpan()
   {
     // construct default time-span (one day)
-    m_num = 1;
-    m_units = UNITS.days;
+    m_num = 1.0;
+    m_units = UNITS.DAYS;
   }
 
   /**************************************** constructor ******************************************/
@@ -52,22 +72,20 @@ public class TimeSpan
 
     // if string with white-spaces removed is zero length, don't do anything more
     str = str.replaceAll( "\\s+", "" );
-    if ( str.length() == 0 )
+    if ( str.isEmpty() )
       return;
 
     // set units if last character matches units first character
     char lastchr = str.charAt( str.length() - 1 );
-    for ( int index = 0; index < UNITS.values().length; index++ )
-      if ( UNITS.values()[index].name().charAt( 0 ) == lastchr )
-      {
-        // found units first character that matches
-        m_units = UNITS.values()[index];
-        str = str.substring( 0, str.length() - 1 );
-        break;
-      }
+    UNITS units = UNITS.fromChar( lastchr );
+    if ( units != null )
+    {
+      m_units = units;
+      str = str.substring( 0, str.length() - 1 );
+    }
 
     // set number from remainder of string but THROWS EXCEPTION IF PARSING FAILS
-    double num = Double.parseDouble( str );
+    double num = Double.parseDouble( "0" + str );
     if ( m_units == UNITS.SECONDS )
       m_num = Math.rint( num );
     else
@@ -85,26 +103,48 @@ public class TimeSpan
       m_num = Math.rint( num * 100.0 ) / 100.0;
   }
 
+  /**************************************** toStringLong *****************************************/
+  public String toStringLong()
+  {
+    // return string version of time-span, e.g. "1 Month" or "6 Seconds"
+    var units = m_units.name().charAt( 0 ) + m_units.name().substring( 1 ).toLowerCase();
+    if ( m_num == 1.0 )
+      units = units.substring( 0, units.length() - 1 ); // singular form if number is 1
+    return numberString() + " " + units;
+  }
+
   /****************************************** toString *******************************************/
   @Override
   public String toString()
   {
-    // if units are seconds, show integer number and 'S' (first letter of SECONDS)
-    if ( m_units == UNITS.SECONDS )
-      return String.format( "%.0f", m_num ) + " S";
+    // return short string version of time-span, e.g. "1.23 d" or "1 S"
+    return numberString() + " " + m_units.abbreviation();
+  }
 
-    // otherwise, show number to 2 decimal places with trailing zeros/dot removed, and first letter of units
-    String str = String.format( "%.2f", m_num );
-    if ( str.contains( "." ) )
+  private String numberString()
+  {
+    // return number as string, rounded to 2 decimal places except for seconds
+    if ( m_units == UNITS.SECONDS )
+      return Integer.toString( (int) m_num ); // no decimal places for seconds
+
+    // when not seconds, convert to fixed-point integer (e.g. 1.23 -> 123)
+    int fixed = (int) Math.round( m_num * 100 );
+    int whole = fixed / 100;
+    int frac = fixed % 100;
+
+    // build string manually
+    StringBuilder sb = new StringBuilder( 8 );
+    sb.append( whole );
+
+    if ( frac != 0 )
     {
-      int index = str.length() - 1;
-      while ( str.charAt( index ) == '0' )
-        index--;
-      if ( str.charAt( index ) == '.' )
-        index--;
-      str = str.substring( 0, index + 1 );
+      sb.append( '.' );
+      sb.append( frac / 10 );
+      if ( frac % 10 != 0 )
+        sb.append( frac % 10 );
     }
-    return str + " " + m_units.toString().charAt( 0 );
+
+    return sb.toString();
   }
 
   /****************************************** getUnits *******************************************/
@@ -112,6 +152,15 @@ public class TimeSpan
   {
     // return time-span units
     return m_units;
+  }
+
+  /****************************************** setUnits *******************************************/
+  public void setUnits( UNITS units )
+  {
+    // set time-span units
+    m_units = units;
+    if ( units == UNITS.SECONDS )
+      m_num = Math.rint( m_num );
   }
 
   /****************************************** getNumber ******************************************/
@@ -131,4 +180,5 @@ public class TimeSpan
 
     return false;
   }
+
 }

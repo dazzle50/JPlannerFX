@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.tasks;
 
+import rjc.jplanner.gui.editor.EditorTimeSpan;
 import rjc.jplanner.plan.Task.FIELD;
 import rjc.jplanner.plan.TaskType;
 import rjc.table.data.TableData;
@@ -78,7 +79,9 @@ public class TasksView extends TableView
     {
       case Title, Comment:
         return new EditorText();
-      case Start, End:
+      case Duration:
+        return new EditorTimeSpan();
+      case Start, End, Deadline:
         return new EditorDateTime();
       case Priority:
         return new EditorInteger();

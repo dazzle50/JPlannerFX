@@ -178,9 +178,27 @@ public class Task
         }
         return "Not task-type: " + Utils.objectsString( newValue );
 
-      case Cost:
-      case Deadline:
       case Duration:
+        // check new value is a time-span
+        if ( newValue instanceof TimeSpan ts )
+        {
+          if ( commit )
+            m_duration = ts;
+          return null;
+        }
+        return "Not time-span: " + Utils.objectsString( newValue );
+
+      case Deadline:
+        // check new value is date-time
+        if ( newValue instanceof DateTime dt )
+        {
+          if ( commit )
+            m_deadline = dt;
+          return null;
+        }
+        return "Not Date-time: " + Utils.objectsString( newValue );
+
+      case Cost:
       case Predecessors:
       case Resources:
       case Work:

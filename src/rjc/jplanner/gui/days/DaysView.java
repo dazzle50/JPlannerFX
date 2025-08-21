@@ -107,7 +107,8 @@ public class DaysView extends TableView
         return editorI;
 
       default:
-        return new EditorTime();
+        // work period start & end times - hours & minutes only
+        return new EditorTime( true, true, false, false );
     }
   }
 
