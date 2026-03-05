@@ -84,7 +84,7 @@ public class MainWindow extends Scene
       statusBar.setText( status.getMessage() );
       statusBar.setStyle( status.getStyle() );
     } );
-    status.update( Level.NORMAL, "JPlannerFX has started" );
+    status.update( Level.INFO, "JPlannerFX has started" );
     status.clearAfterMillisecs( 2500 );
 
     return statusBar;

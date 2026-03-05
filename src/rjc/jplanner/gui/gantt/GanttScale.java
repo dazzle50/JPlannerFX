@@ -36,27 +36,27 @@ public class GanttScale
   public GanttScale( DateTime start, DoubleProperty scrollBarOffset )
   {
     // initialise the gantt scale
-    m_start = start.getMilliseconds();
+    m_start = start.toMilliseconds();
     m_offset = scrollBarOffset;
-    m_millisecondsPP = 4 * Time.ONE_HOUR; // default to 4 hours per pixel
+    m_millisecondsPP = 4 * Time.MILLIS_PER_HOUR; // default to 4 hours per pixel
   }
 
   /****************************************** setScale *******************************************/
   public void setScale( DateTime start, DateTime end, int widthPixels )
   {
     // determine milliseconds per pixel after checking date-times
-    if ( end.getMilliseconds() - start.getMilliseconds() < widthPixels )
+    if ( end.toMilliseconds() - start.toMilliseconds() < widthPixels )
       throw new IllegalArgumentException( "Invalid scale " + start + " " + end + " " + widthPixels );
 
-    m_start = start.getMilliseconds();
-    m_millisecondsPP = ( end.getMilliseconds() - m_start ) / widthPixels;
+    m_start = start.toMilliseconds();
+    m_millisecondsPP = ( end.toMilliseconds() - m_start ) / widthPixels;
   }
 
   /********************************************** x **********************************************/
   public int x( DateTime dt )
   {
     // return x-coordinate from date-time [TODO stretch date-time to full day ?]
-    long dtMilliseconds = dt.getMilliseconds();
+    long dtMilliseconds = dt.toMilliseconds();
 
     if ( dtMilliseconds > m_start )
       return (int) ( ( dtMilliseconds - m_start ) / m_millisecondsPP - m_offset.get() );
@@ -67,7 +67,7 @@ public class GanttScale
   public DateTime datetime( int x )
   {
     // return date-time for specified x-coordinate
-    return new DateTime( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
+    return DateTime.ofMilliseconds( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
   }
 
   /****************************************** getMsPP *******************************************/

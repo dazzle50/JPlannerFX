@@ -105,7 +105,7 @@ public class CalendarsData extends TableData
 
   /****************************************** setValue *******************************************/
   @Override
-  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
+  protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
     // after committing new cycle-length recalculate table row count
     if ( commit && dataRow == Calendar.FIELD.Cycle.ordinal() )

@@ -43,24 +43,24 @@ public class Calendars extends ArrayList<Calendar>
 
     // initialise list with default calendars
     clear();
-    Date anchor = new Date( 2000, 1, 1 );
+    Date anchor = Date.of( 2000, 1, 1 );
     add( new Calendar( "Standard", anchor, nonWorking, nonWorking, working, working, working, working, working ) );
-    getLast().addException( 5, 5, 2025, nonWorking );
-    getLast().addException( 26, 5, 2025, nonWorking );
-    getLast().addException( 25, 8, 2025, nonWorking );
-    getLast().addException( 25, 12, 2025, nonWorking );
-    getLast().addException( 26, 12, 2025, nonWorking );
     getLast().addException( 1, 1, 2026, nonWorking );
     getLast().addException( 3, 4, 2026, nonWorking );
     getLast().addException( 6, 4, 2026, nonWorking );
+    getLast().addException( 4, 5, 2026, nonWorking );
+    getLast().addException( 25, 5, 2026, nonWorking );
+    getLast().addException( 31, 8, 2026, nonWorking );
+    getLast().addException( 25, 12, 2026, nonWorking );
+    getLast().addException( 28, 12, 2026, nonWorking );
 
-    anchor = new Date( 2025, 1, 1 );
+    anchor = Date.of( 2025, 1, 1 );
     add( new Calendar( "Full time", anchor, fullTime ) );
 
     add( new Calendar( "Fancy", anchor, nonWorking, nonWorking, nonWorking, shortDay, shortDay, evening, evening,
         fullTime, nonWorking, fullTime ) );
-    getLast().addException( 25, 12, 2025, nonWorking );
-    getLast().addException( 26, 12, 2025, nonWorking );
+    getLast().addException( 25, 12, 2026, nonWorking );
+    getLast().addException( 28, 12, 2026, nonWorking );
   }
 
   /**************************************** getNameArray *****************************************/

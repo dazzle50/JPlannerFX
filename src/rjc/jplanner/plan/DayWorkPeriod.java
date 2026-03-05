@@ -37,8 +37,8 @@ public class DayWorkPeriod
     if ( startHour >= endHour )
       throw new IllegalArgumentException( "startHour " + startHour + " >= endHour " + endHour );
 
-    m_start = Time.fromHours( startHour );
-    m_end = Time.fromHours( endHour );
+    m_start = Time.ofHours( startHour );
+    m_end = Time.ofHours( endHour );
   }
 
   /***************************************** toString ********************************************/

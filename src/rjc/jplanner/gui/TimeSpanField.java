@@ -106,7 +106,7 @@ public class TimeSpanField extends NumberSpinField
       m_span = new TimeSpan( text );
       if ( getStatus() != null )
       {
-        getStatus().update( Level.NORMAL, m_span.toStringLong() );
+        getStatus().update( Level.INFO, m_span.toStringLong() );
       }
     }
     else

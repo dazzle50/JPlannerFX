@@ -25,6 +25,7 @@ import rjc.jplanner.gui.tasks.TasksView;
 import rjc.jplanner.plan.Calendar;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
+import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
 /***************** GanttPlot provides a view of the plan tasks and dependencies ******************/
@@ -104,7 +105,7 @@ class GanttPlot extends Canvas
     // shade non-working time on gantt-plot
     Calendar calendar = Main.getPlan().getDefaultCalendar();
     Date date = m_scale.datetime( x - 1 ).getDate();
-    int endEpoch = m_scale.datetime( x + w ).getDate().getEpochday();
+    int endEpoch = m_scale.datetime( x + w ).getDate().getEpochDay();
     int startShadeEpoch;
 
     GraphicsContext gc = getGraphicsContext2D();
@@ -114,25 +115,25 @@ class GanttPlot extends Canvas
       // find start of non-working period
       if ( !calendar.isWorking( date ) )
       {
-        startShadeEpoch = date.getEpochday();
+        startShadeEpoch = date.getEpochDay();
 
         // find end of non-working period
         do
-          date.increment();
-        while ( date.getEpochday() <= endEpoch && !calendar.isWorking( date ) );
+          date = date.plusDays( 1 );
+        while ( date.getEpochDay() <= endEpoch && !calendar.isWorking( date ) );
 
         // if width at least 1 pixel shade non-working period
-        long width = ( date.getEpochday() - startShadeEpoch ) * DateTime.MILLISECONDS_IN_DAY / m_scale.getMsPP();
+        long width = ( date.getEpochDay() - startShadeEpoch ) * Time.MILLIS_PER_DAY / m_scale.getMsPP();
         if ( width > 0L )
         {
-          long xe = m_scale.x( new DateTime( date.getEpochday() * DateTime.MILLISECONDS_IN_DAY ) );
+          long xe = m_scale.x( DateTime.of( date, Time.MIN_VALUE ) );
           gc.fillRect( xe - width, y, width, h );
         }
       }
 
-      date.increment();
+      date = date.plusDays( 1 );
     }
-    while ( date.getEpochday() <= endEpoch );
+    while ( date.getEpochDay() <= endEpoch );
   }
 
   /****************************************** drawTasks ******************************************/

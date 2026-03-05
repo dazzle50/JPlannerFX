@@ -49,9 +49,9 @@ public class ResourcesView extends TableView
   {
     // reset table view to custom settings
     super.reset();
-    getColumnsAxis().setIndexSize( FIELD.Available.ordinal(), 70 );
-    getColumnsAxis().setIndexSize( FIELD.Cost.ordinal(), 70 );
-    getColumnsAxis().setIndexSize( FIELD.Comment.ordinal(), 250 );
+    getColumnsAxis().setNominalSize( FIELD.Available.ordinal(), 70 );
+    getColumnsAxis().setNominalSize( FIELD.Cost.ordinal(), 70 );
+    getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
   }
 
   /**************************************** getCellEditor ****************************************/

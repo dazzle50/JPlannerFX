@@ -26,7 +26,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import rjc.jplanner.Main;
 import rjc.jplanner.gui.tasks.TasksView;
-import rjc.table.data.types.DateTime.Interval;
+import rjc.table.data.types.DateTime.IntervalUnit;
 import rjc.table.signal.ObservableInteger;
 import rjc.table.signal.ObservableInteger.ReadOnlyInteger;
 import rjc.table.view.Colours;
@@ -65,8 +65,8 @@ public class Gantt extends Region
     m_scrollBar = new GanttScrollBar();
     m_scale = new GanttScale( Main.getPlan().getDefaultStart(), m_scrollBar.valueProperty() );
     m_axes = new ArrayList<>( 2 );
-    m_axes.add( new GanttAxis( m_scale, Interval.MONTH ) );
-    m_axes.add( new GanttAxis( m_scale, Interval.WEEK ) );
+    m_axes.add( new GanttAxis( m_scale, IntervalUnit.MONTH ) );
+    m_axes.add( new GanttAxis( m_scale, IntervalUnit.WEEK ) );
     m_plot = new GanttPlot( view, m_scale );
     getChildren().addAll( m_axes.get( 0 ), m_axes.get( 1 ), m_plot, m_scrollBar );
 

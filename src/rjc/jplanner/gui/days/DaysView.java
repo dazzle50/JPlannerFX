@@ -50,9 +50,9 @@ public class DaysView extends TableView
   {
     // reset table view to custom settings
     super.reset();
-    getColumnsAxis().setHeaderSize( 35 );
-    getColumnsAxis().setDefaultSize( 60 );
-    getColumnsAxis().setIndexSize( Day.FIELD.Name.ordinal(), 150 );
+    getColumnsAxis().setHeaderNominalSize( 35 );
+    getColumnsAxis().setDefaultNominalSize( 60 );
+    getColumnsAxis().setNominalSize( Day.FIELD.Name.ordinal(), 150 );
   }
 
   /**************************************** getCellDrawer ****************************************/

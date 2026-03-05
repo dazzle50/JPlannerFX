@@ -114,7 +114,7 @@ public class DaysData extends TableData
 
   /****************************************** setValue *******************************************/
   @Override
-  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
+  protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
     // after committing new work-periods recalculate table column count
     if ( commit && dataColumn == Day.FIELD.Periods.ordinal() )

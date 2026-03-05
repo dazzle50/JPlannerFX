@@ -248,10 +248,10 @@ public class Day
 
     // check time is between previous and next
     Object previousTime = getValue( field + period * 2 - 1 );
-    int previousMS = ( previousTime instanceof Time t ) ? t.getDayMilliseconds() : Integer.MIN_VALUE;
+    int previousMS = ( previousTime instanceof Time t ) ? t.toMillisecondsOfDay() : Integer.MIN_VALUE;
     Object nextTime = getValue( field + period * 2 + 1 );
-    int nextMS = ( nextTime instanceof Time t ) ? t.getDayMilliseconds() : Integer.MAX_VALUE;
-    int ms = time.getDayMilliseconds();
+    int nextMS = ( nextTime instanceof Time t ) ? t.toMillisecondsOfDay() : Integer.MAX_VALUE;
+    int ms = time.toMillisecondsOfDay();
 
     if ( previousMS >= ms || ms >= nextMS )
       return "Start/End times not in ascending order";

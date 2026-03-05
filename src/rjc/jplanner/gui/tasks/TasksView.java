@@ -51,11 +51,11 @@ public class TasksView extends TableView
   {
     // reset table view to custom settings
     super.reset();
-    getColumnsAxis().setIndexSize( FIELD.Title.ordinal(), 200 );
-    getColumnsAxis().setIndexSize( FIELD.Duration.ordinal(), 60 );
-    getColumnsAxis().setIndexSize( FIELD.Start.ordinal(), 140 );
-    getColumnsAxis().setIndexSize( FIELD.End.ordinal(), 140 );
-    getColumnsAxis().setIndexSize( FIELD.Comment.ordinal(), 250 );
+    getColumnsAxis().setNominalSize( FIELD.Title.ordinal(), 200 );
+    getColumnsAxis().setNominalSize( FIELD.Duration.ordinal(), 60 );
+    getColumnsAxis().setNominalSize( FIELD.Start.ordinal(), 140 );
+    getColumnsAxis().setNominalSize( FIELD.End.ordinal(), 140 );
+    getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
   }
 
   /****************************************** relocate *******************************************/

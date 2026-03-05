@@ -51,8 +51,8 @@ public class CalendarsView extends TableView
   {
     // reset table view to custom settings
     super.reset();
-    getColumnsAxis().setHeaderSize( 80 );
-    getColumnsAxis().setDefaultSize( 140 );
+    getColumnsAxis().setHeaderNominalSize( 80 );
+    getColumnsAxis().setDefaultNominalSize( 140 );
   }
 
   /**************************************** getCellDrawer ****************************************/

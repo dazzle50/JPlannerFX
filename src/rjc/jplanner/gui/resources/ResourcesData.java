@@ -89,7 +89,7 @@ public class ResourcesData extends TableData
 
   /****************************************** setValue *******************************************/
   @Override
-  protected String setValue( int dataColumn, int dataRow, Object newValue, Boolean commit )
+  protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
     // test if value can/could be set
     return m_resources.get( dataRow ).setValue( dataColumn, newValue, commit );

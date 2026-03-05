@@ -18,6 +18,8 @@
 
 package rjc.jplanner.gui.plan;
 
+import java.time.format.DateTimeFormatter;
+
 import javafx.application.Platform;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -226,8 +228,8 @@ public class PlanProperties extends ScrollPane
       if ( m_DTformat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_DTformat.getStatus().update( Level.NORMAL,
-          "Date-time format example: " + DateTime.now().toString( m_DTformat.getText() ) );
+      m_DTformat.getStatus().update( Level.INFO, "Date-time format example: "
+          + DateTime.now().toString( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
       m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
@@ -261,8 +263,7 @@ public class PlanProperties extends ScrollPane
       if ( m_Dformat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_Dformat.getStatus().update( Level.NORMAL,
-          "Date format example: " + Date.now().toString( m_Dformat.getText() ) );
+      m_Dformat.getStatus().update( Level.INFO, "Date format example: " + Date.now().toString( m_Dformat.getText() ) );
       m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
@@ -290,9 +291,9 @@ public class PlanProperties extends ScrollPane
     if ( dt == null )
       field.setText( null );
     else if ( m_DTformat.getStatus().isError() )
-      field.setText( dt.toString( Main.getPlan().getDateTimeFormat() ) );
+      field.setText( dt.toString( DateTimeFormatter.ofPattern( Main.getPlan().getDateTimeFormat() ) ) );
     else
-      field.setText( dt.toString( m_DTformat.getText() ) );
+      field.setText( dt.toString( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
   }
 
   /**************************************** updateFromPlan ***************************************/

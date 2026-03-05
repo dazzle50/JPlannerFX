@@ -46,7 +46,7 @@ public class Calendar
   {
     // construct empty but usable calendar
     m_name = "Null";
-    m_cycleAnchor = new Date( 2000, 1, 1 );
+    m_cycleAnchor = Date.of( 2000, 1, 1 );
     m_normal = new ArrayList<>();
     m_exceptions = new HashMap<>();
   }
@@ -65,7 +65,7 @@ public class Calendar
   public void addException( int day, int month, int year, Day daytype )
   {
     // add exception to this calendar
-    m_exceptions.put( new Date( year, month, day ), daytype );
+    m_exceptions.put( Date.of( year, month, day ), daytype );
   }
 
   /****************************************** toString *******************************************/
@@ -234,7 +234,7 @@ public class Calendar
     if ( day != null )
       return day;
 
-    int normal = ( date.getEpochday() - m_cycleAnchor.getEpochday() ) % m_normal.size();
+    int normal = ( date.getEpochDay() - m_cycleAnchor.getEpochDay() ) % m_normal.size();
     if ( normal < 0 )
       normal += m_normal.size();
 

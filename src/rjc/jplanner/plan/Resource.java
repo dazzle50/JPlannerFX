@@ -81,7 +81,7 @@ public class Resource
     // return date-time when this resource starts being available
     if ( m_start == null )
       return DateTime.MIN_VALUE;
-    return new DateTime( m_start, Time.MIN_VALUE );
+    return DateTime.of( m_start, Time.MIN_VALUE );
   }
 
   /******************************************* getEnd ********************************************/
@@ -90,7 +90,7 @@ public class Resource
     // return date-time when this resource stops being available
     if ( m_end == null )
       return DateTime.MAX_VALUE;
-    return new DateTime( m_end, Time.MAX_VALUE );
+    return DateTime.of( m_end, Time.MAX_VALUE );
   }
 
   /***************************************** getCalendar *****************************************/
@@ -226,7 +226,7 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
-          if ( m_end != null && m_end.getEpochday() < date.getEpochday() )
+          if ( m_end != null && m_end.getEpochDay() < date.getEpochDay() )
             return "Start must be before or equal to end date";
           if ( commit )
             m_start = date;
@@ -238,7 +238,7 @@ public class Resource
         // check new value is date
         if ( newValue instanceof Date date )
         {
-          if ( m_start != null && m_start.getEpochday() > date.getEpochday() )
+          if ( m_start != null && m_start.getEpochDay() > date.getEpochDay() )
             return "End must be after or equal to start date";
           if ( commit )
             m_end = date;
