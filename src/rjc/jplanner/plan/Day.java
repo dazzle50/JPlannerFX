@@ -1,5 +1,5 @@
 /**************************************************************************
- *  Copyright (C) 2025 by Richard Crook                                   *
+ *  Copyright (C) 2026 by Richard Crook                                   *
  *  https://github.com/dazzle50/JPlannerFX                                *
  *                                                                        *
  *  This program is free software: you can redistribute it and/or modify  *
@@ -74,7 +74,7 @@ public class Day
       double end = periods[p * 2 + 1];
       if ( start <= last || end <= start )
         throw new IllegalArgumentException(
-            "Period times must be in assending order " + Utils.objectsString( periods ) );
+            "Period times must be in ascending order " + Utils.objectsString( periods ) );
 
       m_periods.add( new DayWorkPeriod( start, end ) );
       last = end;
@@ -132,10 +132,10 @@ public class Day
     }
   }
 
-  /******************************************** isBlank ******************************************/
-  public boolean isBlank( int field )
+  /***************************************** isDisabled ******************************************/
+  public boolean isDisabled( int field )
   {
-    // work field is blank if no periods, and start/end fields are blank if beyond periods
+    // work field is disabled if no periods, and start/end fields are disabled if beyond periods
     if ( field == FIELD.Work.ordinal() && m_periods.size() == 0 )
       return true;
 
@@ -143,7 +143,7 @@ public class Day
   }
 
   /****************************************** setValue *******************************************/
-  public String setValue( int field, Object newValue, Boolean commit )
+  public String setValue( int field, Object newValue, boolean commit )
   {
     // set/check field value and return null if successful/possible
     int period = ( field - FIELD.Start.ordinal() ) / 2;

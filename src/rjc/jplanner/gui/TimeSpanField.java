@@ -1,5 +1,5 @@
 /**************************************************************************
- *  Copyright (C) 2025 by Richard Crook                                   *
+ *  Copyright (C) 2026 by Richard Crook                                   *
  *  https://github.com/dazzle50/JPlannerFX                                *
  *                                                                        *
  *  This program is free software: you can redistribute it and/or modify  *
@@ -78,7 +78,7 @@ public class TimeSpanField extends NumberSpinField
   }
 
   /***************************************** checkFocus ******************************************/
-  private void checkFocus( Boolean newFocus )
+  private void checkFocus( boolean newFocus )
   {
     // update status and ensure valid time-span is shown when focus lost
     if ( newFocus )

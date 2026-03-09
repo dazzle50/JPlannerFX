@@ -1,5 +1,5 @@
 /**************************************************************************
- *  Copyright (C) 2025 by Richard Crook                                   *
+ *  Copyright (C) 2026 by Richard Crook                                   *
  *  https://github.com/dazzle50/JPlannerFX                                *
  *                                                                        *
  *  This program is free software: you can redistribute it and/or modify  *
@@ -25,12 +25,23 @@ import rjc.table.data.types.Time;
 /**************************** Single working period within a day type ****************************/
 /*************************************************************************************************/
 
+/**
+ * Represents a single contiguous working period within a day type,
+ * defined by a start and end time.
+ */
 public class DayWorkPeriod
 {
-  public Time m_start; // work period start time
-  public Time m_end;   // work period end time
+  public Time m_start; // work period start time - public to allow direct access
+  public Time m_end;   // work period end time - public to allow direct access
 
   /**************************************** constructor ******************************************/
+  /**
+   * Constructs a work period from start and end hour values.
+   *
+   * @param startHour start of the work period in hours
+   * @param endHour   end of the work period in hours
+   * @throws IllegalArgumentException if {@code startHour >= endHour}
+   */
   public DayWorkPeriod( double startHour, double endHour )
   {
     // construct work period from from start and end hour points
@@ -42,10 +53,14 @@ public class DayWorkPeriod
   }
 
   /***************************************** toString ********************************************/
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString()
   {
     // return period information
     return Utils.name( this ) + "[" + m_start + ", " + m_end + "]";
   }
+
 }

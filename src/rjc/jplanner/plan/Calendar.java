@@ -1,5 +1,5 @@
 /**************************************************************************
- *  Copyright (C) 2025 by Richard Crook                                   *
+ *  Copyright (C) 2026 by Richard Crook                                   *
  *  https://github.com/dazzle50/JPlannerFX                                *
  *                                                                        *
  *  This program is free software: you can redistribute it and/or modify  *
@@ -131,7 +131,7 @@ public class Calendar
   }
 
   /****************************************** setValue *******************************************/
-  public String setValue( int field, Object newValue, Boolean commit )
+  public String setValue( int field, Object newValue, boolean commit )
   {
     // set/check field value and return null if successful/possible
     int normal = field >= FIELD.Normal.ordinal() ? field - FIELD.Normal.ordinal() : 0;

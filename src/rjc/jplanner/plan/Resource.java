@@ -1,5 +1,5 @@
 /**************************************************************************
- *  Copyright (C) 2025 by Richard Crook                                   *
+ *  Copyright (C) 2026 by Richard Crook                                   *
  *  https://github.com/dazzle50/JPlannerFX                                *
  *                                                                        *
  *  This program is free software: you can redistribute it and/or modify  *
@@ -158,7 +158,7 @@ public class Resource
   }
 
   /****************************************** setValue *******************************************/
-  public String setValue( int field, Object newValue, Boolean commit )
+  public String setValue( int field, Object newValue, boolean commit )
   {
     // set/check field value and return null if successful/possible
     switch ( FIELD.values()[field] )
