@@ -16,24 +16,51 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.days;
+
+import rjc.table.Utils;
+import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
-/********************** Task predecessors shows dependencies on other tasks **********************/
+/**************************** Single working period within a day type ****************************/
 /*************************************************************************************************/
 
-public class Predecessors
+/**
+ * Represents a single contiguous working period within a day type,
+ * defined by a start and end time.
+ */
+public class DayWorkPeriod
 {
+  public Time m_start; // work period start time - public to allow direct access
+  public Time m_end;   // work period end time - public to allow direct access
 
   /**************************************** constructor ******************************************/
-  public Predecessors()
+  /**
+   * Constructs a work period from start and end hour values.
+   *
+   * @param startHour start of the work period in hours
+   * @param endHour   end of the work period in hours
+   * @throws IllegalArgumentException if {@code startHour >= endHour}
+   */
+  public DayWorkPeriod( double startHour, double endHour )
   {
-    // nothing needs to be done
+    // construct work period from from start and end hour points
+    if ( startHour >= endHour )
+      throw new IllegalArgumentException( "startHour " + startHour + " >= endHour " + endHour );
+
+    m_start = Time.ofHours( startHour );
+    m_end = Time.ofHours( endHour );
   }
 
-  /**************************************** constructor ******************************************/
-  public Predecessors( String text )
+  /***************************************** toString ********************************************/
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String toString()
   {
+    // return period information
+    return Utils.name( this ) + "[" + m_start + ", " + m_end + "]";
   }
 
 }

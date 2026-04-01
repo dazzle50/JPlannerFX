@@ -20,9 +20,9 @@ package rjc.jplanner.gui.days;
 
 import javafx.application.Platform;
 import javafx.geometry.Pos;
-import rjc.jplanner.plan.Day;
-import rjc.jplanner.plan.Day.FIELD;
-import rjc.jplanner.plan.Days;
+import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.Days;
+import rjc.jplanner.plan.days.Day.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;

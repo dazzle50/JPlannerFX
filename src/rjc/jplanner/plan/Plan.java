@@ -19,6 +19,14 @@
 package rjc.jplanner.plan;
 
 import rjc.jplanner.Main;
+import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calenders.Calendars;
+import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.Days;
+import rjc.jplanner.plan.resources.Resource;
+import rjc.jplanner.plan.resources.Resources;
+import rjc.jplanner.plan.tasks.Task;
+import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 

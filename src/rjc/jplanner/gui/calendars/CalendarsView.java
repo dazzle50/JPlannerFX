@@ -19,10 +19,12 @@
 package rjc.jplanner.gui.calendars;
 
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
-import rjc.jplanner.plan.Calendar.FIELD;
 import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.calenders.Calendar.FIELD;
 import rjc.table.Utils;
 import rjc.table.data.TableData;
+import rjc.table.view.TableContextMenu;
+import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -43,6 +45,10 @@ public class CalendarsView extends TableView
   {
     // construct the table view
     super( data, name );
+
+    // set table view properties
+    TableContextMenu.disable( this, TableMenuItems.ROW_HIDE, TableMenuItems.ROW_SHOW );
+    TableContextMenu.disable( this, TableMenuItems.COLUMN_SORT, TableMenuItems.COLUMN_FILTER_TEXT );
   }
 
   /******************************************** reset ********************************************/

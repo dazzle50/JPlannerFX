@@ -16,10 +16,11 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.days;
 
 import java.util.ArrayList;
 
+import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 import rjc.table.data.types.Time;
 

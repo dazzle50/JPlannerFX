@@ -16,8 +16,10 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.resources;
 
+import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.calenders.Calendar;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;

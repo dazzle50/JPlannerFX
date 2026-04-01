@@ -19,10 +19,12 @@
 package rjc.jplanner.gui.tasks;
 
 import rjc.jplanner.gui.editor.EditorTimeSpan;
-import rjc.jplanner.plan.Task.FIELD;
-import rjc.jplanner.plan.TaskType;
+import rjc.jplanner.plan.tasks.TaskType;
+import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
+import rjc.table.view.TableContextMenu;
+import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -43,6 +45,9 @@ public class TasksView extends TableView
   {
     // construct the table view
     super( data, name );
+
+    // set table view properties
+    TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
   }
 
   /******************************************** reset ********************************************/

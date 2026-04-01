@@ -19,9 +19,11 @@
 package rjc.jplanner.gui.days;
 
 import rjc.jplanner.commands.CommandDaySetNumPeriods;
-import rjc.jplanner.plan.Day;
-import rjc.jplanner.plan.Day.FIELD;
+import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.Day.FIELD;
 import rjc.table.data.TableData;
+import rjc.table.view.TableContextMenu;
+import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -42,6 +44,10 @@ public class DaysView extends TableView
   {
     // construct the table view
     super( data, name );
+
+    // set table view properties
+    TableContextMenu.disable( this, TableMenuItems.COLUMN_HIDE, TableMenuItems.COLUMN_SHOW );
+    TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
   }
 
   /******************************************** reset ********************************************/

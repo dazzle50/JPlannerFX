@@ -20,9 +20,9 @@ package rjc.jplanner.commands;
 
 import java.util.ArrayList;
 
-import rjc.jplanner.plan.Day;
-import rjc.jplanner.plan.DayWorkPeriod;
 import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.DayWorkPeriod;
 import rjc.table.data.TableData;
 import rjc.table.data.types.Time;
 import rjc.table.undo.IUndoCommand;

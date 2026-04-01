@@ -19,8 +19,10 @@
 package rjc.jplanner.gui.tasks;
 
 import javafx.geometry.Pos;
-import rjc.jplanner.plan.Task.FIELD;
-import rjc.jplanner.plan.Tasks;
+import rjc.jplanner.plan.tasks.Task;
+import rjc.jplanner.plan.tasks.TaskType;
+import rjc.jplanner.plan.tasks.Tasks;
+import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;

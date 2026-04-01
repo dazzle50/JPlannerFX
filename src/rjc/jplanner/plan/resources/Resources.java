@@ -16,51 +16,39 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.resources;
 
-import rjc.table.Utils;
-import rjc.table.data.types.Time;
+import java.util.ArrayList;
+
+import rjc.jplanner.Main;
 
 /*************************************************************************************************/
-/**************************** Single working period within a day type ****************************/
+/************************** Holds the complete list of plan resources ****************************/
 /*************************************************************************************************/
 
-/**
- * Represents a single contiguous working period within a day type,
- * defined by a start and end time.
- */
-public class DayWorkPeriod
+public class Resources extends ArrayList<Resource>
 {
-  public Time m_start; // work period start time - public to allow direct access
-  public Time m_end;   // work period end time - public to allow direct access
+  private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /**************************************** constructor ******************************************/
-  /**
-   * Constructs a work period from start and end hour values.
-   *
-   * @param startHour start of the work period in hours
-   * @param endHour   end of the work period in hours
-   * @throws IllegalArgumentException if {@code startHour >= endHour}
-   */
-  public DayWorkPeriod( double startHour, double endHour )
+  /***************************************** initialise ******************************************/
+  public void initialise()
   {
-    // construct work period from from start and end hour points
-    if ( startHour >= endHour )
-      throw new IllegalArgumentException( "startHour " + startHour + " >= endHour " + endHour );
-
-    m_start = Time.ofHours( startHour );
-    m_end = Time.ofHours( endHour );
+    // initialise list with default resources (including resource 0 the special 'unassigned' resource)
+    clear();
+    for ( int count = 0; count <= 20; count++ )
+      add( new Resource() );
   }
 
-  /***************************************** toString ********************************************/
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String toString()
+  /*************************************** getNotNullCount ***************************************/
+  public int getNotNullCount()
   {
-    // return period information
-    return Utils.name( this ) + "[" + m_start + ", " + m_end + "]";
+    // return number of not-null resources in plan (skipping special resource 0)
+    int count = 0;
+    for ( int id = 1; id < size(); id++ )
+      if ( !get( id ).isBlank() )
+        count++;
+
+    return count;
   }
 
 }

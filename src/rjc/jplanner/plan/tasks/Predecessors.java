@@ -16,13 +16,24 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.tasks;
 
 /*************************************************************************************************/
-/************************* Resources assigned to single task within plan *************************/
+/********************** Task predecessors shows dependencies on other tasks **********************/
 /*************************************************************************************************/
 
-public class TaskResources
+public class Predecessors
 {
+
+  /**************************************** constructor ******************************************/
+  public Predecessors()
+  {
+    // nothing needs to be done
+  }
+
+  /**************************************** constructor ******************************************/
+  public Predecessors( String text )
+  {
+  }
 
 }

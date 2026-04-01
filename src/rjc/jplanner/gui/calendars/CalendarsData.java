@@ -19,9 +19,9 @@
 package rjc.jplanner.gui.calendars;
 
 import javafx.application.Platform;
-import rjc.jplanner.plan.Calendar;
-import rjc.jplanner.plan.Calendar.FIELD;
-import rjc.jplanner.plan.Calendars;
+import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calenders.Calendars;
+import rjc.jplanner.plan.calenders.Calendar.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;

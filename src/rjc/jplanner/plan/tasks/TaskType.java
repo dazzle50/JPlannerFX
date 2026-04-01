@@ -16,7 +16,7 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.tasks;
 
 import javafx.scene.paint.Paint;
 import rjc.table.view.Colours;

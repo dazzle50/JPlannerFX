@@ -16,8 +16,9 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.tasks;
 
+import rjc.jplanner.plan.TimeSpan;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 

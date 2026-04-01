@@ -19,8 +19,10 @@
 package rjc.jplanner.gui.resources;
 
 import rjc.jplanner.plan.Plan;
-import rjc.jplanner.plan.Resource.FIELD;
+import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
+import rjc.table.view.TableContextMenu;
+import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -41,6 +43,9 @@ public class ResourcesView extends TableView
   {
     // construct the table view
     super( data, name );
+
+    // set table view properties
+    TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
   }
 
   /******************************************** reset ********************************************/

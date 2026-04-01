@@ -81,26 +81,32 @@ public class Gantt extends Region
   @Override
   protected void layoutChildren()
   {
+    // skip layout if dimensions not ready
+    double w = getWidth();
+    double h = getHeight();
+    if ( w <= 0.0 || h <= 0.0 || w > 999_999_999.0 || h > 999_999_999.0 )
+      return;
+
     // layout gantt axes at top
     int y = 0;
     for ( var axis : m_axes )
     {
-      axis.setWidth( getWidth() );
+      axis.setWidth( w );
       axis.setLayoutY( y );
       y += axis.getHeight();
     }
 
     // layout gantt plot below axes
-    m_plot.setWidth( getWidth() );
-    int h = (int) ( getHeight() - m_scrollBar.getHeight() - y );
-    if ( h < 0 )
-      h = 0;
-    m_plot.setHeight( h );
+    m_plot.setWidth( w );
+    int plotHeight = (int) ( h - m_scrollBar.getHeight() - y );
+    if ( plotHeight < 0 )
+      plotHeight = 0;
+    m_plot.setHeight( plotHeight );
     m_plot.setLayoutY( y );
 
     // layout gantt scroll-bar below plot
-    m_scrollBar.setPrefWidth( getWidth() );
-    m_scrollBar.setLayoutY( y + h );
+    m_scrollBar.setPrefWidth( w );
+    m_scrollBar.setLayoutY( y + plotHeight );
     super.layoutChildren();
   }
 

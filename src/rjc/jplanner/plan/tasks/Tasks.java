@@ -16,33 +16,41 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.tasks;
 
 import java.util.ArrayList;
 
 import rjc.jplanner.Main;
 
 /*************************************************************************************************/
-/************************** Holds the complete list of plan resources ****************************/
+/**************************** Holds the complete list of plan tasks ******************************/
 /*************************************************************************************************/
 
-public class Resources extends ArrayList<Resource>
+public class Tasks extends ArrayList<Task>
 {
   private static final long serialVersionUID = Main.VERSION.hashCode();
 
-  /***************************************** initialise ******************************************/
+  /****************************************** initialise *****************************************/
   public void initialise()
   {
-    // initialise list with default resources (including resource 0 the special 'unassigned' resource)
+    // initialise list with default tasks (including special task 0 which is overall project summary)
     clear();
-    for ( int count = 0; count <= 20; count++ )
-      add( new Resource() );
+    for ( int count = 0; count <= 50; count++ )
+      add( new Task() );
+
+    setupTaskZero();
+  }
+
+  /**************************************** setupTaskZero ****************************************/
+  public void setupTaskZero()
+  {
+    // setup special task 0
   }
 
   /*************************************** getNotNullCount ***************************************/
   public int getNotNullCount()
   {
-    // return number of not-null resources in plan (skipping special resource 0)
+    // return number of not-null tasks in plan (skipping special task 0)
     int count = 0;
     for ( int id = 1; id < size(); id++ )
       if ( !get( id ).isBlank() )
