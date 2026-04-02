@@ -53,9 +53,8 @@ public class CommandDaySetNumPeriods implements IUndoCommand
     if ( newNum > oldNum )
     {
       // need to add new work-periods
-      double remainingHours = 24.0;
-      if ( !m_newPeriods.isEmpty() )
-        remainingHours -= 24.0 * m_newPeriods.get( oldNum - 1 ).m_end.toMillisecondsOfDay() / Time.MILLIS_PER_DAY;
+      double remainingHours = m_newPeriods.isEmpty() ? 24.0
+          : 24.0 - m_newPeriods.get( oldNum - 1 ).m_end.toMillisecondsOfDay() / (double) Time.MILLIS_PER_HOUR;
 
       double increment = remainingHours / ( 1 + 2 * ( newNum - oldNum ) );
       if ( increment >= 8.0 )
@@ -102,7 +101,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   {
     // action command
     m_data.setValue( Day.FIELD.Periods.ordinal(), m_dataRow, m_newPeriods );
-
+    m_data.signalRowChanged( m_dataRow );
   }
 
   /******************************************* undo **********************************************/
@@ -111,6 +110,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   {
     // revert command
     m_data.setValue( Day.FIELD.Periods.ordinal(), m_dataRow, m_oldPeriods );
+    m_data.signalRowChanged( m_dataRow );
   }
 
   /******************************************* text **********************************************/

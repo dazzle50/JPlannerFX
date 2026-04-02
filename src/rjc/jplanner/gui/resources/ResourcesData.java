@@ -19,9 +19,8 @@
 package rjc.jplanner.gui.resources;
 
 import javafx.geometry.Pos;
-import rjc.jplanner.plan.resources.Resource;
-import rjc.jplanner.plan.resources.Resources;
 import rjc.jplanner.plan.resources.Resource.FIELD;
+import rjc.jplanner.plan.resources.Resources;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;

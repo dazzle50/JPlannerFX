@@ -75,6 +75,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   {
     // action command
     m_data.setValue( m_dataColumn, Calendar.FIELD.Cycle.ordinal(), m_newNormals );
+    m_data.signalColumnChanged( m_dataColumn );
   }
 
   /******************************************* undo **********************************************/
@@ -82,8 +83,8 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   public void undo()
   {
     // revert command
-    // m_calendar.setNormals( m_oldNormals );
     m_data.setValue( m_dataColumn, Calendar.FIELD.Cycle.ordinal(), m_oldNormals );
+    m_data.signalColumnChanged( m_dataColumn );
   }
 
   /******************************************* text **********************************************/

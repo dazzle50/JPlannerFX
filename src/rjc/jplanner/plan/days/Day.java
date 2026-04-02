@@ -45,7 +45,7 @@ public class Day
   public Day()
   {
     // construct empty but usable day type
-    m_name = "Null";
+    m_name = "New";
     m_work = 0.0;
     m_periods = new ArrayList<>();
     m_workMS = 0;
@@ -179,6 +179,15 @@ public class Day
         // check new value is integer and in range
         if ( newValue instanceof Integer newPeriods )
         {
+          int oldPeriods = m_periods.size();
+          if ( newPeriods > oldPeriods && oldPeriods > 0 )
+          {
+            int endMS = m_periods.get( oldPeriods - 1 ).m_end.toMillisecondsOfDay();
+            int remainingMinutes = ( Time.MILLIS_PER_DAY - endMS ) / Time.MILLIS_PER_MINUTE;
+            if ( remainingMinutes < 2 * ( newPeriods - oldPeriods ) )
+              return "Cannot add work periods";
+          }
+
           if ( newPeriods < 0 || newPeriods > 8 )
             return "Value not between 0 and 8";
           if ( commit )

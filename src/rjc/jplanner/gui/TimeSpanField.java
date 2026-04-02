@@ -96,9 +96,9 @@ public class TimeSpanField extends NumberSpinField
     // ensure only integers for seconds, otherwise 2 decimals places are allowed
     var lastChar = text.charAt( text.length() - 1 );
     if ( lastChar == UNITS.SECONDS.abbreviation() )
-      setFormat( "0", 8, 0 );
+      setFormat( "0", 6, 0 );
     else
-      setFormat( "0", 8, 2 );
+      setFormat( "0", 6, 2 );
 
     // if valid time-span, store it and update status
     if ( Character.isDigit( text.charAt( 0 ) ) || text.charAt( 0 ) == '.' )
