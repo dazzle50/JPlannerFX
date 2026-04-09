@@ -33,7 +33,7 @@ public class ChooseCalendar extends ChooseField
   public ChooseCalendar()
   {
     // create a choose-field populated with the plan calendar names
-    super( Plan.getCalendars().getNameArray() );
+    super( Plan.getCalendars().toArray() );
   }
 
   /*************************************** refreshChoices ****************************************/

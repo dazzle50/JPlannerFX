@@ -134,7 +134,7 @@ public class Resource
       case Available:
         return m_available;
       case Calendar:
-        return m_calendar == null ? null : m_calendar.getName();
+        return m_calendar;
       case Comment:
         return m_comment;
       case Cost:
@@ -250,15 +250,16 @@ public class Resource
 
       case Available:
         // check new value is double and in range
-        if ( newValue instanceof Double avail )
+        if ( newValue instanceof Number num )
         {
+          double avail = num.doubleValue();
           if ( avail < 0 || avail > 99999.99 )
             return "Value not between 0 and 99999.99";
           if ( commit )
             m_available = avail;
           return null;
         }
-        return "Not float: " + Utils.objectsString( newValue );
+        return "Not number: " + Utils.objectsString( newValue );
 
       case Comment:
         // new value can be of any type
@@ -267,12 +268,13 @@ public class Resource
         return null;
 
       case Calendar:
-        Calendar calendar = Plan.getCalendars().findByName( newValue );
-        if ( calendar == null )
-          return "Not calendar: " + Utils.objectsString( newValue );
-        if ( commit )
-          m_calendar = calendar;
-        return null;
+        if ( newValue instanceof Calendar calendar )
+        {
+          if ( commit )
+            m_calendar = calendar;
+          return null;
+        }
+        return "Not calendar: " + Utils.objectsString( newValue );
 
       case Cost:
       default:

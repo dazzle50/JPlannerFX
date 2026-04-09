@@ -86,6 +86,11 @@ public class Day
   @Override
   public String toString()
   {
+    return m_name;
+  }
+
+  public String toStringLong()
+  {
     return Utils.name( this ) + "[" + m_name + ", " + m_work + ", " + m_periods + "]";
   }
 

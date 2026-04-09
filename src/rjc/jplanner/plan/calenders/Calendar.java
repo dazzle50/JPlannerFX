@@ -74,6 +74,11 @@ public class Calendar
   @Override
   public String toString()
   {
+    return m_name;
+  }
+
+  public String toStringLong()
+  {
     return Utils.name( this ) + "[" + m_name + ", " + m_cycleAnchor + ", " + m_normal + "]";
   }
 
@@ -119,7 +124,7 @@ public class Calendar
       case Exceptions:
         return m_exceptions.size();
       case Normal:
-        return normal < m_normal.size() ? m_normal.get( normal ).getName() : null;
+        return normal < m_normal.size() ? m_normal.get( normal ) : null;
       default:
         throw new IllegalArgumentException( "Unrecognised field " + field );
     }
@@ -195,12 +200,13 @@ public class Calendar
         // setting normal day-types
         if ( normal >= m_normal.size() )
           return "Normal beyond cycle length";
-        Day day = Plan.getDays().findByName( newValue );
-        if ( day == null )
-          return "Not day-type: " + Utils.objectsString( newValue );
-        if ( commit )
-          m_normal.set( normal, day );
-        return null;
+        if ( newValue instanceof Day day )
+        {
+          if ( commit )
+            m_normal.set( normal, day );
+          return null;
+        }
+        return "Not day-type: " + Utils.objectsString( newValue );
 
     }
   }

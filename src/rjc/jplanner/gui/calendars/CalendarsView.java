@@ -112,7 +112,7 @@ public class CalendarsView extends TableView
 
       default:
         // normals - select day-types
-        return new EditorChoose( Plan.getDays().getNameArray() );
+        return new EditorChoose( Plan.getDays().toArray() );
     }
   }
 

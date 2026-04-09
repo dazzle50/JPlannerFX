@@ -65,27 +65,4 @@ public class Calendars extends ArrayList<Calendar>
     getLast().addException( 28, 12, 2026, nonWorking );
   }
 
-  /**************************************** getNameArray *****************************************/
-  public Object[] getNameArray()
-  {
-    // return array of calendar names
-    var names = new String[size()];
-    for ( int index = 0; index < size(); index++ )
-      names[index] = get( index ).getName();
-
-    return names;
-  }
-
-  /***************************************** findByName ******************************************/
-  public Calendar findByName( Object name )
-  {
-    // return calendar with this name
-    for ( Calendar cal : this )
-      if ( cal.getName().equals( name ) )
-        return cal;
-
-    // no calendar found, so return null
-    return null;
-  }
-
 }
