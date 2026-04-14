@@ -20,8 +20,8 @@ package rjc.jplanner.gui.calendars;
 
 import javafx.application.Platform;
 import rjc.jplanner.plan.calenders.Calendar;
-import rjc.jplanner.plan.calenders.Calendars;
 import rjc.jplanner.plan.calenders.Calendar.FIELD;
+import rjc.jplanner.plan.calenders.Calendars;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;
@@ -112,7 +112,7 @@ public class CalendarsData extends TableData
       Platform.runLater( () -> setRowCount( calculateRowCount() ) );
 
     // test if value can/could be set
-    return m_calendars.get( dataColumn ).setValue( dataRow, newValue, commit );
+    return m_calendars.setValue( dataColumn, dataRow, newValue, commit );
   }
 
 }

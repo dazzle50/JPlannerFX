@@ -18,7 +18,6 @@
 
 package rjc.jplanner.plan;
 
-import rjc.jplanner.Main;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.jplanner.plan.calenders.Calendars;
 import rjc.jplanner.plan.days.Day;
@@ -56,10 +55,10 @@ public class Plan
   public Plan()
   {
     // construct empty but usable Plan
-    tasks = new Tasks();
-    resources = new Resources();
-    calendars = new Calendars();
     daytypes = new Days();
+    calendars = new Calendars( this );
+    resources = new Resources();
+    tasks = new Tasks();
 
     m_title = "";
     m_datetimeFormat = "EEE dd/MM/yyyy HH:mm";
@@ -89,76 +88,76 @@ public class Plan
     tasks.initialise();
 
     // default calendar to first calendar (should be standard week)
-    m_calendar = getCalendar( 0 );
+    m_calendar = calendars.get( 0 );
     m_start = DateTime.now();
   }
 
   /******************************************** task *********************************************/
-  static public Task getTask( int index )
+  public Task getTask( int index )
   {
     // return task corresponding to index
-    return Main.getPlan().tasks.get( index );
+    return tasks.get( index );
   }
 
-  static public int getIndex( Task task )
+  public int getIndex( Task task )
   {
-    return Main.getPlan().tasks.indexOf( task );
+    return tasks.indexOf( task );
   }
 
-  public static Tasks getTasks()
+  public Tasks getTasks()
   {
-    return Main.getPlan().tasks;
+    return tasks;
   }
 
   /****************************************** resource *******************************************/
-  static public Resource getResource( int index )
+  public Resource getResource( int index )
   {
     // return resource corresponding to index
-    return Main.getPlan().resources.get( index );
+    return resources.get( index );
   }
 
-  static public int getIndex( Resource resource )
+  public int getIndex( Resource resource )
   {
-    return Main.getPlan().resources.indexOf( resource );
+    return resources.indexOf( resource );
   }
 
-  public static Resources getResources()
+  public Resources getResources()
   {
-    return Main.getPlan().resources;
+    return resources;
   }
 
   /****************************************** calendar *******************************************/
-  static public Calendar getCalendar( int index )
+  public Calendar getCalendar( int index )
   {
     // return calendar corresponding to index
-    return Main.getPlan().calendars.get( index );
+    return calendars.get( index );
   }
 
-  static public int getIndex( Calendar calendar )
+  public int getIndex( Calendar calendar )
   {
-    return Main.getPlan().calendars.indexOf( calendar );
+    return calendars.indexOf( calendar );
   }
 
-  public static Calendars getCalendars()
+  public Calendars getCalendars()
   {
-    return Main.getPlan().calendars;
+    return calendars;
   }
 
   /********************************************* day *********************************************/
-  static public Day getDay( int index )
+  public Day getDay( int index )
   {
     // return day-type corresponding to index
-    return Main.getPlan().daytypes.get( index );
+    return daytypes.get( index );
   }
 
-  static public int getIndex( Day dayType )
+  public int getIndex( Day dayType )
   {
-    return Main.getPlan().daytypes.indexOf( dayType );
+    return daytypes.indexOf( dayType );
   }
 
-  public static Days getDays()
+  public Days getDays()
   {
-    return Main.getPlan().daytypes;
+    return daytypes;
   }
 
   /****************************************** getTitle *******************************************/

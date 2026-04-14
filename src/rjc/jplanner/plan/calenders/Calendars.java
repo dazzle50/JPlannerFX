@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import rjc.jplanner.Main;
 import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.days.Day;
+import rjc.table.Utils;
 import rjc.table.data.types.Date;
 
 /*************************************************************************************************/
@@ -33,15 +34,24 @@ public class Calendars extends ArrayList<Calendar>
 {
   private static final long serialVersionUID = Main.VERSION.hashCode();
 
+  private Plan              m_plan;
+
+  /**************************************** constructor ******************************************/
+  public Calendars( Plan plan )
+  {
+    // initialise private variables
+    m_plan = plan;
+  }
+
   /***************************************** initialise ******************************************/
   public void initialise()
   {
     // these day-types should reflect the default created in Days initialise()
-    Day nonWorking = Plan.getDay( 0 );
-    Day working = Plan.getDay( 1 );
-    Day shortDay = Plan.getDay( 2 );
-    Day evening = Plan.getDay( 3 );
-    Day fullTime = Plan.getDay( 4 );
+    Day nonWorking = m_plan.getDay( 0 );
+    Day working = m_plan.getDay( 1 );
+    Day shortDay = m_plan.getDay( 2 );
+    Day evening = m_plan.getDay( 3 );
+    Day fullTime = m_plan.getDay( 4 );
 
     // initialise list with default calendars
     clear();
@@ -63,6 +73,22 @@ public class Calendars extends ArrayList<Calendar>
         fullTime, nonWorking, fullTime ) );
     getLast().addException( 25, 12, 2026, nonWorking );
     getLast().addException( 28, 12, 2026, nonWorking );
+  }
+
+  /****************************************** setValue *******************************************/
+  public String setValue( int calendarIndex, int field, Object newValue, boolean commit )
+  {
+    // reject duplicate calendar names
+    if ( field == Calendar.FIELD.Name.ordinal() )
+    {
+      String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
+      for ( int index = 0; index < size(); index++ )
+        if ( index != calendarIndex && get( index ).getName().equals( newName ) )
+          return "Name not unique (clash with calendar " + ( index + 1 ) + ")";
+    }
+
+    // delegate to calendar to set value, and return any error message
+    return get( calendarIndex ).setValue( field, newValue, commit );
   }
 
 }

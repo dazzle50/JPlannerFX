@@ -19,10 +19,9 @@
 package rjc.jplanner.gui.tasks;
 
 import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.XSplitPane;
 import rjc.jplanner.gui.gantt.Gantt;
-import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
 /******************** Tab showing table of the plan tasks alongside the gantt ********************/
@@ -30,24 +29,21 @@ import rjc.jplanner.plan.Plan;
 
 public class TasksTab extends Tab
 {
-  private TasksView        m_view;
-  private Gantt            m_gantt;
-  private XSplitPane       m_split;
-
-  private static TasksData m_data;
+  private TasksView  m_view;
+  private Gantt      m_gantt;
+  private XSplitPane m_split;
 
   /**************************************** constructor ******************************************/
-  public TasksTab()
+  public TasksTab( PlanContext context )
   {
     // construct tab
     super( "Tasks & Gantt" );
     setClosable( false );
 
     // showing table of available plan tasks
-    m_data = m_data == null ? new TasksData( Plan.getTasks() ) : m_data;
-    m_view = new TasksView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
+    m_view = new TasksView( context.getTasksTableData(), getText() );
+    m_view.setUndostack( context.getUndoStack() );
+    m_view.setStatus( context.getStatus() );
     m_view.setFocusTraversable( true );
 
     // alongside the gantt
@@ -56,9 +52,9 @@ public class TasksTab extends Tab
     m_view.getRowsAxis().setHeaderNominalSize( m_gantt.axesHeightProperty().get() );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, wasSelected, isSelected ) ->
     {
-      if ( newValue )
+      if ( isSelected )
         setContent( m_split );
       else
         setContent( null );

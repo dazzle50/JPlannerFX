@@ -21,6 +21,7 @@ package rjc.jplanner.plan.resources;
 import java.util.ArrayList;
 
 import rjc.jplanner.Main;
+import rjc.table.Utils;
 
 /*************************************************************************************************/
 /************************** Holds the complete list of plan resources ****************************/
@@ -49,6 +50,22 @@ public class Resources extends ArrayList<Resource>
         count++;
 
     return count;
+  }
+
+  /****************************************** setValue *******************************************/
+  public String setValue( int resourceIndex, int field, Object newValue, boolean commit )
+  {
+    // reject duplicate resource initials
+    if ( field == Resource.FIELD.Initials.ordinal() )
+    {
+      String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
+      for ( int index = 0; index < size(); index++ )
+        if ( index != resourceIndex && get( index ).getInitials().equals( newInitials ) )
+          return "Initials not unique (clash with resource " + ( index + 1 ) + ")";
+    }
+
+    // delegate to resource to set value, and return any error message
+    return get( resourceIndex ).setValue( field, newValue, commit );
   }
 
 }

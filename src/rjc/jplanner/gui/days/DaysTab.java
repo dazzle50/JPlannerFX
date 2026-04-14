@@ -19,8 +19,7 @@
 package rjc.jplanner.gui.days;
 
 import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan day-types *************************/
@@ -28,28 +27,25 @@ import rjc.jplanner.plan.Plan;
 
 public class DaysTab extends Tab
 {
-  private DaysView        m_view;
-
-  private static DaysData m_data;
+  private DaysView m_view;
 
   /**************************************** constructor ******************************************/
-  public DaysTab()
+  public DaysTab( PlanContext context )
   {
     // construct tab
     super( "Days" );
     setClosable( false );
 
     // showing table of available plan day-types
-    m_data = m_data == null ? new DaysData( Plan.getDays() ) : m_data;
-    m_view = new DaysView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
+    m_view = new DaysView( context.getDaysTableData(), getText() );
+    m_view.setUndostack( context.getUndoStack() );
+    m_view.setStatus( context.getStatus() );
     m_view.setFocusTraversable( true );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, wasSelected, isSelected ) ->
     {
-      if ( newValue )
+      if ( isSelected )
         setContent( m_view );
       else
         setContent( null );

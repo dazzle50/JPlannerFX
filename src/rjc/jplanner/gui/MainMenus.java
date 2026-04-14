@@ -40,13 +40,13 @@ public class MainMenus extends MenuBar
   private Menu m_menuHelp;
 
   /***************************************** constructor *****************************************/
-  public MainMenus()
+  public MainMenus( PlanContext context )
   {
     // construct main window menu bar
     m_menuFile = new FileMenu();
-    m_menuEdit = new EditMenu();
+    m_menuEdit = new EditMenu( context );
     m_menuReport = new ReportMenu();
-    m_menuView = new ViewMenu();
+    m_menuView = new ViewMenu( context );
     m_menuHelp = new HelpMenu();
     getMenus().addAll( m_menuFile, m_menuEdit, m_menuReport, m_menuView, m_menuHelp );
 

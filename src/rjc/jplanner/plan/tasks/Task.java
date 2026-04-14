@@ -41,8 +41,11 @@ public class Task
   private String        m_cost;         // calculated cost based on resource use
   private String        m_comment;      // free text comment
 
+  @SuppressWarnings( "unused" ) // TODO: remove when implemented
   private int           m_indent;       // task indent level, zero for no indent
+  @SuppressWarnings( "unused" ) // TODO: remove when implemented
   private int           m_summaryStart; // index of this task's summary, ultimately task 0
+  @SuppressWarnings( "unused" ) // TODO: remove when implemented
   private int           m_summaryEnd;   // if summary, index of summary end, otherwise -1
 
   public enum FIELD

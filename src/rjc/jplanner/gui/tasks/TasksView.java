@@ -19,8 +19,8 @@
 package rjc.jplanner.gui.tasks;
 
 import rjc.jplanner.gui.editor.EditorTimeSpan;
-import rjc.jplanner.plan.tasks.TaskType;
 import rjc.jplanner.plan.tasks.Task.FIELD;
+import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;

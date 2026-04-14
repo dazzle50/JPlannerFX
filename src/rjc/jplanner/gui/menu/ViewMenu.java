@@ -25,6 +25,8 @@ import javafx.scene.control.MenuItem;
 import javafx.stage.Stage;
 import rjc.jplanner.Main;
 import rjc.jplanner.gui.MainTabs;
+import rjc.jplanner.gui.PlanContext;
+import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
 /**************************** View menu for main application menu bar ****************************/
@@ -32,12 +34,16 @@ import rjc.jplanner.gui.MainTabs;
 
 public class ViewMenu extends Menu
 {
+  private PlanContext            m_context;
+
+  private static UndoStackWindow undoWindow; // window to show current undostack
 
   /***************************************** constructor *****************************************/
-  public ViewMenu()
+  public ViewMenu( PlanContext context )
   {
     // construct view menu for main window menu bar
     setText( "View" );
+    m_context = context;
 
     getItems().add( undoWindow() );
     getItems().add( newWindow() );
@@ -48,7 +54,8 @@ public class ViewMenu extends Menu
   {
     // show/hide undostack window
     var viewUndoStack = new CheckMenuItem( "Undo Stack..." );
-    var undoWindow = Main.getUndoWindow();
+    if ( undoWindow == null )
+      undoWindow = new UndoStackWindow( m_context.getUndoStack() );
     undoWindow.showingProperty().addListener( ( property, oldShow, newShow ) -> viewUndoStack.setSelected( newShow ) );
     viewUndoStack.setOnAction( event ->
     {
@@ -73,7 +80,7 @@ public class ViewMenu extends Menu
       Stage stage = new Stage();
       stage.setTitle( "JPlannerFX" );
       stage.getIcons().add( Main.getIcon() );
-      stage.setScene( new Scene( new MainTabs( false ) ) );
+      stage.setScene( new Scene( new MainTabs( m_context ) ) );
       stage.setWidth( 1000 );
       stage.setHeight( 600 );
       stage.show();

@@ -92,7 +92,7 @@ public class ResourcesData extends TableData
   protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
     // test if value can/could be set
-    return m_resources.get( dataRow ).setValue( dataColumn, newValue, commit );
+    return m_resources.setValue( dataRow, dataColumn, newValue, commit );
   }
 
 }

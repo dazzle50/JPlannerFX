@@ -36,14 +36,15 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.Duration;
-import rjc.jplanner.Main;
 import rjc.jplanner.gui.ChooseCalendar;
-import rjc.jplanner.gui.MainWindow;
+import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.plan.Plan;
 import rjc.table.control.DateTimeField;
 import rjc.table.control.ExpandingField;
 import rjc.table.control.IObservableStatus;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
+import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.view.Colours;
 import rjc.table.view.TableScrollBar;
@@ -54,25 +55,47 @@ import rjc.table.view.TableScrollBar;
 
 public class PlanProperties extends ScrollPane
 {
-  private GridPane          m_grid            = new GridPane();
-  private ExpandingField    m_title           = new ExpandingField();
-  private DateTimeField     m_defaultStart    = new DateTimeField();
-  private ExpandingField    m_actualStart     = new ExpandingField();
-  private ExpandingField    m_end             = new ExpandingField();
-  private ChooseCalendar    m_defaultCalendar = new ChooseCalendar();
-  private ExpandingField    m_DTformat        = new ExpandingField();
-  private ExpandingField    m_Dformat         = new ExpandingField();
-  private ExpandingField    m_fileName        = new ExpandingField();
-  private ExpandingField    m_fileLocation    = new ExpandingField();
-  private ExpandingField    m_savedBy         = new ExpandingField();
-  private ExpandingField    m_savedWhen       = new ExpandingField();
-  private NumberOf          m_numberOf        = new NumberOf();
+  private Plan              m_plan;
+  private ObservableStatus  m_status;
+  private NumberOf          m_numberOf;
 
-  private static Background READONLY          = new Background(
+  private GridPane          m_grid         = new GridPane();
+  private ExpandingField    m_title        = new ExpandingField();
+  private DateTimeField     m_defaultStart = new DateTimeField();
+  private ExpandingField    m_actualStart  = new ExpandingField();
+  private ExpandingField    m_end          = new ExpandingField();
+  private ChooseCalendar    m_defaultCalendar;
+  private ExpandingField    m_DTformat     = new ExpandingField();
+  private ExpandingField    m_Dformat      = new ExpandingField();
+  private ExpandingField    m_fileName     = new ExpandingField();
+  private ExpandingField    m_fileLocation = new ExpandingField();
+  private ExpandingField    m_savedBy      = new ExpandingField();
+  private ExpandingField    m_savedWhen    = new ExpandingField();
+
+  private static Background READONLY       = new Background(
       new BackgroundFill( Colours.CELL_DISABLED_BACKGROUND, null, null ) );
 
+  public static String      STYLE_TOOLTIP;
+
   /**************************************** constructor ******************************************/
-  public PlanProperties()
+  public PlanProperties( PlanContext context )
+  {
+    // remember plan and setup gui
+    m_plan = context.getPlan();
+    m_status = context.getStatus();
+    m_numberOf = new NumberOf( m_plan );
+    m_defaultCalendar = new ChooseCalendar( m_plan.getCalendars() );
+    setup();
+
+    // set style for tool tips
+    STYLE_TOOLTIP = "-fx-text-fill: black;";
+    STYLE_TOOLTIP += "-fx-background-color: lightyellow;";
+    STYLE_TOOLTIP += "-fx-padding: 0.2em 1em 0.2em 0.5em;";
+    STYLE_TOOLTIP += "-fx-background-radius: 3px;";
+  }
+
+  /******************************************* setup *********************************************/
+  private void setup()
   {
     // setup scrolling properties panel
     setMinWidth( 0.0 );
@@ -131,7 +154,7 @@ public class PlanProperties extends ScrollPane
             + " S\t\t fraction-of-second\t\t\t fraction\t\t 978\n" + " A\t\t milli-of-day\t\t\t\t number\t\t 1234\n"
             + " N\t\t nano-of-day\t\t\t\t number\t\t 1234000000\n\n" + " p\t\t pad next\t\t\t\t\t pad modifier\t 1\n"
             + " '\t\t escape for text\t\t\t delimiter\n" + " ''\t\t single quote\t\t\t\t literal\t\t '\n" );
-    DTtip.setStyle( MainWindow.STYLE_TOOLTIP );
+    DTtip.setStyle( STYLE_TOOLTIP );
     DTtip.setShowDuration( Duration.INDEFINITE );
     m_DTformat.setTooltip( DTtip );
 
@@ -148,7 +171,7 @@ public class PlanProperties extends ScrollPane
             + " e/c\t\t localized day-of-week\t\t number/text\t 2; 02; Tue; Tuesday; T\n"
             + " F\t\t week-of-month\t\t\t number\t\t 3\n\n" + " p\t\t pad next\t\t\t\t\t pad modifier\t 1\n"
             + " '\t\t escape for text\t\t\t delimiter\n" + " ''\t\t single quote\t\t\t\t literal\t\t '\n" );
-    Dtip.setStyle( MainWindow.STYLE_TOOLTIP );
+    Dtip.setStyle( STYLE_TOOLTIP );
     Dtip.setShowDuration( Duration.INDEFINITE );
     m_Dformat.setTooltip( Dtip );
 
@@ -184,7 +207,7 @@ public class PlanProperties extends ScrollPane
 
     // attach the control to application status if has observable status
     if ( control instanceof IObservableStatus field )
-      field.setStatus( Main.getStatus() );
+      field.setStatus( m_status );
   }
 
   /***************************************** keyPressed ******************************************/
@@ -198,15 +221,15 @@ public class PlanProperties extends ScrollPane
     {
       int pos = source.getCaretPosition();
       if ( source == m_DTformat )
-        source.setText( Main.getPlan().getDateTimeFormat() );
+        source.setText( m_plan.getDateTimeFormat() );
       if ( source == m_Dformat )
-        source.setText( Main.getPlan().getDateFormat() );
+        source.setText( m_plan.getDateFormat() );
       if ( source == m_title )
-        source.setText( Main.getPlan().getTitle() );
+        source.setText( m_plan.getTitle() );
       if ( source == m_defaultStart )
-        displayDateTime( m_defaultStart, Main.getPlan().getDefaultStart() );
+        displayDateTime( m_defaultStart, m_plan.getDefaultStart() );
       if ( source == m_defaultCalendar )
-        source.setText( Main.getPlan().getDefaultCalendar().getName() );
+        source.setText( m_plan.getDefaultCalendar().getName() );
       source.selectRange( pos, pos );
     }
 
@@ -239,9 +262,9 @@ public class PlanProperties extends ScrollPane
       m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
     }
 
-    displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
-    displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
-    displayDateTime( m_savedWhen, Main.getPlan().getSavedWhen() );
+    displayDateTime( m_actualStart, m_plan.getEarliestTaskStart() );
+    displayDateTime( m_end, m_plan.getLatestTaskEnd() );
+    displayDateTime( m_savedWhen, m_plan.getSavedWhen() );
   }
 
   /************************************* dateTimeFocusChange *************************************/
@@ -291,7 +314,7 @@ public class PlanProperties extends ScrollPane
     if ( dt == null )
       field.setText( null );
     else if ( m_DTformat.getStatus().isError() )
-      field.setText( dt.toString( DateTimeFormatter.ofPattern( Main.getPlan().getDateTimeFormat() ) ) );
+      field.setText( dt.toString( DateTimeFormatter.ofPattern( m_plan.getDateTimeFormat() ) ) );
     else
       field.setText( dt.toString( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
   }
@@ -300,18 +323,18 @@ public class PlanProperties extends ScrollPane
   public void updateFromPlan()
   {
     // update the gui property widgets with values from plan
-    m_title.setText( Main.getPlan().getTitle() );
-    m_defaultCalendar.setSelected( Main.getPlan().getDefaultCalendar().getName() );
-    m_DTformat.setText( Main.getPlan().getDateTimeFormat() );
-    m_Dformat.setText( Main.getPlan().getDateFormat() );
-    m_fileName.setText( Main.getPlan().getFilename() );
-    m_fileLocation.setText( Main.getPlan().getFileLocation() );
-    m_savedBy.setText( Main.getPlan().getSavedBy() );
+    m_title.setText( m_plan.getTitle() );
+    m_defaultCalendar.setSelected( m_plan.getDefaultCalendar().getName() );
+    m_DTformat.setText( m_plan.getDateTimeFormat() );
+    m_Dformat.setText( m_plan.getDateFormat() );
+    m_fileName.setText( m_plan.getFilename() );
+    m_fileLocation.setText( m_plan.getFileLocation() );
+    m_savedBy.setText( m_plan.getSavedBy() );
 
-    m_defaultStart.setDateTime( Main.getPlan().getDefaultStart() );
-    displayDateTime( m_actualStart, Main.getPlan().getEarliestTaskStart() );
-    displayDateTime( m_end, Main.getPlan().getLatestTaskEnd() );
-    displayDateTime( m_savedWhen, Main.getPlan().getSavedWhen() );
+    m_defaultStart.setDateTime( m_plan.getDefaultStart() );
+    displayDateTime( m_actualStart, m_plan.getEarliestTaskStart() );
+    displayDateTime( m_end, m_plan.getLatestTaskEnd() );
+    displayDateTime( m_savedWhen, m_plan.getSavedWhen() );
 
     // update the gui "number of" pane
     m_numberOf.redraw();

@@ -21,6 +21,7 @@ package rjc.jplanner.plan.days;
 import java.util.ArrayList;
 
 import rjc.jplanner.Main;
+import rjc.table.Utils;
 
 /*************************************************************************************************/
 /************************** Holds the complete list of plan day-types ****************************/
@@ -40,6 +41,22 @@ public class Days extends ArrayList<Day>
     add( new Day( "Morning only", 0.5, 9.0, 13.0 ) );
     add( new Day( "Evening shift", 0.6, 18.0, 22.0 ) );
     add( new Day( "24H day", 1.5, 0.0, 24.0 ) );
+  }
+
+  /****************************************** setValue *******************************************/
+  public String setValue( int dayIndex, int field, Object newValue, boolean commit )
+  {
+    // reject duplicate day-type names
+    if ( field == Day.FIELD.Name.ordinal() )
+    {
+      String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
+      for ( int index = 0; index < size(); index++ )
+        if ( index != dayIndex && get( index ).getName().equals( newName ) )
+          return "Name not unique (clash with day-type " + ( index + 1 ) + ")";
+    }
+
+    // delegate to day-type to set value, and return any error message
+    return get( dayIndex ).setValue( field, newValue, commit );
   }
 
 }

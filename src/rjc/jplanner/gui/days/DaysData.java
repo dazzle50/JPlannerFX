@@ -128,7 +128,7 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
       Platform.runLater( () -> setColumnCount( calculateColumnCount() ) );
 
     // test if value can/could be set
-    return m_days.get( dataRow ).setValue( dataColumn, newValue, commit );
+    return m_days.setValue( dataRow, dataColumn, newValue, commit );
   }
 
   /****************************************** swapRows *******************************************/

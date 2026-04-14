@@ -18,7 +18,6 @@
 
 package rjc.jplanner.plan.resources;
 
-import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
@@ -52,7 +51,7 @@ public class Resource
   /**************************************** constructor ******************************************/
   public Resource()
   {
-    // nothing needs doing
+    // construct blank resource
   }
 
   /**************************************** toStringShort ****************************************/
@@ -151,14 +150,6 @@ public class Resource
     return m_initials == null;
   }
 
-  /******************************************** reset ********************************************/
-  private void reset()
-  {
-    // prepare blank resource when initials are first set
-    m_available = 1.0;
-    m_calendar = Plan.getCalendar( 0 );
-  }
-
   /****************************************** setValue *******************************************/
   public String setValue( int field, Object newValue, boolean commit )
   {
@@ -168,15 +159,10 @@ public class Resource
       case Initials:
         // new value can be of any type
         String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
-        String problem = initialsValidity( newInitials );
-        if ( problem != null )
-          return problem;
+        if ( newInitials.length() < 1 || newInitials.length() > 20 )
+          return "Initials length not between 1 and 20 characters";
         if ( commit )
-        {
-          if ( m_initials == null )
-            reset();
           m_initials = newInitials;
-        }
         return null;
 
       case Alias:
@@ -280,22 +266,6 @@ public class Resource
       default:
         return "Not implemented";
     }
-  }
-
-  /************************************* initialsValidity ****************************************/
-  private String initialsValidity( String newInitials )
-  {
-    // check initials are not too short or long
-    if ( newInitials.length() < 1 || newInitials.length() > 20 )
-      return "Initials length not between 1 and 20 characters";
-
-    // check name is not a duplicate
-    for ( int index = 0; index < Plan.getResources().size(); index++ )
-      if ( Plan.getResource( index ) != this && newInitials.equals( Plan.getResource( index ).getInitials() ) )
-        return "Initials not unique (clash with resource " + index + ")";
-
-    // no problem so return null
-    return null;
   }
 
 }

@@ -25,7 +25,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
-import rjc.jplanner.Main;
+import rjc.jplanner.gui.PlanContext;
 import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
@@ -36,14 +36,16 @@ public class EditMenu extends Menu
 {
   private MenuItem        m_editUndo;
   private MenuItem        m_editRedo;
+  private UndoStack       m_undostack;
 
   private static Modifier CONTROL = KeyCombination.CONTROL_DOWN;
 
   /***************************************** constructor *****************************************/
-  public EditMenu()
+  public EditMenu( PlanContext context )
   {
     // construct edit menu for main window menu bar
     setText( "Edit" );
+    m_undostack = context.getUndoStack();
 
     getItems().add( undo() );
     getItems().add( redo() );
@@ -55,14 +57,13 @@ public class EditMenu extends Menu
     setOnShowing( event ->
     {
       // check if possible to undo
-      UndoStack stack = Main.getUndostack();
-      boolean undo = stack.getIndex() > 0;
-      m_editUndo.setText( "Undo " + ( undo ? stack.getUndoText() : "" ) );
+      boolean undo = m_undostack.getIndex() > 0;
+      m_editUndo.setText( "Undo " + ( undo ? m_undostack.getUndoText() : "" ) );
       m_editUndo.setDisable( !undo );
 
       // check if possible to redo
-      boolean redo = stack.getIndex() < stack.getSize();
-      m_editRedo.setText( "Redo " + ( redo ? stack.getRedoText() : "" ) );
+      boolean redo = m_undostack.getIndex() < m_undostack.getSize();
+      m_editRedo.setText( "Redo " + ( redo ? m_undostack.getRedoText() : "" ) );
       m_editRedo.setDisable( !redo );
     } );
   }
@@ -73,7 +74,7 @@ public class EditMenu extends Menu
     // undo last command on undo-stack
     m_editUndo = new MenuItem();
     m_editUndo.setAccelerator( new KeyCodeCombination( KeyCode.Z, CONTROL ) );
-    m_editUndo.setOnAction( event -> Main.getUndostack().undo() );
+    m_editUndo.setOnAction( event -> m_undostack.undo() );
     return m_editUndo;
   }
 
@@ -83,7 +84,7 @@ public class EditMenu extends Menu
     // redo next command on undo-stack
     m_editRedo = new MenuItem();
     m_editRedo.setAccelerator( new KeyCodeCombination( KeyCode.Y, CONTROL ) );
-    m_editRedo.setOnAction( event -> Main.getUndostack().redo() );
+    m_editRedo.setOnAction( event -> m_undostack.redo() );
 
     return m_editRedo;
   }

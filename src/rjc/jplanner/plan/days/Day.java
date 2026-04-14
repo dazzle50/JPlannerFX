@@ -20,7 +20,6 @@ package rjc.jplanner.plan.days;
 
 import java.util.ArrayList;
 
-import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 import rjc.table.data.types.Time;
 
@@ -34,6 +33,7 @@ public class Day
   private double                   m_work;    // equivalent days worked (typically 1.0 or 0.0)
   private ArrayList<DayWorkPeriod> m_periods; // list of work periods
 
+  @SuppressWarnings( "unused" ) // TODO: remove when implemented
   private int                      m_workMS;  // pre-calculated number of worked milliseconds in day-type
 
   public enum FIELD
@@ -161,9 +161,8 @@ public class Day
       case Name:
         // new value can be of any type
         String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
-        String problem = nameValidity( newName );
-        if ( problem != null )
-          return problem;
+        if ( newName.length() < 1 || newName.length() > 40 )
+          return "Name length not between 1 and 40 characters";
         if ( commit )
           m_name = newName;
         return null;
@@ -221,7 +220,7 @@ public class Day
         if ( newValue instanceof Time time )
         {
           boolean isStart = ( ( field - FIELD.Start.ordinal() ) & 1 ) == 0;
-          problem = timeValidity( period, field, time );
+          var problem = timeValidity( period, field, time );
           if ( problem != null )
             return problem;
           if ( commit )
@@ -236,22 +235,6 @@ public class Day
         }
         return "Not time: " + Utils.objectsString( newValue );
     }
-  }
-
-  /*************************************** nameValidity ******************************************/
-  public String nameValidity( String newName )
-  {
-    // check name is not too short or long
-    if ( newName.length() < 1 || newName.length() > 40 )
-      return "Name length not between 1 and 40 characters";
-
-    // check name is not a duplicate
-    for ( int index = 0; index < Plan.getDays().size(); index++ )
-      if ( Plan.getDay( index ) != this && Plan.getDay( index ).getName().equals( newName ) )
-        return "Name not unique (clash with day-type " + ( index + 1 ) + ")";
-
-    // no problem so return null
-    return null;
   }
 
   /*************************************** timeValidity  ******************************************/

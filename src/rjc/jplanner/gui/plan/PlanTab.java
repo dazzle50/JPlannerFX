@@ -19,7 +19,7 @@
 package rjc.jplanner.gui.plan;
 
 import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.XSplitPane;
 
 /*************************************************************************************************/
@@ -28,33 +28,35 @@ import rjc.jplanner.gui.XSplitPane;
 
 public class PlanTab extends Tab
 {
-  private PlanNotes      m_notes      = new PlanNotes();
-  private PlanProperties m_properties = new PlanProperties();
+  private PlanNotes      m_notes;
+  private PlanProperties m_properties;
 
   /**************************************** constructor ******************************************/
-  public PlanTab()
+  public PlanTab( PlanContext context )
   {
     // construct tab
     super( "Plan" );
     setClosable( false );
 
+    m_notes = new PlanNotes();
+    m_properties = new PlanProperties( context );
     XSplitPane split = new XSplitPane( m_properties, m_notes );
     split.setPreferredDividerPosition( 300 );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, wasSelected, isSelected ) ->
     {
-      if ( newValue )
+      if ( isSelected )
       {
         m_properties.updateFromPlan();
-        m_notes.setText( Main.getPlan().getNotes() );
+        m_notes.setText( context.getPlan().getNotes() );
         setContent( split );
       }
       else
       {
         setContent( null );
         m_properties.updatePlan();
-        Main.getPlan().setNotes( m_notes.getText() );
+        context.getPlan().setNotes( m_notes.getText() );
       }
     } );
   }

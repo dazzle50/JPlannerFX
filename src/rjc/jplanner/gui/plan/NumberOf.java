@@ -33,16 +33,21 @@ import rjc.jplanner.plan.Plan;
 
 class NumberOf extends Pane
 {
-  private Canvas m_canvas = new Canvas(); // canvas to display group box and contents
+  private Plan   m_plan;         // plan to display number of tasks/resources/calendars/days
+  private Canvas m_canvas;       // canvas to display group box and contents
 
-  private double m_titleWidth;            // width in pixels of string "Number of"
-  private double m_rowHeight;             // height in pixels of each row displayed
-  private double m_inset;                 // inset in pixels of grouping border from top edge
-  private double m_longestLabel;          // indent in pixels of displayed numbers from right edge
+  private double m_titleWidth;   // width in pixels of string "Number of"
+  private double m_rowHeight;    // height in pixels of each row displayed
+  private double m_inset;        // inset in pixels of grouping border from top edge
+  private double m_longestLabel; // indent in pixels of displayed numbers from right edge
 
   /**************************************** constructor ******************************************/
-  public NumberOf()
+  public NumberOf( Plan plan )
   {
+    // initialise private variables
+    m_plan = plan;
+    m_canvas = new Canvas();
+
     // create pane to display number of tasks/resources/calendars/day-types
     Bounds bounds = new Text( "Number of" ).getLayoutBounds();
     m_titleWidth = Math.ceil( bounds.getWidth() );
@@ -85,16 +90,16 @@ class NumberOf extends Pane
     // draw labels and number of
     double y = m_inset + m_rowHeight;
     gc.fillText( "Tasks", m_inset, y );
-    gc.fillText( ":  " + Plan.getTasks().getNotNullCount(), m_longestLabel, y );
+    gc.fillText( ":  " + m_plan.getTasks().getNotNullCount(), m_longestLabel, y );
     y += m_rowHeight;
     gc.fillText( "Recources", m_inset, y );
-    gc.fillText( ":  " + Plan.getResources().getNotNullCount(), m_longestLabel, y );
+    gc.fillText( ":  " + m_plan.getResources().getNotNullCount(), m_longestLabel, y );
     y += m_rowHeight;
     gc.fillText( "Calendars", m_inset, y );
-    gc.fillText( ":  " + Plan.getCalendars().size(), m_longestLabel, y );
+    gc.fillText( ":  " + m_plan.getCalendars().size(), m_longestLabel, y );
     y += m_rowHeight;
     gc.fillText( "Days", m_inset, y );
-    gc.fillText( ":  " + Plan.getDays().size(), m_longestLabel, y );
+    gc.fillText( ":  " + m_plan.getDays().size(), m_longestLabel, y );
   }
 
 }

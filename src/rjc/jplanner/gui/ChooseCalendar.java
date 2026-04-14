@@ -18,7 +18,7 @@
 
 package rjc.jplanner.gui;
 
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.calenders.Calendars;
 import rjc.table.Utils;
 import rjc.table.control.ChooseField;
 
@@ -30,10 +30,10 @@ public class ChooseCalendar extends ChooseField
 {
 
   /**************************************** constructor ******************************************/
-  public ChooseCalendar()
+  public ChooseCalendar( Calendars calendars )
   {
     // create a choose-field populated with the plan calendar names
-    super( Plan.getCalendars().toArray() );
+    super( calendars.toArray() );
   }
 
   /*************************************** refreshChoices ****************************************/

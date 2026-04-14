@@ -19,7 +19,7 @@
 package rjc.jplanner.gui.calendars;
 
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calenders.Calendar.FIELD;
 import rjc.table.Utils;
 import rjc.table.data.TableData;
@@ -112,7 +112,8 @@ public class CalendarsView extends TableView
 
       default:
         // normals - select day-types
-        return new EditorChoose( Plan.getDays().toArray() );
+        var days = ( (PlanContext) getData().getUserData() ).getPlan().getDays();
+        return new EditorChoose( days.toArray() );
     }
   }
 

@@ -39,26 +39,16 @@ public class MainTabs extends TabPane
   private Tab m_days;      // tab showing table view of plan day-types
 
   /**************************************** constructor ******************************************/
-  public MainTabs()
-  {
-    // construct main window tabs with plan-tabs
-    this( true );
-  }
-
-  /**************************************** constructor ******************************************/
-  public MainTabs( boolean showPlanTab )
+  public MainTabs( PlanContext context )
   {
     // construct main window tabs with optional plan-tabs
-    if ( showPlanTab )
-      m_plan = new PlanTab();
-    m_tasks = new TasksTab();
-    m_resources = new ResourcesTab();
-    m_calendars = new CalendarsTab();
-    m_days = new DaysTab();
+    m_plan = new PlanTab( context );
+    m_tasks = new TasksTab( context );
+    m_resources = new ResourcesTab( context );
+    m_calendars = new CalendarsTab( context );
+    m_days = new DaysTab( context );
 
-    if ( showPlanTab )
-      getTabs().addAll( m_plan );
-    getTabs().addAll( m_tasks, m_resources, m_calendars, m_days );
+    getTabs().addAll( m_plan, m_tasks, m_resources, m_calendars, m_days );
   }
 
 }

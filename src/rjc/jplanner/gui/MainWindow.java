@@ -27,7 +27,8 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
-import rjc.jplanner.Main;
+import rjc.jplanner.plan.Plan;
+import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
 
 /*************************************************************************************************/
@@ -36,28 +37,25 @@ import rjc.table.signal.ObservableStatus.Level;
 
 public class MainWindow extends Scene
 {
-  private MenuBar      m_menus;      // menus at top of MainWindow
-  private TabPane      m_tabs;       // tabs containing application functionality
-  private TextField    m_statusBar;  // status bar at bottom of MainWindow
-
-  public static String STYLE_TOOLTIP;
+  private MenuBar   m_menus;     // menus at top of scene
+  private TabPane   m_tabs;      // tabs containing application functionality
+  private TextField m_statusBar; // status bar at bottom of scene
 
   /**************************************** constructor ******************************************/
   public MainWindow()
   {
-    // main window based on grid layout
+    // main window scene based on grid layout
     super( new GridPane() );
 
-    // set style for tool tips
-    STYLE_TOOLTIP = "-fx-text-fill: black;";
-    STYLE_TOOLTIP += "-fx-background-color: lightyellow;";
-    STYLE_TOOLTIP += "-fx-padding: 0.2em 1em 0.2em 0.5em;";
-    STYLE_TOOLTIP += "-fx-background-radius: 3px;";
+    // prepare initial plan and table data sources
+    Plan plan = new Plan();
+    plan.initialise();
+    PlanContext context = new PlanContext( plan );
 
     // prepare components
-    m_menus = new MainMenus();
-    m_tabs = new MainTabs();
-    m_statusBar = getStatusBar();
+    m_menus = new MainMenus( context );
+    m_tabs = new MainTabs( context );
+    m_statusBar = createStatusBar( context.getStatus() );
 
     // arrange the grid
     GridPane grid = (GridPane) getRoot();
@@ -69,7 +67,7 @@ public class MainWindow extends Scene
   }
 
   /**************************************** getStatusBar *****************************************/
-  private TextField getStatusBar()
+  private TextField createStatusBar( ObservableStatus status )
   {
     // create status-bar for displaying status messages
     TextField statusBar = new TextField();
@@ -78,7 +76,6 @@ public class MainWindow extends Scene
     statusBar.setBackground( new Background( new BackgroundFill( Color.gray( 0.96 ), null, null ) ) );
 
     // display status changes on status-bar using runLater so can handle signals from other threads
-    var status = Main.getStatus();
     status.addLaterListener( ( sender, msg ) ->
     {
       statusBar.setText( status.getMessage() );

@@ -20,7 +20,7 @@ package rjc.jplanner.gui.gantt;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import rjc.jplanner.Main;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.tasks.TasksView;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.table.data.types.Date;
@@ -103,7 +103,7 @@ class GanttPlot extends Canvas
   private void shadeNonWorking( int x, int y, int w, int h )
   {
     // shade non-working time on gantt-plot
-    Calendar calendar = Main.getPlan().getDefaultCalendar();
+    Calendar calendar = ( (PlanContext) m_view.getData().getUserData() ).getPlan().getDefaultCalendar();
     Date date = m_scale.datetime( x - 1 ).getDate();
     int endEpoch = m_scale.datetime( x + w ).getDate().getEpochDay();
     int startShadeEpoch;

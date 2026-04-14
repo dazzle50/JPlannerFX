@@ -19,8 +19,7 @@
 package rjc.jplanner.gui.resources;
 
 import javafx.scene.control.Tab;
-import rjc.jplanner.Main;
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 
 /*************************************************************************************************/
 /************************* Tab showing table of available plan resources *************************/
@@ -28,28 +27,25 @@ import rjc.jplanner.plan.Plan;
 
 public class ResourcesTab extends Tab
 {
-  private ResourcesView        m_view;
-
-  private static ResourcesData m_data;
+  private ResourcesView m_view;
 
   /**************************************** constructor ******************************************/
-  public ResourcesTab()
+  public ResourcesTab( PlanContext context )
   {
     // construct tab
     super( "Resources" );
     setClosable( false );
 
     // showing table of available plan resources
-    m_data = m_data == null ? new ResourcesData( Plan.getResources() ) : m_data;
-    m_view = new ResourcesView( m_data, getText() );
-    m_view.setUndostack( Main.getUndostack() );
-    m_view.setStatus( Main.getStatus() );
+    m_view = new ResourcesView( context.getResourcesTableData(), getText() );
+    m_view.setUndostack( context.getUndoStack() );
+    m_view.setStatus( context.getStatus() );
     m_view.setFocusTraversable( true );
 
     // only have tab contents set if tab selected
-    selectedProperty().addListener( ( property, oldValue, newValue ) ->
+    selectedProperty().addListener( ( property, wasSelected, isSelected ) ->
     {
-      if ( newValue )
+      if ( isSelected )
         setContent( m_view );
       else
         setContent( null );

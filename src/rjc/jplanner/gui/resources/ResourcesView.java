@@ -87,7 +87,8 @@ public class ResourcesView extends TableView
         return new EditorDouble();
 
       case Calendar:
-        return new EditorChoose( Plan.getCalendars().toArray() );
+        var calendars = ( (Plan) getData().getUserData() ).getCalendars();
+        return new EditorChoose( calendars.toArray() );
 
       default:
         return null;

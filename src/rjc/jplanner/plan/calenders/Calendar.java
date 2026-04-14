@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.days.Day;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
@@ -148,9 +147,8 @@ public class Calendar
       case Name:
         // new value can be of any type
         String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
-        String problem = nameValidity( newName );
-        if ( problem != null )
-          return problem;
+        if ( newName.length() < 1 || newName.length() > 40 )
+          return "Name length not between 1 and 40 characters";
         if ( commit )
           m_name = newName;
         return null;
@@ -209,22 +207,6 @@ public class Calendar
         return "Not day-type: " + Utils.objectsString( newValue );
 
     }
-  }
-
-  /*************************************** nameValidity ******************************************/
-  public String nameValidity( String newName )
-  {
-    // check name is not too short or long
-    if ( newName.length() < 1 || newName.length() > 40 )
-      return "Name length not between 1 and 40 characters";
-
-    // check name is not a duplicate
-    for ( int index = 0; index < Plan.getCalendars().size(); index++ )
-      if ( Plan.getCalendar( index ) != this && newName.equals( Plan.getCalendar( index ).getName() ) )
-        return "Name not unique (clash with calendar " + ( index + 1 ) + ")";
-
-    // no problem so return null
-    return null;
   }
 
   /***************************************** isWorking *******************************************/

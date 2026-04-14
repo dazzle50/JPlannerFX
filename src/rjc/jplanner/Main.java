@@ -25,11 +25,7 @@ import javafx.application.Platform;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import rjc.jplanner.gui.MainWindow;
-import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
-import rjc.table.signal.ObservableStatus;
-import rjc.table.undo.UndoStack;
-import rjc.table.undo.UndoStackWindow;
 
 /*************************************************************************************************/
 // Aims to be a project planner similar to M$Project with table entry of tasks & Gantt chart
@@ -40,13 +36,9 @@ import rjc.table.undo.UndoStackWindow;
 
 public class Main extends Application
 {
-  public static final String      VERSION = "v0.1.0 WIP";
+  public static final String VERSION = "v0.1.0 WIP";
 
-  private static Image            m_icon;                // icon for application
-  private static Plan             m_plan;                // current active plan
-  private static ObservableStatus m_status;              // current application status
-  private static UndoStack        m_undostack;           // current active undostack
-  private static UndoStackWindow  m_undoWindow;          // window to show current undostack
+  private static Image       m_icon;                // icon for application
 
   /******************************************** main *********************************************/
   public static void main( String[] args )
@@ -60,14 +52,6 @@ public class Main extends Application
     Utils.trace( "JPlannerFX  VERSION = '" + VERSION + "'", args );
     Utils.trace( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ JPlannerFX started ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
 
-    // prepare application
-    m_icon = new Image( Main.class.getResourceAsStream( "JPlannerFX-icon64.png" ) );
-    m_status = new ObservableStatus();
-    m_undostack = new UndoStack();
-    m_plan = new Plan();
-    m_plan.initialise();
-    Utils.trace( "PLAN INITIALISED : ", m_plan );
-
     // launch application display
     launch( args );
 
@@ -79,11 +63,12 @@ public class Main extends Application
   public void start( Stage primaryStage ) throws Exception
   {
     // prepare application display
+    m_icon = new Image( Main.class.getResourceAsStream( "JPlannerFX-icon64.png" ) );
     primaryStage.setTitle( "JPlannerFX  " + VERSION );
     primaryStage.getIcons().add( m_icon );
     primaryStage.setScene( new MainWindow() );
 
-    // close app when main window is closed (in case other windows are open)
+    // close app when main window is closed (even if other windows are open)
     primaryStage.setOnHidden( event -> Platform.exit() );
 
     // open app window
@@ -92,40 +77,11 @@ public class Main extends Application
     primaryStage.show();
   }
 
-  /******************************************* getPlan *******************************************/
-  public static Plan getPlan()
-  {
-    // return application current active plan
-    return m_plan;
-  }
-
-  /****************************************** getStatus ******************************************/
-  public static ObservableStatus getStatus()
-  {
-    // return application current status property
-    return m_status;
-  }
-
-  /***************************************** getUndostack ****************************************/
-  public static UndoStack getUndostack()
-  {
-    // return application current active undo-stack
-    return m_undostack;
-  }
-
   /******************************************* getIcon *******************************************/
   public static Image getIcon()
   {
     // return application icon
     return m_icon;
-  }
-
-  /*************************************** undoStackWindow ***************************************/
-  public static UndoStackWindow getUndoWindow()
-  {
-    // return application undostack window
-    m_undoWindow = m_undoWindow == null ? new UndoStackWindow( getUndostack() ) : m_undoWindow;
-    return m_undoWindow;
   }
 
 }

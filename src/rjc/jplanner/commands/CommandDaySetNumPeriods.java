@@ -20,7 +20,7 @@ package rjc.jplanner.commands;
 
 import java.util.ArrayList;
 
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.days.Day;
 import rjc.jplanner.plan.days.DayWorkPeriod;
 import rjc.table.data.TableData;
@@ -43,7 +43,7 @@ public class CommandDaySetNumPeriods implements IUndoCommand
   public CommandDaySetNumPeriods( TableData tableData, int dataRow, int newNum )
   {
     // initialise private variables
-    Day day = Plan.getDay( dataRow ); // TODO IN FUTURE Day day = tableData.getDataSource() ....
+    var day = ( (PlanContext) tableData.getUserData() ).getPlan().getDay( dataRow );
     m_oldPeriods = day.getWorkPeriods();
     m_newPeriods = new ArrayList<DayWorkPeriod>( m_oldPeriods );
     int oldNum = m_oldPeriods.size();

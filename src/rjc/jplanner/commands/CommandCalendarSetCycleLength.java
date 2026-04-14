@@ -20,7 +20,7 @@ package rjc.jplanner.commands;
 
 import java.util.ArrayList;
 
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.jplanner.plan.days.Day;
 import rjc.table.data.TableData;
@@ -42,7 +42,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
   public CommandCalendarSetCycleLength( TableData tableData, int dataColumn, int newLength )
   {
     // initialise private variables
-    Calendar calendar = Plan.getCalendar( dataColumn ); // TODO IN FUTURE Day day = tableData.getDataSource() ....
+    var calendar = ( (PlanContext) tableData.getUserData() ).getPlan().getCalendar( dataColumn );
     m_oldNormals = calendar.getNormals();
     m_newNormals = new ArrayList<Day>( m_oldNormals );
     int oldLength = m_oldNormals.size();
