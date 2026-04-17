@@ -24,6 +24,7 @@ import java.util.List;
 
 import javafx.application.Platform;
 import javafx.geometry.Pos;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.days.Day;
 import rjc.jplanner.plan.days.Day.FIELD;
 import rjc.jplanner.plan.days.Days;
@@ -109,7 +110,7 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
       if ( m_days.get( dataRow ).isDisabled( dataColumn ) )
         return m_disabledVisual;
 
-    // otherwise return default cell visuals
+    // otherwise return adjusted default cell visuals
     var visual = super.getVisual( dataColumn, dataRow );
     if ( dataColumn == Day.FIELD.Name.ordinal() )
       visual.textAlignment = Pos.CENTER_LEFT;
@@ -124,7 +125,7 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
   protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
     // after committing new work-periods recalculate table column count
-    if ( commit && dataColumn == Day.FIELD.Periods.ordinal() )
+    if ( commit && dataColumn == FIELD.Periods.ordinal() )
       Platform.runLater( () -> setColumnCount( calculateColumnCount() ) );
 
     // test if value can/could be set
@@ -164,8 +165,20 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
     for ( var data : rowData )
       toInsert.add( data == null ? new Day() : (Day) data );
 
+    // insert the new rows and update row count
     m_days.addAll( insertIndex, toInsert );
     setRowCount( getRowCount() + toInsert.size() );
+
+    // ensure all inserted days have unique names by appending suffix if necessary
+    for ( int i = 0; i < toInsert.size(); i++ )
+    {
+      var day = toInsert.get( i );
+      String name = day.getName();
+      int suffix = 1;
+      while ( setValue( FIELD.Name.ordinal(), insertIndex + i, name, true ) != null )
+        name = day.getName() + " " + suffix++;
+    }
+
     return true;
   }
 
@@ -183,11 +196,44 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
   @Override
   public List<Object> deleteRows( int deleteIndex, int count )
   {
-    // snapshot the rows being removed before clearing the sublist
+    // snapshot the days being removed before clearing the sublist
     var deleted = new ArrayList<Object>( m_days.subList( deleteIndex, deleteIndex + count ) );
     m_days.subList( deleteIndex, deleteIndex + count ).clear();
     setRowCount( getRowCount() - count );
     return deleted;
+  }
+
+  /************************************** checkRowsDeletable *************************************/
+  /**
+   * IDataInsertDeleteRows - Checks if the specified rows can be deleted.
+   *
+   * @param dataRows  array of data-row indices to check for deletability
+   * @return {@code null} if all rows are deletable, otherwise a message describing why the
+   *         specified rows cannot be deleted
+   */
+  @Override
+  public String checkRowsDeletable( int[] dataRows )
+  {
+    // check if any of the specified day-types are used by any calendar
+    var messages = new ArrayList<String>();
+    var calendars = ( (PlanContext) getUserData() ).getPlan().getCalendars();
+
+    for ( var dataRow : dataRows )
+    {
+      var day = m_days.get( dataRow );
+      var usedBy = calendars.stream()
+          .filter( calendar -> calendar.getNormals().contains( day ) || calendar.getExceptions().containsValue( day ) )
+          .map( calendar -> "'" + calendar.getName() + "'" ).toList();
+
+      if ( !usedBy.isEmpty() )
+        messages.add( "Day-type '" + day.getName() + "' is used by calendar " + String.join( ", ", usedBy ) );
+    }
+
+    if ( !messages.isEmpty() )
+      return String.join( "\n", messages );
+
+    // if we get here, all day-types are deletable
+    return null;
   }
 
 }

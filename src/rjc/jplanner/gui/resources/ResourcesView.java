@@ -18,7 +18,7 @@
 
 package rjc.jplanner.gui.resources;
 
-import rjc.jplanner.plan.Plan;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableContextMenu;
@@ -87,7 +87,7 @@ public class ResourcesView extends TableView
         return new EditorDouble();
 
       case Calendar:
-        var calendars = ( (Plan) getData().getUserData() ).getCalendars();
+        var calendars = ( (PlanContext) getData().getUserData() ).getPlan().getCalendars();
         return new EditorChoose( calendars.toArray() );
 
       default:

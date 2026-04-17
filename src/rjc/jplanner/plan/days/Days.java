@@ -51,7 +51,7 @@ public class Days extends ArrayList<Day>
     {
       String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
       for ( int index = 0; index < size(); index++ )
-        if ( index != dayIndex && get( index ).getName().equals( newName ) )
+        if ( index != dayIndex && newName.equals( get( index ).getName() ) )
           return "Name not unique (clash with day-type " + ( index + 1 ) + ")";
     }
 

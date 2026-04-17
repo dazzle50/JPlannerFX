@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.calendars;
 
+import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calenders.Calendar.FIELD;
@@ -115,6 +116,22 @@ public class CalendarsView extends TableView
         var days = ( (PlanContext) getData().getUserData() ).getPlan().getDays();
         return new EditorChoose( days.toArray() );
     }
+  }
+
+  /*************************************** openContextMenu ***************************************/
+  @Override
+  public void openContextMenu( ContextMenuEvent event )
+  {
+    // build context menu
+    var menu = new TableContextMenu( this );
+
+    // loop through menu items find item with text "Add column" and rename it
+    menu.getItems().stream().filter( item -> item.getText().equals( "Add column" ) )
+        .forEach( item -> item.setText( "Add new calendar" ) );
+
+    // show the context menu if it has any items
+    if ( menu != null && !menu.getItems().isEmpty() )
+      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

@@ -43,12 +43,13 @@ public class Calendar
   }
 
   /**************************************** constructor ******************************************/
-  public Calendar()
+  public Calendar( Day day )
   {
-    // construct empty but usable calendar
-    m_name = "Null";
+    // construct simple new calendar
+    m_name = "New";
     m_cycleAnchor = Date.of( 2000, 1, 1 );
     m_normal = new ArrayList<>();
+    m_normal.add( day );
     m_exceptions = new HashMap<>();
   }
 

@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.days;
 
+import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandDaySetNumPeriods;
 import rjc.jplanner.plan.days.Day;
 import rjc.jplanner.plan.days.Day.FIELD;
@@ -116,6 +117,22 @@ public class DaysView extends TableView
         // work period start & end times - hours & minutes only
         return new EditorTime( true, true, false, false );
     }
+  }
+
+  /*************************************** openContextMenu ***************************************/
+  @Override
+  public void openContextMenu( ContextMenuEvent event )
+  {
+    // build context menu
+    var menu = new TableContextMenu( this );
+
+    // loop through menu items find item with text "Add row" and rename it
+    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
+        .forEach( item -> item.setText( "Add new day-type" ) );
+
+    // show the context menu if it has any items
+    if ( menu != null && !menu.getItems().isEmpty() )
+      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

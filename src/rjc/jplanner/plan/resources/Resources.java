@@ -60,7 +60,7 @@ public class Resources extends ArrayList<Resource>
     {
       String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
       for ( int index = 0; index < size(); index++ )
-        if ( index != resourceIndex && get( index ).getInitials().equals( newInitials ) )
+        if ( index != resourceIndex && newInitials.equals( get( index ).getInitials() ) )
           return "Initials not unique (clash with resource " + ( index + 1 ) + ")";
     }
 

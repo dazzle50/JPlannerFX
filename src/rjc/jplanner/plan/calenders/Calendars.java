@@ -83,7 +83,7 @@ public class Calendars extends ArrayList<Calendar>
     {
       String newName = newValue == null ? "" : Utils.clean( newValue.toString() );
       for ( int index = 0; index < size(); index++ )
-        if ( index != calendarIndex && get( index ).getName().equals( newName ) )
+        if ( index != calendarIndex && newName.equals( get( index ).getName() ) )
           return "Name not unique (clash with calendar " + ( index + 1 ) + ")";
     }
 
