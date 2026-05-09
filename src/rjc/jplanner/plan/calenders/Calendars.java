@@ -18,6 +18,7 @@
 
 package rjc.jplanner.plan.calenders;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import rjc.jplanner.Main;
@@ -32,26 +33,27 @@ import rjc.table.data.types.Date;
 
 public class Calendars extends ArrayList<Calendar>
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
+  private static final long   serialVersionUID = Main.VERSION.hashCode();
 
-  private Plan              m_plan;
+  private WeakReference<Plan> m_plan;
 
   /**************************************** constructor ******************************************/
   public Calendars( Plan plan )
   {
-    // initialise private variables
-    m_plan = plan;
+    // hold plan weakly so does not prevent garbage collection of plan
+    m_plan = new WeakReference<>( plan );
   }
 
   /***************************************** initialise ******************************************/
   public void initialise()
   {
     // these day-types should reflect the default created in Days initialise()
-    Day nonWorking = m_plan.getDay( 0 );
-    Day working = m_plan.getDay( 1 );
-    Day shortDay = m_plan.getDay( 2 );
-    Day evening = m_plan.getDay( 3 );
-    Day fullTime = m_plan.getDay( 4 );
+    var plan = m_plan.get();
+    Day nonWorking = plan.getDay( 0 );
+    Day working = plan.getDay( 1 );
+    Day shortDay = plan.getDay( 2 );
+    Day evening = plan.getDay( 3 );
+    Day fullTime = plan.getDay( 4 );
 
     // initialise list with default calendars
     clear();

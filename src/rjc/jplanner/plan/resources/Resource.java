@@ -157,8 +157,14 @@ public class Resource
     switch ( FIELD.values()[field] )
     {
       case Initials:
-        // new value can be of any type
-        String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
+        // new value can be of any type, including null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_initials = null;
+          return null;
+        }
+        String newInitials = Utils.clean( newValue.toString() );
         if ( newInitials.length() < 1 || newInitials.length() > 20 )
           return "Initials length not between 1 and 20 characters";
         if ( commit )
@@ -211,7 +217,13 @@ public class Resource
         return null;
 
       case Start:
-        // check new value is date
+        // check new value is date or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_start = null;
+          return null;
+        }
         if ( newValue instanceof Date date )
         {
           if ( m_end != null && m_end.getEpochDay() < date.getEpochDay() )
@@ -223,7 +235,13 @@ public class Resource
         return "Not Date: " + Utils.objectsString( newValue );
 
       case End:
-        // check new value is date
+        // check new value is date or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_end = null;
+          return null;
+        }
         if ( newValue instanceof Date date )
         {
           if ( m_start != null && m_start.getEpochDay() > date.getEpochDay() )
@@ -254,6 +272,13 @@ public class Resource
         return null;
 
       case Calendar:
+        // check new value is calendar or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_calendar = null;
+          return null;
+        }
         if ( newValue instanceof Calendar calendar )
         {
           if ( commit )

@@ -62,14 +62,6 @@ public class CalendarsView extends TableView
     getColumnsAxis().setDefaultNominalSize( 140 );
   }
 
-  /**************************************** getCellDrawer ****************************************/
-  @Override
-  public CellDrawer getCellDrawer()
-  {
-    // return new instance of class responsible for drawing the cells on canvas
-    return new CalendarsCellDrawer();
-  }
-
   /**************************************** getCellEditor ****************************************/
   @Override
   public AbstractCellEditor getCellEditor( CellDrawer cell )

@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.resources;
 
+import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
@@ -93,6 +94,22 @@ public class ResourcesView extends TableView
       default:
         return null;
     }
+  }
+
+  /*************************************** openContextMenu ***************************************/
+  @Override
+  public void openContextMenu( ContextMenuEvent event )
+  {
+    // build context menu
+    var menu = new TableContextMenu( this );
+
+    // loop through menu items find item with text "Add row" and rename it
+    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
+        .forEach( item -> item.setText( "Add new blank resource" ) );
+
+    // show the context menu if it has any items
+    if ( menu != null && !menu.getItems().isEmpty() )
+      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

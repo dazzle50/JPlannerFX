@@ -57,7 +57,7 @@ public class Plan
     // construct empty but usable Plan
     daytypes = new Days();
     calendars = new Calendars( this );
-    resources = new Resources();
+    resources = new Resources( this );
     tasks = new Tasks();
 
     m_title = "";

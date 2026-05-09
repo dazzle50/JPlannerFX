@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.jplanner.plan.calenders.Calendar.FIELD;
@@ -101,13 +102,21 @@ public class CalendarsData extends TableData implements IDataSwapColumns, IDataI
   @Override
   public CellVisual getVisual( int dataColumn, int dataRow )
   {
-    // return disabled-cells-visual for non-initials field if initials is blank
-    if ( dataColumn > HEADER && dataRow > FIELD.Normal.ordinal() )
-      if ( m_calendars.get( dataColumn ).isBlank( dataRow ) )
-        return m_disabledVisual;
+    // return default visuals for header cells (with centred text)
+    var visual = super.getVisual( dataColumn, dataRow );
+    if ( dataRow == HEADER || dataColumn == HEADER )
+    {
+      visual.textAlignment = Pos.CENTER;
+      return visual;
+    }
 
-    // otherwise return default cell visuals
-    return super.getVisual( dataColumn, dataRow );
+    // return disabled visuals if calendar doesn't have value for this row (e.g. cycle row beyond cycle-length)
+    if ( m_calendars.get( dataColumn ).isBlank( dataRow ) )
+      return m_disabledVisual;
+
+    // otherwise return default visuals with left-aligned text
+    visual.textAlignment = Pos.CENTER_LEFT;
+    return visual;
   }
 
   /****************************************** setValue *******************************************/
