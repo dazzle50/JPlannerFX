@@ -28,6 +28,7 @@ import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
+import rjc.table.data.types.DateTime.IntervalUnit;
 
 /*************************************************************************************************/
 /*************************** Holds the complete data model for a plan ****************************/
@@ -89,7 +90,7 @@ public class Plan
 
     // default calendar to first calendar (should be standard week)
     m_calendar = calendars.get( 0 );
-    m_start = DateTime.now();
+    m_start = DateTime.now().roundUp( IntervalUnit.HOUR );
   }
 
   /******************************************** task *********************************************/

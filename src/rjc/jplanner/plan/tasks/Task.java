@@ -193,7 +193,13 @@ public class Task
         return "Not time-span: " + Utils.objectsString( newValue );
 
       case Deadline:
-        // check new value is date-time
+        // check new value is date-time, or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_deadline = null;
+          return null;
+        }
         if ( newValue instanceof DateTime dt )
         {
           if ( commit )

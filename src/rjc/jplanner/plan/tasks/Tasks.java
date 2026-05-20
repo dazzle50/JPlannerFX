@@ -35,7 +35,7 @@ public class Tasks extends ArrayList<Task>
   {
     // initialise list with default tasks (including special task 0 which is overall project summary)
     clear();
-    for ( int count = 0; count <= 50; count++ )
+    for ( int count = 0; count <= 10; count++ )
       add( new Task() );
 
     setupTaskZero();
@@ -45,6 +45,7 @@ public class Tasks extends ArrayList<Task>
   public void setupTaskZero()
   {
     // setup special task 0
+    get( 0 ).setValue( Task.FIELD.Title.ordinal(), "[OVERALL_PROJECT]", true );
   }
 
   /*************************************** getNotNullCount ***************************************/
@@ -57,6 +58,13 @@ public class Tasks extends ArrayList<Task>
         count++;
 
     return count;
+  }
+
+  /****************************************** setValue *******************************************/
+  public String setValue( int taskIndex, int field, Object newValue, boolean commit )
+  {
+    // delegate to resource to set value, and return any error message
+    return get( taskIndex ).setValue( field, newValue, commit );
   }
 
 }

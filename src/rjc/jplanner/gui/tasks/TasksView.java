@@ -18,10 +18,14 @@
 
 package rjc.jplanner.gui.tasks;
 
+import javafx.application.Platform;
+import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.gui.editor.EditorTimeSpan;
 import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
+import rjc.table.data.types.DateTime;
+import rjc.table.data.types.DateTime.IntervalUnit;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
@@ -84,17 +88,47 @@ public class TasksView extends TableView
     {
       case Title, Comment:
         return new EditorText();
+
       case Duration:
         return new EditorTimeSpan();
-      case Start, End, Deadline:
+
+      case Start, End:
         return new EditorDateTime();
+
+      case Deadline:
+        var deadline = new EditorDateTime();
+        if ( cell.value == null )
+          Platform.runLater( () -> deadline.setValue( DateTime.now().roundUp( IntervalUnit.DAY ) ) );
+        return deadline;
+
       case Priority:
-        return new EditorInteger();
+        var priority = new EditorInteger();
+        priority.setRange( 0, 999 );
+        priority.setStepPage( 10, 100 );
+        return priority;
+
       case Type:
         return new EditorChoose( TaskType.values() );
+
       default:
         return null;
     }
+  }
+
+  /*************************************** openContextMenu ***************************************/
+  @Override
+  public void openContextMenu( ContextMenuEvent event )
+  {
+    // build context menu
+    var menu = new TableContextMenu( this );
+
+    // loop through menu items find item with text "Add row" and rename it
+    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
+        .forEach( item -> item.setText( "Add new task" ) );
+
+    // show the context menu if it has any items
+    if ( menu != null && !menu.getItems().isEmpty() )
+      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

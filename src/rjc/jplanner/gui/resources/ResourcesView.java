@@ -105,7 +105,7 @@ public class ResourcesView extends TableView
 
     // loop through menu items find item with text "Add row" and rename it
     menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
-        .forEach( item -> item.setText( "Add new blank resource" ) );
+        .forEach( item -> item.setText( "Add new resource" ) );
 
     // show the context menu if it has any items
     if ( menu != null && !menu.getItems().isEmpty() )

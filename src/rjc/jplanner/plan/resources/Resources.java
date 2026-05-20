@@ -32,7 +32,20 @@ import rjc.table.Utils;
 
 public class Resources extends ArrayList<Resource>
 {
-  private static final long   serialVersionUID = Main.VERSION.hashCode();
+  private static final long   serialVersionUID      = Main.VERSION.hashCode();
+
+  private static final int    INITIALS              = FIELD.Initials.ordinal();
+  private static final int    NAME                  = FIELD.Name.ordinal();
+  private static final int    ORG                   = FIELD.Organisation.ordinal();
+  private static final int    GROUP                 = FIELD.Group.ordinal();
+  private static final int    ROLE                  = FIELD.Role.ordinal();
+  private static final int    ALIAS                 = FIELD.Alias.ordinal();
+  private static final int    START                 = FIELD.Start.ordinal();
+  private static final int    END                   = FIELD.End.ordinal();
+  private static final int    CALENDAR              = FIELD.Calendar.ordinal();
+  private static final int    AVAILABLE             = FIELD.Available.ordinal();
+
+  private static final int[]  INITIALS_CLASH_FIELDS = { NAME, ORG, GROUP, ROLE, ALIAS };
 
   private WeakReference<Plan> m_plan;
 
@@ -46,10 +59,13 @@ public class Resources extends ArrayList<Resource>
   /***************************************** initialise ******************************************/
   public void initialise()
   {
-    // initialise list with default resources (including resource 0 the special 'unassigned' resource)
+    // initialise list with default resources
     clear();
     for ( int count = 0; count <= 5; count++ )
       add( new Resource() );
+
+    // set resource 0 to be the special 'unassigned' resource
+    get( 0 ).setValue( INITIALS, "[UNASSIGNED]", true );
   }
 
   /*************************************** getNotNullCount ***************************************/
@@ -57,8 +73,8 @@ public class Resources extends ArrayList<Resource>
   {
     // return number of not-null resources in plan (skipping special resource 0)
     int count = 0;
-    for ( int id = 1; id < size(); id++ )
-      if ( !get( id ).isBlank() )
+    for ( int index = 1; index < size(); index++ )
+      if ( !get( index ).isBlank() )
         count++;
 
     return count;
@@ -67,32 +83,51 @@ public class Resources extends ArrayList<Resource>
   /****************************************** setValue *******************************************/
   public String setValue( int resourceIndex, int field, Object newValue, boolean commit )
   {
-    // reject duplicate resource initials
-    if ( field == FIELD.Initials.ordinal() )
-    {
-      String newInitials = newValue == null ? "" : Utils.clean( newValue.toString() );
-      for ( int index = 0; index < size(); index++ )
-        if ( index != resourceIndex && newInitials.equals( get( index ).getInitials() ) )
-          return "Initials not unique (clash with resource " + ( index + 1 ) + ")";
+    String cleanValue = newValue == null ? "" : Utils.clean( newValue.toString() );
 
-      if ( commit && get( resourceIndex ).setValue( field, newValue, false ) == null )
+    // reject values that clash with existing initials
+    if ( isInitialsClashField( field ) )
+    {
+      String clash = findClash( cleanValue, INITIALS, -1, "Value clashes with the Initials of resource " );
+      if ( clash != null )
+        return clash;
+    }
+
+    // reject duplicate initials or initials that clash with existing resource text fields
+    if ( field == INITIALS )
+    {
+      String clash = findClash( cleanValue, INITIALS, resourceIndex, "Initials are already used by resource " );
+      if ( clash != null )
+        return clash;
+
+      for ( int clashField : INITIALS_CLASH_FIELDS )
       {
-        if ( newValue == null )
+        clash = findClash( cleanValue, clashField, resourceIndex,
+            "Initials clash with the " + FIELD.values()[clashField] + " of resource " );
+        if ( clash != null )
+          return clash;
+      }
+
+      if ( commit )
+      {
+        Resource resource = get( resourceIndex );
+        String oldInitials = resource.getInitials();
+
+        if ( resource.setValue( field, newValue, false ) == null )
         {
-          // when clearing initials, also clear start + end + calendar
-          get( resourceIndex ).setValue( FIELD.Start.ordinal(), null, true );
-          get( resourceIndex ).setValue( FIELD.End.ordinal(), null, true );
-          get( resourceIndex ).setValue( FIELD.Calendar.ordinal(), null, true );
-        }
-        else
-        {
-          // when setting initials from null, also set default calendar and available to 1.0
-          var oldInitials = get( resourceIndex ).getInitials();
-          if ( oldInitials == null )
+          if ( newValue == null )
           {
-            var defaultCal = m_plan.get().getDefaultCalendar();
-            get( resourceIndex ).setValue( FIELD.Calendar.ordinal(), defaultCal, true );
-            get( resourceIndex ).setValue( FIELD.Available.ordinal(), 1.0, true );
+            // when clearing initials, also clear start, end, and calendar
+            resource.setValue( START, null, true );
+            resource.setValue( END, null, true );
+            resource.setValue( CALENDAR, null, true );
+          }
+          else if ( oldInitials == null )
+          {
+            // when setting initials from null, also set default calendar and availability
+            Plan plan = m_plan.get();
+            resource.setValue( CALENDAR, plan.getDefaultCalendar(), true );
+            resource.setValue( AVAILABLE, 1.0, true );
           }
         }
       }
@@ -100,6 +135,28 @@ public class Resources extends ArrayList<Resource>
 
     // delegate to resource to set value, and return any error message
     return get( resourceIndex ).setValue( field, newValue, commit );
+  }
+
+  /****************************************** findClash ******************************************/
+  private String findClash( String value, int field, int resourceIndex, String message )
+  {
+    // return message + index if value clashes with value of field in resource at index
+    for ( int index = 0; index < size(); index++ )
+      if ( index != resourceIndex && value.equals( get( index ).getValue( field ) ) )
+        return message + index;
+
+    return null;
+  }
+
+  /************************************ isInitialsClashField *************************************/
+  private static boolean isInitialsClashField( int field )
+  {
+    // return true if field must not clash with initials
+    for ( int clashField : INITIALS_CLASH_FIELDS )
+      if ( field == clashField )
+        return true;
+
+    return false;
   }
 
 }

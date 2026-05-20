@@ -98,7 +98,7 @@ class NumberOf extends Pane
     gc.fillText( "Calendars", m_inset, y );
     gc.fillText( ":  " + m_plan.getCalendars().size(), m_longestLabel, y );
     y += m_rowHeight;
-    gc.fillText( "Days", m_inset, y );
+    gc.fillText( "Day types", m_inset, y );
     gc.fillText( ":  " + m_plan.getDays().size(), m_longestLabel, y );
   }
 
