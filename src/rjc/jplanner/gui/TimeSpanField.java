@@ -21,7 +21,7 @@ package rjc.jplanner.gui;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import rjc.jplanner.plan.TimeSpan;
-import rjc.jplanner.plan.TimeSpan.UNITS;
+import rjc.jplanner.plan.TimeSpan.Unit;
 import rjc.table.control.NumberSpinField;
 import rjc.table.signal.ObservableStatus.Level;
 
@@ -64,7 +64,7 @@ public class TimeSpanField extends NumberSpinField
     setOnKeyTyped( event ->
     {
       char ch = event.getCharacter().charAt( 0 );
-      var unit = UNITS.fromChar( ch );
+      var unit = Unit.fromChar( ch );
       if ( unit != null )
         setValue( new TimeSpan( m_span.getNumber(), unit ) );
     } );
@@ -95,7 +95,7 @@ public class TimeSpanField extends NumberSpinField
   {
     // ensure only integers for seconds, otherwise 2 decimals places are allowed
     var lastChar = text.charAt( text.length() - 1 );
-    if ( lastChar == UNITS.SECONDS.abbreviation() )
+    if ( lastChar == Unit.SECONDS.abbreviation() )
       setFormat( "0", 6, 0 );
     else
       setFormat( "0", 6, 2 );
@@ -124,7 +124,7 @@ public class TimeSpanField extends NumberSpinField
     if ( value instanceof TimeSpan ts )
     {
       m_span = ts;
-      setPrefixSuffix( null, " " + ts.getUnits().abbreviation() );
+      setPrefixSuffix( null, " " + ts.getUnit().abbreviation() );
       super.setValue( ts.getNumber() );
     }
     else if ( value instanceof String str )
@@ -132,10 +132,10 @@ public class TimeSpanField extends NumberSpinField
       char ch = str.charAt( 0 );
       if ( !Character.isDigit( ch ) && ch != '.' )
       {
-        var units = UNITS.fromChar( ch );
+        var units = Unit.fromChar( ch );
         if ( units != null )
         {
-          m_span.setUnits( units );
+          m_span.setUnit( units );
           setValue( m_span );
         }
         return;

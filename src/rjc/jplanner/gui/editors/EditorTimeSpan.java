@@ -16,7 +16,7 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui.editor;
+package rjc.jplanner.gui.editors;
 
 import rjc.jplanner.gui.TimeSpanField;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -55,7 +55,7 @@ public class EditorTimeSpan extends AbstractCellEditor
       m_editor.setValue( value );
   }
 
-  /******************************************* isValueValid ******************************************/
+  /***************************************** isValueValid ****************************************/
   @Override
   public boolean isValueValid( Object value )
   {

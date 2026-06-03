@@ -24,16 +24,16 @@ package rjc.jplanner.plan;
 
 public class TimeSpan
 {
-  private double m_num;   // number of unit periods (max 2 decimal places, except only whole seconds)
-  private UNITS  m_units; // type of periods (first letter shown in string version)
+  private double m_num;  // number of unit periods (max 2 decimal places, except only whole seconds)
+  private Unit   m_unit; // type of periods (first letter shown in string version)
 
-  public enum UNITS // duration units with their single-character abbreviations
+  public enum Unit // duration units with their single-character abbreviations
   {
     SECONDS( 'S' ), MINUTES( 'M' ), HOURS( 'H' ), DAYS( 'd' ), WEEKS( 'w' ), MONTHS( 'm' ), YEARS( 'y' );
 
     private final char abbreviation;
 
-    UNITS( char letter )
+    Unit( char letter )
     {
       abbreviation = letter;
     }
@@ -43,9 +43,9 @@ public class TimeSpan
       return abbreviation;
     }
 
-    public static UNITS fromChar( char ch )
+    public static Unit fromChar( char ch )
     {
-      for ( UNITS unit : values() )
+      for ( Unit unit : values() )
         if ( unit.abbreviation == ch )
           return unit;
       return null;
@@ -57,7 +57,7 @@ public class TimeSpan
   {
     // construct default time-span (one day)
     m_num = 1.0;
-    m_units = UNITS.DAYS;
+    m_unit = Unit.DAYS;
   }
 
   /**************************************** constructor ******************************************/
@@ -77,27 +77,27 @@ public class TimeSpan
 
     // set units if last character matches units first character
     char lastchr = str.charAt( str.length() - 1 );
-    UNITS units = UNITS.fromChar( lastchr );
+    Unit units = Unit.fromChar( lastchr );
     if ( units != null )
     {
-      m_units = units;
+      m_unit = units;
       str = str.substring( 0, str.length() - 1 );
     }
 
     // set number from remainder of string but THROWS EXCEPTION IF PARSING FAILS
     double num = Double.parseDouble( "0" + str );
-    if ( m_units == UNITS.SECONDS )
+    if ( m_unit == Unit.SECONDS )
       m_num = Math.rint( num );
     else
       m_num = Math.rint( num * 100.0 ) / 100.0;
   }
 
   /**************************************** constructor ******************************************/
-  public TimeSpan( double num, UNITS units )
+  public TimeSpan( double num, Unit unit )
   {
     // construct time-span from parameters, rounding number based on units
-    m_units = units;
-    if ( units == UNITS.SECONDS )
+    m_unit = unit;
+    if ( unit == Unit.SECONDS )
       m_num = Math.rint( num );
     else
       m_num = Math.rint( num * 100.0 ) / 100.0;
@@ -107,7 +107,7 @@ public class TimeSpan
   public String toStringLong()
   {
     // return string version of time-span, e.g. "1 Month" or "6 Seconds"
-    var units = m_units.name().charAt( 0 ) + m_units.name().substring( 1 ).toLowerCase();
+    var units = m_unit.name().charAt( 0 ) + m_unit.name().substring( 1 ).toLowerCase();
     if ( m_num == 1.0 )
       units = units.substring( 0, units.length() - 1 ); // singular form if number is 1
     return numberString() + " " + units;
@@ -118,13 +118,13 @@ public class TimeSpan
   public String toString()
   {
     // return short string version of time-span, e.g. "1.23 d" or "1 S"
-    return numberString() + " " + m_units.abbreviation();
+    return numberString() + " " + m_unit.abbreviation();
   }
 
   private String numberString()
   {
     // return number as string, rounded to 2 decimal places except for seconds
-    if ( m_units == UNITS.SECONDS )
+    if ( m_unit == Unit.SECONDS )
       return Integer.toString( (int) m_num ); // no decimal places for seconds
 
     // when not seconds, convert to fixed-point integer (e.g. 1.23 -> 123)
@@ -147,19 +147,19 @@ public class TimeSpan
     return sb.toString();
   }
 
-  /****************************************** getUnits *******************************************/
-  public UNITS getUnits()
+  /******************************************* getUnit *******************************************/
+  public Unit getUnit()
   {
     // return time-span units
-    return m_units;
+    return m_unit;
   }
 
-  /****************************************** setUnits *******************************************/
-  public void setUnits( UNITS units )
+  /******************************************* setUnit *******************************************/
+  public void setUnit( Unit units )
   {
     // set time-span units
-    m_units = units;
-    if ( units == UNITS.SECONDS )
+    m_unit = units;
+    if ( units == Unit.SECONDS )
       m_num = Math.rint( m_num );
   }
 
@@ -176,7 +176,7 @@ public class TimeSpan
   {
     // return true if this time-span and other time-span are same
     if ( other instanceof TimeSpan ts )
-      return m_units == ts.m_units && Math.abs( m_num - ts.m_num ) < 0.001;
+      return m_unit == ts.m_unit && Math.abs( m_num - ts.m_num ) < 0.001;
 
     return false;
   }

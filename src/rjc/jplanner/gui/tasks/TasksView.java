@@ -20,8 +20,10 @@ package rjc.jplanner.gui.tasks;
 
 import javafx.application.Platform;
 import javafx.scene.input.ContextMenuEvent;
-import rjc.jplanner.gui.editor.EditorTimeSpan;
 import rjc.jplanner.plan.tasks.Task.FIELD;
+import rjc.jplanner.gui.editors.EditorPredecessors;
+import rjc.jplanner.gui.editors.EditorResources;
+import rjc.jplanner.gui.editors.EditorTimeSpan;
 import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
 import rjc.table.data.types.DateTime;
@@ -106,6 +108,12 @@ public class TasksView extends TableView
         priority.setRange( 0, 999 );
         priority.setStepPage( 10, 100 );
         return priority;
+
+      case Predecessors:
+        return new EditorPredecessors();
+
+      case Resources:
+        return new EditorResources();
 
       case Type:
         return new EditorChoose( TaskType.values() );
