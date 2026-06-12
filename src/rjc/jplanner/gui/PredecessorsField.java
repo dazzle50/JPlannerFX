@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui;
 
+import rjc.jplanner.plan.TimeSpan;
 import rjc.table.control.ExpandingField;
 
 /*************************************************************************************************/
@@ -26,5 +27,24 @@ import rjc.table.control.ExpandingField;
 
 public class PredecessorsField extends ExpandingField
 {
+
+  /**************************************** constructor ******************************************/
+  public PredecessorsField()
+  {
+    // build TIME_UNITS regex from TimeSpan.Unit enum similar to "(?:mo|m|h|d|w|%)";
+    StringBuilder TIME_UNITS = new StringBuilder();
+    TIME_UNITS.append( "(?:" );
+    for ( TimeSpan.Unit unit : TimeSpan.Unit.values() )
+      TIME_UNITS.append( unit.abbreviation() ).append( '|' );
+    TIME_UNITS.append( "%)" );
+
+    final String NUMBER = "(?:\\d+(?:\\.\\d*)?|\\.\\d*)";
+    final String LAG = "(?:[+-](?:\\s*" + NUMBER + "(?:\\s*" + TIME_UNITS + ")?)?)?";
+    final String DEPENDENCY = "\\s*" + "\\d*" + "\\s*" + "(?:FS|fs|SS|ss|FF|ff|SF|sf|F|f|S|s)?" + "\\s*" + LAG + "\\s*";
+    final String PARTIAL_INPUT_REGEX = "^(?:\\s*|" + DEPENDENCY + "(?:," + DEPENDENCY + ")*)$";
+
+    // allow mid-typing of valid predecessor text
+    setAllowed( PARTIAL_INPUT_REGEX );
+  }
 
 }

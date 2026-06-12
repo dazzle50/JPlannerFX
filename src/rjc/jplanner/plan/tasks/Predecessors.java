@@ -18,11 +18,13 @@
 
 package rjc.jplanner.plan.tasks;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.StringJoiner;
 
 import rjc.jplanner.plan.TimeSpan;
+import rjc.jplanner.plan.tasks.Dependency.DependencyType;
 
 /*************************************************************************************************/
 /********************** Task predecessors shows dependencies on other tasks **********************/
@@ -30,12 +32,14 @@ import rjc.jplanner.plan.TimeSpan;
 
 public class Predecessors
 {
-  private Predecessor[] m_predecessors;
+  private Dependency[]         m_dependencies;
+  private WeakReference<Tasks> m_tasksRef;    // weak reference to tasks for toString()
 
   /**************************************** constructor ******************************************/
-  public Predecessors()
+  private Predecessors( Tasks tasks )
   {
-    // nothing needs to be done
+    // constructor is private to force use of static parse method, which validates predecessor text and sets up weak reference to tasks
+    m_tasksRef = new WeakReference<>( tasks );
   }
 
   /******************************************* parse *********************************************/
@@ -50,8 +54,8 @@ public class Predecessors
 
     // remove all whitespace before parsing
     var parts = text.replaceAll( "\\s+", "" ).split( "," );
-    var predecessors = new Predecessors();
-    predecessors.m_predecessors = new Predecessor[parts.length];
+    var predecessors = new Predecessors( tasks );
+    predecessors.m_dependencies = new Dependency[parts.length];
 
     // duplicate predecessor tasks are not allowed, regardless of dependency type or lead/lag
     var seenTasks = new HashSet<Task>();
@@ -63,7 +67,7 @@ public class Predecessors
       if ( part.isEmpty() )
         continue;
 
-      // predecessor starts task number, followed by optional dependency type and lead/lag, e.g. "1FS+2d"
+      // predecessor starts task number, followed by optional dependency type and optional lead/lag, e.g. "1FS+2d"
       var index = 0;
       while ( index < part.length() && Character.isDigit( part.charAt( index ) ) )
         index++;
@@ -81,71 +85,114 @@ public class Predecessors
       if ( !seenTasks.add( task ) )
         throw new IllegalArgumentException( "Duplicate predecessor task: " + taskIndex );
 
-      // dependency type is optional and defaults to finish-start
-      var type = Predecessor.Type.FS;
-      part = part.substring( index );
-      for ( var possibleType : Predecessor.Type.values() )
-        if ( part.startsWith( possibleType.name() ) )
+      // dependency type is optional, case-insensitive and defaults to finish-start
+      DependencyType type = DependencyType.FS;
+      var cut = part.substring( index );
+      for ( var possibleType : DependencyType.values() )
+        if ( cut.toUpperCase().startsWith( possibleType.name() ) )
         {
           type = possibleType;
-          part = part.substring( possibleType.name().length() );
+          cut = cut.substring( possibleType.name().length() );
           break;
         }
+
+      // check for incomplete dependency type
+      if ( !cut.isEmpty() )
+      {
+        char first = cut.charAt( 0 );
+        if ( first == 'S' || first == 'F' || first == 's' || first == 'f' )
+          throw new IllegalArgumentException( "Incomplete dependency type in predecessor: " + part );
+      }
 
       // lead/lag is optional and defaults to zero days, but if present must be a signed decimal number followed by a valid time unit character
       var num = 0.0;
       var unit = TimeSpan.Unit.DAYS;
 
-      if ( !part.isEmpty() )
+      // check for lead/lag sign, which must be present if there is any lead/lag text
+      if ( !cut.isEmpty() )
       {
-        var sign = part.charAt( 0 );
+        var sign = cut.charAt( 0 );
         if ( sign != '+' && sign != '-' )
-          throw new IllegalArgumentException( "Invalid lead/lag number in predecessor: " + part );
+          throw new IllegalArgumentException( "Missing lead/lag number sign: " + part );
+      }
 
+      // if there is lead/lag text, parse it and check for valid format, e.g. "+2d" or "-0.5w"
+      if ( cut.length() > 1 )
+      {
         // read the signed decimal number, leaving the final character as the unit
         index = 1;
-        while ( index < part.length() && ( Character.isDigit( part.charAt( index ) ) || part.charAt( index ) == '.' ) )
+        while ( index < cut.length() && ( Character.isDigit( cut.charAt( index ) ) || cut.charAt( index ) == '.' ) )
           index++;
 
         if ( index == 1 )
           throw new IllegalArgumentException( "Invalid lead/lag number in predecessor: " + part );
 
         // accept "+." and "-." as zero, matching the existing permissive decimal parsing style
-        if ( index == 2 && part.charAt( 1 ) == '.' )
-          part = part.charAt( 0 ) + "0" + part.substring( 1 );
-        if ( index >= part.length() )
+        if ( index == 2 && cut.charAt( 1 ) == '.' )
+        {
+          cut = cut.charAt( 0 ) + "0" + cut.substring( 1 );
+          index++;
+        }
+
+        if ( index >= cut.length() )
           throw new IllegalArgumentException( "Missing lead/lag units in predecessor: " + part );
 
-        num = Double.parseDouble( part.substring( 0, index ) );
-        unit = TimeSpan.Unit.fromChar( part.charAt( index ) );
-        if ( unit == null || index + 1 != part.length() )
+        num = Double.parseDouble( cut.substring( 0, index ) );
+        unit = TimeSpan.Unit.fromChar( cut.charAt( index ) );
+        if ( unit == null || index + 1 != cut.length() )
           throw new IllegalArgumentException( "Invalid lead/lag units in predecessor: " + part );
       }
 
-      // predecessor stores lead/lag as hundredths of a unit
-      predecessors.m_predecessors[count++] = new Predecessor( task, type, (int) Math.round( num * 100 ), unit );
+      // dependency stores lead/lag as hundredths of a unit
+      predecessors.m_dependencies[count++] = new Dependency( task, type, (int) Math.round( num * 100 ), unit );
     }
 
     if ( count == 0 )
       return null;
 
     // trim skipped empty comma sections from the backing array
-    if ( count < predecessors.m_predecessors.length )
-      predecessors.m_predecessors = Arrays.copyOf( predecessors.m_predecessors, count );
+    if ( count < predecessors.m_dependencies.length )
+      predecessors.m_dependencies = Arrays.copyOf( predecessors.m_dependencies, count );
 
     return predecessors;
   }
 
-  /****************************************** toString *******************************************/
-  public String toString( Tasks tasks )
+  /************************************* hasCircularReference ************************************/
+  public boolean hasCircularReference( Task task )
   {
+    // circular reference exists if specified task is a predecessor of itself, directly or indirectly through other predecessors
+    if ( m_dependencies == null || task == null )
+      return false;
+
+    // check each dependency for circular reference to specified task
+    for ( var dep : m_dependencies )
+    {
+      // if dependency task is specified task, circular reference exists
+      if ( dep.task == task )
+        return true;
+
+      // if dependency task has predecessors, check them for circular reference to specified task
+      if ( dep.task.getValue( Task.FIELD.Predecessors.ordinal() ) instanceof Predecessors preds )
+        if ( preds.hasCircularReference( task ) )
+          return true;
+    }
+
+    return false;
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    // predecessors string is comma-separated list
+    var tasks = m_tasksRef.get();
     var sj = new StringJoiner( ", " );
 
-    // predecessors string is comma-separated list
-    if ( m_predecessors != null )
-      for ( var pred : m_predecessors )
+    if ( m_dependencies != null )
+      for ( var pred : m_dependencies )
         sj.add( pred.toString( tasks ) );
 
     return sj.toString();
   }
+
 }

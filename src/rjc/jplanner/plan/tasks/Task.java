@@ -208,10 +208,30 @@ public class Task
         }
         return "Not Date-time: " + Utils.objectsString( newValue );
 
-      case Cost:
       case Predecessors:
+        // check new value is predecessors, or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_predecessors = null;
+          return null;
+        }
+        if ( newValue instanceof Predecessors preds )
+        {
+          if ( preds.hasCircularReference( this ) )
+            return "Circular reference to self";
+          if ( commit )
+            m_predecessors = preds;
+          return null;
+        }
+        return "Not Predecessors: " + Utils.objectsString( newValue );
+
+      case Cost:
+
       case Resources:
+
       case Work:
+
       default:
         return "Not implemented";
     }

@@ -63,7 +63,21 @@ public class Tasks extends ArrayList<Task>
   /****************************************** setValue *******************************************/
   public String setValue( int taskIndex, int field, Object newValue, boolean commit )
   {
-    // delegate to resource to set value, and return any error message
+    // if predecessors field, check that new value is valid before setting
+    if ( field == Task.FIELD.Predecessors.ordinal() && newValue != null )
+    {
+      try
+      {
+        newValue = Predecessors.parse( newValue.toString(), this );
+      }
+      catch ( IllegalArgumentException exception )
+      {
+        // validation failed, return error message
+        return exception.getMessage();
+      }
+    }
+
+    // delegate to task to set value, and return any error message
     return get( taskIndex ).setValue( field, newValue, commit );
   }
 

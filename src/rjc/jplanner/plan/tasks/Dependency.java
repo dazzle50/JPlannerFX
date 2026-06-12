@@ -19,67 +19,62 @@
 package rjc.jplanner.plan.tasks;
 
 /*************************************************************************************************/
-/********************** Task predecessor with dependency type and lead/lag ***********************/
+/********************** Task predecessor dependency with type and lead/lag ***********************/
 /*************************************************************************************************/
 
 import rjc.jplanner.plan.TimeSpan;
+import rjc.table.Utils;
 
-public class Predecessor
+public class Dependency
 {
-  public enum Type
+  public enum DependencyType
   {
     FS, SS, FF, SF // dependency types: finish-start, start-start, finish-finish, start-finish
   }
 
-  public final Task          task;
-  public final Type          type;
-  public final int           num100; // lead/lag number * 100 (to allow for 2 decimal places)
-  public final TimeSpan.Unit unit;
+  public final Task           task;
+  public final DependencyType type;
+  public final int            lag100ths; // +ve for lag, -ve for lead, 0 for none, *100 to allow for 2 decimal places
+  public final TimeSpan.Unit  lagUnit;
 
   /**************************************** constructor ******************************************/
-  public Predecessor( Task task, Type type, int num100, TimeSpan.Unit unit )
+  public Dependency( Task task, DependencyType type, int num100, TimeSpan.Unit unit )
   {
-    // construct predecessor with given task reference, dependency type, lead/lag number and units
+    // construct dependency with given task reference, dependency type, lead/lag number and units
     this.task = task;
     this.type = type;
-    this.num100 = num100;
-    this.unit = unit;
+    this.lag100ths = num100;
+    this.lagUnit = unit;
   }
 
   /****************************************** toString *******************************************/
   @Override
   public String toString()
   {
-    // return string representation of predecessor using task reference
-    return toString( task );
+    // dependency debug string shows task name, dependency type and lead/lag
+    return Utils.name( task ) + " " + type + " " + lag100ths + " " + lagUnit;
   }
 
   public String toString( Tasks tasks )
   {
-    // return string representation of predecessor using task index reference
-    return toString( tasks.indexOf( task ) );
-  }
-
-  private String toString( Object taskRef )
-  {
-    // return string representation of predecessor using given task reference, dependency type and lead/lag
+    // dependency display string shows task index, dependency type (if not FS) and lead/lag (if not 0)
     StringBuilder sb = new StringBuilder();
-    sb.append( taskRef );
-    if ( type != Type.FS )
+    sb.append( tasks.indexOf( task ) );
+    if ( type != DependencyType.FS )
       sb.append( type );
-    if ( num100 != 0 )
+    if ( lag100ths != 0 )
     {
-      long num = Math.abs( (long) num100 );
+      long num = Math.abs( (long) lag100ths );
       long frac = num % 100;
 
-      sb.append( num100 > 0 ? "+" : "-" ).append( num / 100 );
+      sb.append( lag100ths > 0 ? "+" : "-" ).append( num / 100 );
       if ( frac != 0 )
       {
         sb.append( "." ).append( frac / 10 );
         if ( frac % 10 != 0 )
           sb.append( frac % 10 );
       }
-      sb.append( unit.abbreviation() );
+      sb.append( lagUnit.abbreviation() );
     }
     return sb.toString();
   }
