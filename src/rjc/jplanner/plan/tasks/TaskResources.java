@@ -25,4 +25,10 @@ package rjc.jplanner.plan.tasks;
 public class TaskResources
 {
 
+  public static TaskResources parse( String string )
+  {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
 }

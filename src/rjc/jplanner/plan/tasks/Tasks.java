@@ -63,12 +63,15 @@ public class Tasks extends ArrayList<Task>
   /****************************************** setValue *******************************************/
   public String setValue( int taskIndex, int field, Object newValue, boolean commit )
   {
-    // if predecessors field, check that new value is valid before setting
-    if ( field == Task.FIELD.Predecessors.ordinal() && newValue != null )
+    if ( newValue != null )
     {
       try
       {
-        newValue = Predecessors.parse( newValue.toString(), this );
+        // validate and parse specific fields if required
+        if ( field == Task.FIELD.Predecessors.ordinal() )
+          newValue = Predecessors.parse( newValue.toString(), this );
+        else if ( field == Task.FIELD.Resources.ordinal() )
+          newValue = TaskResources.parse( newValue.toString() );
       }
       catch ( IllegalArgumentException exception )
       {

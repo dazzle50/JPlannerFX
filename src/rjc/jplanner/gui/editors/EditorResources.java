@@ -36,4 +36,20 @@ public class EditorResources extends AbstractCellEditor
     setControl( m_editor );
   }
 
+  /******************************************* getValue ******************************************/
+  @Override
+  public Object getValue()
+  {
+    // get editor predecessors value
+    return m_editor.getText();
+  }
+
+  /******************************************* setValue ******************************************/
+  @Override
+  public void setValue( Object value )
+  {
+    // set value depending on type
+    m_editor.setText( value == null ? "" : value.toString() );
+  }
+
 }

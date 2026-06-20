@@ -226,15 +226,35 @@ public class Task
         }
         return "Not Predecessors: " + Utils.objectsString( newValue );
 
-      case Cost:
-
       case Resources:
+        // check new value is task-resources, or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_resources = null;
+          return null;
+        }
+        if ( newValue instanceof TaskResources res )
+        {
+          if ( commit )
+            m_resources = res;
+          return null;
+        }
+        return "Not Task-Resources: " + Utils.objectsString( newValue );
+
+      case Cost:
 
       case Work:
 
       default:
         return "Not implemented";
     }
+  }
+
+  /*************************************** getPredecessors ***************************************/
+  public Predecessors getPredecessors()
+  {
+    return m_predecessors;
   }
 
 }

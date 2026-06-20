@@ -23,13 +23,13 @@ import java.util.Collections;
 import java.util.List;
 
 import javafx.geometry.Pos;
+import rjc.jplanner.plan.tasks.Predecessors;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.data.IDataInsertDeleteRows;
 import rjc.table.data.IDataSwapRows;
 import rjc.table.data.TableData;
-import rjc.table.demo.edit.EditableTableRow;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellVisual;
 
@@ -41,6 +41,14 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
 {
   private Tasks      m_tasks;          // array of tasks to be shown on table
   private CellVisual m_disabledVisual; // cell visuals for disabled cells
+
+  private record TaskPredecessors( Task task, Predecessors predecessors )
+  {
+  }
+
+  private record TasksPredChanges( List<Task> tasks, List<TaskPredecessors> changes )
+  {
+  }
 
   /**************************************** constructor ******************************************/
   public TasksData( Tasks tasks )
@@ -142,48 +150,77 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
 
   /***************************************** insertRows ******************************************/
   /**
-   * IDataInsertDeleteRows - Inserts one or more rows at the specified position.
+   * Inserts tasks and restores their historic predecessor dependencies.
    *
-   * @param insertIndex  data-based index at which to insert; must be &gt;= 0
-   * @param rowData      non-null list of row data; {@code null} elements receive default content
-   * @return {@code true} if at least one row was inserted, {@code false} if the list is empty
-   * @throws IllegalArgumentException if {@code insertIndex} is out of range or
-   *                                  {@code rowData} is {@code null}
+   * @param insertIndex  the data-based index at which to insert the tasks
+   * @param rowData      a non-null list containing a {@code TasksPredChanges} object as its first element
+   * @return {@code true} if the tasks and dependencies were successfully restored
+   * @throws IllegalArgumentException if {@code rowData} is empty, does not contain a {@code TasksPredChanges} 
+   *                                  object as its first element, or if {@code insertIndex} is out of bounds
    */
   @Override
   public boolean insertRows( int insertIndex, List<Object> rowData )
   {
-    // build the list of rows to insert, substituting defaults for null elements
-    var toInsert = new ArrayList<Task>( rowData.size() );
-    for ( var data : rowData )
-      toInsert.add( data == null ? new Task() : (Task) data );
 
-    // insert the new rows and update row count
-    m_tasks.addAll( insertIndex, toInsert );
-    setRowCount( getRowCount() + toInsert.size() );
+    // check rowData first element is a TasksPredChanges object, if so, extract the tasks and predecessor changes
+    if ( rowData.get( 0 ) instanceof TasksPredChanges tasksPredChanges )
+    {
+      // insert the new tasks and update row count
+      m_tasks.addAll( insertIndex, tasksPredChanges.tasks() );
+      setRowCount( getRowCount() + tasksPredChanges.tasks().size() );
 
-    return true;
+      // loop through the predecessor changes and restore the predecessors for each task
+      for ( TaskPredecessors change : tasksPredChanges.changes() )
+        change.task().setValue( FIELD.Predecessors.ordinal(), change.predecessors(), true );
+
+      return true;
+    }
+
+    // otherwise throw an exception, as the rowData is not in the expected format
+    throw new IllegalArgumentException( "rowData must contain a TasksPredChanges object as its first element" );
   }
 
   /***************************************** deleteRows ******************************************/
   /**
-   * IDataInsertDeleteRows - Deletes a contiguous range of rows from the data model.
+   * Deletes a contiguous range of tasks and updates dependent predecessors.
    *
-   * @param deleteIndex  data-based index of the first row to delete; must be &gt;= 0
-   * @param count        number of consecutive rows to delete; must be &gt; 0
-   * @return a list of the deleted {@link EditableTableRow} rows, or {@code null} if the
-   *         operation failed
-   * @throws IllegalArgumentException if {@code deleteIndex} is out of range or
-   *                                  {@code count} is not positive
+   * @param deleteIndex  the data-based index of the first task to delete
+   * @param count        the number of consecutive tasks to delete
+   * @return a list of size {@code count} containing a {@code TasksPredChanges} object as its first element followed by padding nulls, used for undo operations
+   * @throws IllegalArgumentException if {@code deleteIndex} or {@code count} are out of valid bounds
    */
   @Override
   public List<Object> deleteRows( int deleteIndex, int count )
   {
-    // snapshot the resources being removed before clearing the sublist
-    var deleted = new ArrayList<Object>( m_tasks.subList( deleteIndex, deleteIndex + count ) );
+    // snapshot the tasks being removed before clearing the sublist
+    var removedTasks = new ArrayList<Task>( m_tasks.subList( deleteIndex, deleteIndex + count ) );
     m_tasks.subList( deleteIndex, deleteIndex + count ).clear();
     setRowCount( getRowCount() - count );
-    return deleted;
+
+    // loop through remaining tasks and remove any dependencies that reference the deleted tasks
+    var predecessorChanges = new ArrayList<TaskPredecessors>();
+    for ( Task task : m_tasks )
+    {
+      Predecessors beforeRemove = task.getPredecessors();
+      if ( beforeRemove == null )
+        continue;
+
+      // altered predecessors will have shorter length than before
+      Predecessors afterRemove = Predecessors.withoutTasks( beforeRemove, removedTasks );
+      if ( afterRemove == null || beforeRemove.size() != afterRemove.size() )
+      {
+        task.setValue( FIELD.Predecessors.ordinal(), afterRemove, true );
+        predecessorChanges.add( new TaskPredecessors( task, beforeRemove ) );
+      }
+    }
+
+    // create undo data for the deleted tasks and any predecessor changes, add nulls to list to match size of deleted rows
+    var undoData = new ArrayList<Object>();
+    undoData.add( new TasksPredChanges( removedTasks, predecessorChanges ) );
+    while ( undoData.size() < count )
+      undoData.add( null );
+
+    return undoData;
   }
 
 }

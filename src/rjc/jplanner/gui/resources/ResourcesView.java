@@ -78,8 +78,11 @@ public class ResourcesView extends TableView
         editor.setAllowed( "^[^\\s\\[\\],]*$" );
         return editor;
 
-      case Name, Organisation, Group, Role, Alias, Comment:
-        return new EditorText();
+      case Name, Organisation, Group, Role, Alias:
+        // allow any characters except square brackets and comma
+        editor = new EditorText();
+        editor.setAllowed( "^[^\\[\\],]*$" );
+        return editor;
 
       case Start, End:
         return new EditorDate();
@@ -90,6 +93,9 @@ public class ResourcesView extends TableView
       case Calendar:
         var calendars = ( (PlanContext) getData().getUserData() ).getPlan().getCalendars();
         return new EditorChoose( calendars.toArray() );
+
+      case Comment:
+        return new EditorText();
 
       default:
         return null;

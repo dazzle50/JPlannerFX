@@ -19,7 +19,9 @@
 package rjc.jplanner.plan.tasks;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.StringJoiner;
 
@@ -33,13 +35,13 @@ import rjc.jplanner.plan.tasks.Dependency.DependencyType;
 public class Predecessors
 {
   private Dependency[]         m_dependencies;
-  private WeakReference<Tasks> m_tasksRef;    // weak reference to tasks for toString()
+  private WeakReference<Tasks> m_weakTasks;   // weak reference to tasks for toString()
 
   /**************************************** constructor ******************************************/
   private Predecessors( Tasks tasks )
   {
     // constructor is private to force use of static parse method, which validates predecessor text and sets up weak reference to tasks
-    m_tasksRef = new WeakReference<>( tasks );
+    m_weakTasks = new WeakReference<>( tasks );
   }
 
   /******************************************* parse *********************************************/
@@ -157,6 +159,35 @@ public class Predecessors
     return predecessors;
   }
 
+  /*************************************** withoutTasks ******************************************/
+  public static Predecessors withoutTasks( Predecessors predecessors, Collection<Task> tasksToRemove )
+  {
+    // returns a new Predecessors object with any dependencies that reference the removed tasks removed, or null if no dependencies remain
+    if ( predecessors == null || tasksToRemove == null || tasksToRemove.isEmpty() )
+      return predecessors;
+
+    var tasks = predecessors.m_weakTasks.get();
+
+    for ( var dep : predecessors.m_dependencies )
+      if ( tasksToRemove.contains( dep.task ) )
+      {
+        var newPreds = new Predecessors( tasks );
+        var newDeps = new ArrayList<Dependency>();
+
+        for ( var d : predecessors.m_dependencies )
+          if ( !tasksToRemove.contains( d.task ) )
+            newDeps.add( d );
+
+        if ( newDeps.isEmpty() )
+          return null;
+
+        newPreds.m_dependencies = newDeps.toArray( new Dependency[0] );
+        return newPreds;
+      }
+
+    return predecessors; // no dependencies reference the removed tasks, so return the original Predecessors object
+  }
+
   /************************************* hasCircularReference ************************************/
   public boolean hasCircularReference( Task task )
   {
@@ -180,12 +211,18 @@ public class Predecessors
     return false;
   }
 
+  /******************************************* size **********************************************/
+  public int size()
+  {
+    return m_dependencies == null ? 0 : m_dependencies.length;
+  }
+
   /****************************************** toString *******************************************/
   @Override
   public String toString()
   {
     // predecessors string is comma-separated list
-    var tasks = m_tasksRef.get();
+    var tasks = m_weakTasks.get();
     var sj = new StringJoiner( ", " );
 
     if ( m_dependencies != null )
