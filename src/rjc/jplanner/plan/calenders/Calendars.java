@@ -35,20 +35,20 @@ public class Calendars extends ArrayList<Calendar>
 {
   private static final long   serialVersionUID = Main.VERSION.hashCode();
 
-  private WeakReference<Plan> m_plan;
+  private WeakReference<Plan> m_weakPlan;
 
   /**************************************** constructor ******************************************/
   public Calendars( Plan plan )
   {
     // hold plan weakly so does not prevent garbage collection of plan
-    m_plan = new WeakReference<>( plan );
+    m_weakPlan = new WeakReference<>( plan );
   }
 
   /***************************************** initialise ******************************************/
   public void initialise()
   {
     // these day-types should reflect the default created in Days initialise()
-    var plan = m_plan.get();
+    var plan = m_weakPlan.get();
     Day nonWorking = plan.getDay( 0 );
     Day working = plan.getDay( 1 );
     Day shortDay = plan.getDay( 2 );

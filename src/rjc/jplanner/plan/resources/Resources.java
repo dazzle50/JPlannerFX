@@ -20,6 +20,7 @@ package rjc.jplanner.plan.resources;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 import rjc.jplanner.Main;
 import rjc.jplanner.plan.Plan;
@@ -47,13 +48,15 @@ public class Resources extends ArrayList<Resource>
 
   private static final int[]  INITIALS_CLASH_FIELDS = { NAME, ORG, GROUP, ROLE, ALIAS };
 
-  private WeakReference<Plan> m_plan;
+  private WeakReference<Plan> m_weakPlan;
+  private ResourceLookup      m_lookup;
 
   /**************************************** constructor ******************************************/
   public Resources( Plan plan )
   {
     // hold plan weakly so does not prevent garbage collection of plan
-    m_plan = new WeakReference<>( plan );
+    m_weakPlan = new WeakReference<>( plan );
+    m_lookup = new ResourceLookup();
   }
 
   /***************************************** initialise ******************************************/
@@ -66,6 +69,7 @@ public class Resources extends ArrayList<Resource>
 
     // set resource 0 to be the special 'unassigned' resource
     get( 0 ).setValue( INITIALS, "[UNASSIGNED]", true );
+    m_lookup.invalidate();
   }
 
   /*************************************** getNotNullCount ***************************************/
@@ -125,7 +129,7 @@ public class Resources extends ArrayList<Resource>
           else if ( oldInitials == null )
           {
             // when setting initials from null, also set default calendar and availability
-            Plan plan = m_plan.get();
+            Plan plan = m_weakPlan.get();
             resource.setValue( CALENDAR, plan.getDefaultCalendar(), true );
             resource.setValue( AVAILABLE, 1.0, true );
           }
@@ -134,7 +138,10 @@ public class Resources extends ArrayList<Resource>
     }
 
     // delegate to resource to set value, and return any error message
-    return get( resourceIndex ).setValue( field, newValue, commit );
+    var result = get( resourceIndex ).setValue( field, newValue, commit );
+    if ( result == null && commit && ResourceLookup.isTagField( field ) )
+      m_lookup.invalidate();
+    return result;
   }
 
   /****************************************** findClash ******************************************/
@@ -157,6 +164,12 @@ public class Resources extends ArrayList<Resource>
         return true;
 
     return false;
+  }
+
+  /****************************************** findByTag ******************************************/
+  public List<Resource> findByTag( String tag )
+  {
+    return m_lookup.findByTag( this, tag );
   }
 
 }

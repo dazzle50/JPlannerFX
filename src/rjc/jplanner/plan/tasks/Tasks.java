@@ -18,9 +18,11 @@
 
 package rjc.jplanner.plan.tasks;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import rjc.jplanner.Main;
+import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
 /**************************** Holds the complete list of plan tasks ******************************/
@@ -28,7 +30,16 @@ import rjc.jplanner.Main;
 
 public class Tasks extends ArrayList<Task>
 {
-  private static final long serialVersionUID = Main.VERSION.hashCode();
+  private static final long   serialVersionUID = Main.VERSION.hashCode();
+
+  private WeakReference<Plan> m_weakPlan;
+
+  /**************************************** constructor ******************************************/
+  public Tasks( Plan plan )
+  {
+    // hold plan weakly so does not prevent garbage collection of plan
+    m_weakPlan = new WeakReference<>( plan );
+  }
 
   /****************************************** initialise *****************************************/
   public void initialise()
@@ -71,7 +82,7 @@ public class Tasks extends ArrayList<Task>
         if ( field == Task.FIELD.Predecessors.ordinal() )
           newValue = Predecessors.parse( newValue.toString(), this );
         else if ( field == Task.FIELD.Resources.ordinal() )
-          newValue = TaskResources.parse( newValue.toString() );
+          newValue = TaskResources.parse( newValue.toString(), m_weakPlan.get().getResources() );
       }
       catch ( IllegalArgumentException exception )
       {

@@ -59,7 +59,7 @@ public class Plan
     daytypes = new Days();
     calendars = new Calendars( this );
     resources = new Resources( this );
-    tasks = new Tasks();
+    tasks = new Tasks( this );
 
     m_title = "";
     m_datetimeFormat = "EEE dd/MM/yyyy HH:mm";
