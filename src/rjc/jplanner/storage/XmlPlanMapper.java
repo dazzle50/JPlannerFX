@@ -16,49 +16,30 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.gui;
+package rjc.jplanner.storage;
 
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import rjc.jplanner.gui.menu.EditMenu;
-import rjc.jplanner.gui.menu.FileMenu;
-import rjc.jplanner.gui.menu.HelpMenu;
-import rjc.jplanner.gui.menu.ReportMenu;
-import rjc.jplanner.gui.menu.ViewMenu;
-import rjc.table.view.editor.AbstractCellEditor;
+import java.nio.file.Path;
+
+import rjc.jplanner.plan.Plan;
 
 /*************************************************************************************************/
-/*********************************** Main application menu bar ***********************************/
+/************************* Reading and writing of plan data to XML files *************************/
 /*************************************************************************************************/
 
-public class MainMenus extends MenuBar
+public class XmlPlanMapper
 {
-  private Menu m_menuFile;
-  private Menu m_menuEdit;
-  private Menu m_menuReport;
-  private Menu m_menuView;
-  private Menu m_menuHelp;
 
-  /***************************************** constructor *****************************************/
-  public MainMenus( PlanContext context )
+  /******************************************** load *********************************************/
+  public Plan load( Path path )
   {
-    // construct main window menu bar
-    m_menuFile = new FileMenu( context );
-    m_menuEdit = new EditMenu( context );
-    m_menuReport = new ReportMenu();
-    m_menuView = new ViewMenu( context );
-    m_menuHelp = new HelpMenu();
-    getMenus().addAll( m_menuFile, m_menuEdit, m_menuReport, m_menuView, m_menuHelp );
-
-    // without using setOnShowing() so it is free for other uses, add handler when menu about to be shown
-    getMenus().forEach( menu -> menu.addEventHandler( Menu.ON_SHOWING, event -> onMenuShowing() ) );
+    // TODO Auto-generated method stub
+    return null;
   }
 
-  /***************************************** onMenuShow ******************************************/
-  private void onMenuShowing()
+  /******************************************** save *********************************************/
+  public void save( Plan plan, Path path )
   {
-    // if any table cell editing in progress, end it
-    AbstractCellEditor.endEditing();
+    // TODO Auto-generated method stub
   }
 
 }

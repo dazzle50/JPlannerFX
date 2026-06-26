@@ -18,6 +18,8 @@
 
 package rjc.jplanner.gui.menu;
 
+import java.io.File;
+
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
@@ -25,6 +27,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
+import javafx.stage.FileChooser;
+import rjc.jplanner.gui.PlanContext;
 import rjc.table.Utils;
 
 /*************************************************************************************************/
@@ -35,11 +39,14 @@ public class FileMenu extends Menu
 {
   private static Modifier CONTROL = KeyCombination.CONTROL_DOWN;
 
+  private PlanContext     m_context;
+
   /***************************************** constructor *****************************************/
-  public FileMenu()
+  public FileMenu( PlanContext context )
   {
     // construct file menu for main window menu bar
     setText( "File" );
+    m_context = context;
 
     getItems().add( newPlan() );
     getItems().add( open() );
@@ -68,7 +75,28 @@ public class FileMenu extends Menu
     // open a plan file
     MenuItem fileOpen = new MenuItem( "Open..." );
     fileOpen.setAccelerator( new KeyCodeCombination( KeyCode.O, CONTROL ) );
-    fileOpen.setOnAction( event -> Utils.trace( "OPEN - NOT YET IMPLEMENTED" ) );
+
+    fileOpen.setOnAction( event ->
+    {
+      // TODO check if current plan is saved, and prompt user to save if not
+      // use file-chooser defaulting (if available) to current plan location
+      FileChooser fc = new FileChooser();
+      fc.setTitle( "Open plan" );
+      File initialDirectory = new File( m_context.getPlan().getFileLocation() );
+      if ( initialDirectory.isDirectory() )
+        fc.setInitialDirectory( initialDirectory );
+      fc.getExtensionFilters().add( new FileChooser.ExtensionFilter( "JPlannerFX files (*.xml)", "*.xml" ) );
+      fc.getExtensionFilters().add( new FileChooser.ExtensionFilter( "All files (*.*)", "*.*" ) );
+      File file = fc.showOpenDialog( m_context.getGui().getWindow() );
+
+      // if user cancels file is null, so exit immediately
+      if ( file == null )
+        return;
+
+      // attempt to load from user specified file
+      Utils.trace( "OPEN - NOT YET IMPLEMENTED", file );
+    } );
+
     return fileOpen;
   }
 
@@ -87,7 +115,27 @@ public class FileMenu extends Menu
   {
     // save plan to a new file
     MenuItem fileSaveAs = new MenuItem( "Save As..." );
-    fileSaveAs.setOnAction( event -> Utils.trace( "SAVE AS - NOT YET IMPLEMENTED" ) );
+    fileSaveAs.setOnAction( event ->
+    {
+      // use file-chooser defaulting (if available) to current plan location and filename
+      FileChooser fc = new FileChooser();
+      fc.setTitle( "Save plan" );
+      File initialDirectory = new File( m_context.getPlan().getFileLocation() );
+      if ( initialDirectory.isDirectory() )
+        fc.setInitialDirectory( initialDirectory );
+      fc.setInitialFileName( m_context.getPlan().getFilename() );
+      fc.getExtensionFilters().add( new FileChooser.ExtensionFilter( "JPlannerFX files (*.xml)", "*.xml" ) );
+      fc.getExtensionFilters().add( new FileChooser.ExtensionFilter( "All files (*.*)", "*.*" ) );
+      File file = fc.showSaveDialog( m_context.getGui().getWindow() );
+
+      // if user cancels file is null, so exit immediately
+      if ( file == null )
+        return;
+
+      // attempt to save to user specified file
+      m_context.getStorageIO().save( m_context, file );
+    } );
+
     return fileSaveAs;
   }
 

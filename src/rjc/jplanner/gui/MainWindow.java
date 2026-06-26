@@ -27,7 +27,6 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
-import rjc.jplanner.plan.Plan;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
 
@@ -47,10 +46,8 @@ public class MainWindow extends Scene
     // main window scene based on grid layout
     super( new GridPane() );
 
-    // prepare initial plan and table data sources
-    Plan plan = new Plan();
-    plan.initialise();
-    PlanContext context = new PlanContext( plan );
+    // prepare plan context for this GUI
+    PlanContext context = new PlanContext( this );
 
     // prepare components
     m_menus = new MainMenus( context );
