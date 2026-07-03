@@ -273,4 +273,16 @@ public class Plan
     m_dateFormat = Dformat;
   }
 
+  /***************************************** setFilename *****************************************/
+  public void setFilename( String filename )
+  {
+    m_filename = filename;
+  }
+
+  /*************************************** setFileLocation ***************************************/
+  public void setFileLocation( String fileLocation )
+  {
+    m_fileLocation = fileLocation;
+  }
+
 }

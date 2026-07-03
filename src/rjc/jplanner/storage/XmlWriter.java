@@ -23,6 +23,7 @@ import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
+import java.util.function.IntFunction;
 
 import javax.xml.stream.XMLStreamWriter;
 
@@ -39,16 +40,20 @@ import javax.xml.stream.XMLStreamWriter;
  * normalisation (unlike {@link XMLStreamWriter}).
  * <p>
  * The writer is deliberately small and stateful. Attributes must be written immediately after
- * {@link #startElement(String)}, before text or child elements are written.
+ * {@link #startElement(String)}, before text or child elements are written. Only one root element
+ * is permitted; a second top-level {@link #startElement(String)} call is rejected.
  * <p>
  * Closing this object verifies that all elements have been ended, but does not close the underlying
  * {@link Writer}. The caller owns the destination writer.
+ * <p>
+ * This class is not thread-safe. Instances must be confined to a single thread.
  */
 public final class XmlWriter implements AutoCloseable
 {
   private final Writer        m_writer;
   private final Deque<String> m_elements = new ArrayDeque<>();
   private boolean             m_startElementOpen;
+  private boolean             m_rootStarted;
   private boolean             m_closed;
 
   /***************************************** constructor *****************************************/
@@ -62,18 +67,28 @@ public final class XmlWriter implements AutoCloseable
     m_writer = Objects.requireNonNull( writer, "writer" );
   }
 
-  /**************************************** startElement *****************************************/
+  /***************************************** startElement ****************************************/
   /**
    * Starts an element.
    *
    * @param name the element name
    * @return this writer
    * @throws IOException if writing fails
+   * @throws IllegalStateException if a second root element is started
    */
   public XmlWriter startElement( String name ) throws IOException
   {
     requireOpen();
     requireName( name );
+
+    // enforce a single document (root) element
+    if ( m_elements.isEmpty() )
+    {
+      if ( m_rootStarted )
+        throw new IllegalStateException( "document already has a root element" );
+      m_rootStarted = true;
+    }
+
     closeStartElementIfNeeded();
 
     m_writer.write( '<' );
@@ -84,7 +99,7 @@ public final class XmlWriter implements AutoCloseable
     return this;
   }
 
-  /***************************************** attribute *******************************************/
+  /****************************************** attribute ******************************************/
   /**
    * Writes an attribute on the current open start element.
    *
@@ -92,6 +107,7 @@ public final class XmlWriter implements AutoCloseable
    * @param value the attribute value; {@code null} is written as an empty string
    * @return this writer
    * @throws IOException if writing fails
+   * @throws IllegalStateException if no start element is open
    */
   public XmlWriter attribute( String name, Object value ) throws IOException
   {
@@ -104,34 +120,39 @@ public final class XmlWriter implements AutoCloseable
     m_writer.write( ' ' );
     m_writer.write( name );
     m_writer.write( "=\"" );
-    writeAttributeValue( value == null ? "" : value.toString() );
+    writeEscaped( value == null ? "" : value.toString(), XmlWriter::attributeReplacement );
     m_writer.write( '"' );
 
     return this;
   }
 
-  /******************************************* text **********************************************/
+  /********************************************* text ********************************************/
   /**
    * Writes text content.
    *
    * @param text the text to write; {@code null} writes nothing
    * @return this writer
    * @throws IOException if writing fails
+   * @throws IllegalStateException if no element is currently open
    */
   public XmlWriter text( String text ) throws IOException
   {
     requireOpen();
 
+    // text is only meaningful inside an element, never at document level
+    if ( m_elements.isEmpty() )
+      throw new IllegalStateException( "text must be written inside an element" );
+
     if ( text == null || text.isEmpty() )
       return this;
 
     closeStartElementIfNeeded();
-    writeTextValue( text );
+    writeEscaped( text, XmlWriter::textReplacement );
 
     return this;
   }
 
-  /**************************************** endElement *******************************************/
+  /****************************************** endElement *****************************************/
   /**
    * Ends the current element.
    *
@@ -177,9 +198,12 @@ public final class XmlWriter implements AutoCloseable
     return this;
   }
 
-  /****************************************** flush **********************************************/
+  /******************************************** flush ********************************************/
   /**
    * Flushes the underlying writer.
+   * <p>
+   * If a start element is currently open, this closes its start tag first (as writing text or a
+   * child element would), so no further attributes can be added to it afterwards.
    *
    * @throws IOException if flushing fails
    */
@@ -190,9 +214,11 @@ public final class XmlWriter implements AutoCloseable
     m_writer.flush();
   }
 
-  /****************************************** close **********************************************/
+  /******************************************** close ********************************************/
   /**
    * Verifies that the document is complete.
+   *
+   * @throws IllegalStateException if an element remains unclosed
    */
   @Override
   public void close()
@@ -216,64 +242,40 @@ public final class XmlWriter implements AutoCloseable
     m_startElementOpen = false;
   }
 
-  /********************************** writeAttributeValue ****************************************/
-  private void writeAttributeValue( String value ) throws IOException
+  /***************************************** writeEscaped ****************************************/
+  private void writeEscaped( String value, IntFunction<String> escaper ) throws IOException
   {
     int start = 0;
+    int i = 0;
 
-    for ( int i = 0; i < value.length(); i++ )
+    // walk by code point, not char, so surrogate pairs are treated as one unit
+    while ( i < value.length() )
     {
-      char c = value.charAt( i );
-      String replacement = attributeReplacement( c );
+      int codePoint = value.codePointAt( i );
+      int charCount = Character.charCount( codePoint );
+      String replacement = escaper.apply( codePoint );
 
       if ( replacement == null )
       {
-        requireLegalXmlCharacter( c );
+        requireLegalCodePoint( codePoint );
+        i += charCount;
         continue;
       }
 
-      writeRun( value, start, i );
+      // Writer.write with a zero length is a documented no-op, so no need to guard it here
+      m_writer.write( value, start, i - start );
       m_writer.write( replacement );
-      start = i + 1;
+      i += charCount;
+      start = i;
     }
 
-    writeRun( value, start, value.length() );
+    m_writer.write( value, start, value.length() - start );
   }
 
-  /************************************* writeTextValue ******************************************/
-  private void writeTextValue( String value ) throws IOException
+  /************************************* attributeReplacement ************************************/
+  private static String attributeReplacement( int codePoint )
   {
-    int start = 0;
-
-    for ( int i = 0; i < value.length(); i++ )
-    {
-      char c = value.charAt( i );
-      String replacement = textReplacement( c );
-
-      if ( replacement == null )
-      {
-        requireLegalXmlCharacter( c );
-        continue;
-      }
-
-      writeRun( value, start, i );
-      m_writer.write( replacement );
-      start = i + 1;
-    }
-
-    writeRun( value, start, value.length() );
-  }
-
-  /*************************************** writeRun **********************************************/
-  private void writeRun( String value, int start, int end ) throws IOException
-  {
-    if ( end > start )
-      m_writer.write( value, start, end - start );
-  }
-
-  private static String attributeReplacement( char c )
-  {
-    return switch ( c )
+    return switch ( codePoint )
     {
       case '&' -> "&amp;";
       case '<' -> "&lt;";
@@ -285,10 +287,10 @@ public final class XmlWriter implements AutoCloseable
     };
   }
 
-  /************************************** textReplacement ****************************************/
-  private static String textReplacement( char c )
+  /*************************************** textReplacement ***************************************/
+  private static String textReplacement( int codePoint )
   {
-    return switch ( c )
+    return switch ( codePoint )
     {
       case '&' -> "&amp;";
       case '<' -> "&lt;";
@@ -298,21 +300,34 @@ public final class XmlWriter implements AutoCloseable
     };
   }
 
-  /*************************************** requireName *******************************************/
+  /***************************************** requireName *****************************************/
   private static void requireName( String name )
   {
     if ( name == null || name.isEmpty() )
       throw new IllegalArgumentException( "XML name must not be null or empty" );
   }
 
-  /*********************************** requireLegalXmlCharacter **********************************/
-  private static void requireLegalXmlCharacter( char c )
+  /************************************ requireLegalCodePoint ************************************/
+  private static void requireLegalCodePoint( int codePoint )
   {
-    if ( c < 0x20 && c != '\t' && c != '\n' && c != '\r' )
-      throw new IllegalArgumentException( "illegal XML character: 0x" + Integer.toHexString( c ) );
+    // XML 1.0 Char production excludes most control characters, lone surrogates and the
+    // U+FFFE / U+FFFF noncharacters; supplementary-plane noncharacters are legal per spec
+    boolean controlCharacter = codePoint < 0x20 && codePoint != '\t' && codePoint != '\n' && codePoint != '\r';
+
+    // codePointAt only yields a supplementary value (>= 0x10000) for an already-valid pair,
+    // so a lone/unpaired surrogate can only ever appear as a BMP code point; casting a
+    // supplementary code point to char without this guard truncates it and can alias into
+    // the surrogate range, wrongly rejecting valid characters such as U+1D800
+    boolean loneSurrogate = Character.isBmpCodePoint( codePoint ) && Character.isSurrogate( (char) codePoint );
+
+    boolean nonCharacter = codePoint == 0xFFFE || codePoint == 0xFFFF;
+
+    if ( controlCharacter || loneSurrogate || nonCharacter )
+      throw new IllegalArgumentException(
+          "illegal XML character: U+" + Integer.toHexString( codePoint ).toUpperCase() );
   }
 
-  /**************************************** requireOpen ******************************************/
+  /***************************************** requireOpen *****************************************/
   private void requireOpen()
   {
     if ( m_closed )

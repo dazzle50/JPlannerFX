@@ -22,30 +22,21 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 import rjc.jplanner.gui.PlanContext;
-import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus.Level;
 
 /*************************************************************************************************/
-/******************* Central gateway for application save and load operations ********************/
+/********************** Save Plan and display details to file in XML format **********************/
 /*************************************************************************************************/
 
-public class StorageIO
+public class FileSave
 {
 
-  /********************************************** open *******************************************/
-  public Plan open( Path path )
-  {
-    // TODO delegate to specialised mapper
-    return null;
-  }
-
-  /********************************************** save *******************************************/
-  public boolean save( PlanContext context, File file )
+  /***************************************** constructor *****************************************/
+  public FileSave( PlanContext context, File file )
   {
     // check context is valid
     if ( context == null || context.getPlan() == null )
@@ -55,7 +46,7 @@ public class StorageIO
     if ( file.exists() && !file.canWrite() )
     {
       context.getStatus().update( Level.ERROR, "Could not write to '" + file.getPath() + "'" );
-      return false;
+      return;
     }
 
     // attempt to write JPlannerFX file to the specified file
@@ -68,6 +59,7 @@ public class StorageIO
 
       var planMapper = new XmlPlanMapper( context.getPlan() );
       planMapper.write( xml );
+      // TODO guiMapper.write( xml);
 
       xml.endDocument();
       xml.flush();
@@ -79,12 +71,11 @@ public class StorageIO
       exception.printStackTrace();
       context.getStatus().update( Level.ERROR,
           "Error writing to '" + file.getPath() + "' : " + exception.getMessage() );
-      return false;
+      return;
     }
 
     // successfully wrote file
     Utils.trace( "Successfully wrote '" + file.getPath() + "'" );
-    return true;
   }
 
   /************************************** writeStartDocument *************************************/

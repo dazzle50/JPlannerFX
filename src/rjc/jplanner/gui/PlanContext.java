@@ -23,7 +23,6 @@ import rjc.jplanner.gui.days.DaysData;
 import rjc.jplanner.gui.resources.ResourcesData;
 import rjc.jplanner.gui.tasks.TasksData;
 import rjc.jplanner.plan.Plan;
-import rjc.jplanner.storage.StorageIO;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.undo.UndoStack;
 
@@ -41,7 +40,6 @@ public class PlanContext
   private final Plan             m_plan;
   private final ObservableStatus m_status;
   private final UndoStack        m_undoStack;
-  private final StorageIO        m_storageIO;
   private final MainWindow       m_gui;
 
   // data wrappers for TableView data sources
@@ -58,7 +56,6 @@ public class PlanContext
 
     m_status = new ObservableStatus();
     m_undoStack = new UndoStack();
-    m_storageIO = new StorageIO();
     m_gui = gui;
 
     // initialise TableView data sources using plan sub-collections
@@ -88,11 +85,6 @@ public class PlanContext
   public UndoStack getUndoStack()
   {
     return m_undoStack;
-  }
-
-  public StorageIO getStorageIO()
-  {
-    return m_storageIO;
   }
 
   public MainWindow getGui()
