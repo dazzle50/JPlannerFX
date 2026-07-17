@@ -18,37 +18,23 @@
 
 package rjc.jplanner.storage;
 
-import javax.xml.stream.XMLStreamReader;
-
 import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.resources.Resource;
 import rjc.jplanner.plan.tasks.Task;
 
 /*************************************************************************************************/
-/************************* Reading and writing of plan data to XML files *************************/
+/******************************* Writing plan data to XML files **********************************/
 /*************************************************************************************************/
 
-public class XmlPlanMapper
+public final class XmlPlanWriter
 {
   private Plan m_plan;
 
-  /***************************************** constructor ******************************************/
-  public XmlPlanMapper( Plan plan )
-  {
-    m_plan = plan;
-  }
-
-  /******************************************** load *********************************************/
-  public Plan load( XMLStreamReader xsr )
-  {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   /******************************************** write ********************************************/
-  public void write( XmlWriter xml ) throws Exception
+  public void write( Plan plan, XmlWriter xml ) throws Exception
   {
     // write plan to XML stream
+    m_plan = plan;
     xml.startElement( XmlLabels.XML_PLAN_DATA );
     xml.attribute( XmlLabels.XML_TITLE, m_plan.getTitle() );
     xml.attribute( XmlLabels.XML_START, m_plan.getDefaultStart() );
@@ -159,21 +145,43 @@ public class XmlPlanMapper
 
       xml.attribute( XmlLabels.XML_ID, id++ );
       xml.attribute( XmlLabels.XML_INITIALS, resource.getInitials() );
-      xml.attribute( XmlLabels.XML_NAME, resource.getValue( Resource.FIELD.Name.ordinal() ) );
-      xml.attribute( XmlLabels.XML_ORG, resource.getValue( Resource.FIELD.Organisation.ordinal() ) );
-      xml.attribute( XmlLabels.XML_GROUP, resource.getValue( Resource.FIELD.Group.ordinal() ) );
-      xml.attribute( XmlLabels.XML_ROLE, resource.getValue( Resource.FIELD.Role.ordinal() ) );
-      xml.attribute( XmlLabels.XML_ALIAS, resource.getValue( Resource.FIELD.Alias.ordinal() ) );
-      xml.attribute( XmlLabels.XML_START, resource.getValue( Resource.FIELD.Start.ordinal() ) );
-      xml.attribute( XmlLabels.XML_END, resource.getValue( Resource.FIELD.End.ordinal() ) );
-      xml.attribute( XmlLabels.XML_AVAIL, resource.getAvailable() );
+
+      var name = resource.getValue( Resource.FIELD.Name.ordinal() );
+      if ( name != null )
+        xml.attribute( XmlLabels.XML_NAME, name );
+
+      var org = resource.getValue( Resource.FIELD.Organisation.ordinal() );
+      if ( org != null )
+        xml.attribute( XmlLabels.XML_ORG, org );
+
+      var group = resource.getValue( Resource.FIELD.Group.ordinal() );
+      if ( group != null )
+        xml.attribute( XmlLabels.XML_GROUP, group );
+
+      var role = resource.getValue( Resource.FIELD.Role.ordinal() );
+      if ( role != null )
+        xml.attribute( XmlLabels.XML_ROLE, role );
+
+      var alias = resource.getValue( Resource.FIELD.Alias.ordinal() );
+      if ( alias != null )
+        xml.attribute( XmlLabels.XML_ALIAS, alias );
+
+      var start = resource.getValue( Resource.FIELD.Start.ordinal() );
+      if ( start != null )
+        xml.attribute( XmlLabels.XML_START, start );
+
+      var end = resource.getValue( Resource.FIELD.End.ordinal() );
+      if ( end != null )
+        xml.attribute( XmlLabels.XML_END, end );
+
+      var comment = resource.getValue( Resource.FIELD.Comment.ordinal() );
+      if ( comment != null )
+        xml.attribute( XmlLabels.XML_COMMENT, comment );
 
       // write calendar reference
       var calendar = resource.getCalendar();
       if ( calendar != null )
         xml.attribute( XmlLabels.XML_CALENDAR, m_plan.getIndex( calendar ) );
-
-      xml.attribute( XmlLabels.XML_COMMENT, resource.getValue( Resource.FIELD.Comment.ordinal() ) );
 
       xml.endElement(); // end XML_RESOURCE
     }

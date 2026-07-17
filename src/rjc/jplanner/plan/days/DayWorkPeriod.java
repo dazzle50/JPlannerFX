@@ -52,6 +52,24 @@ public class DayWorkPeriod
     m_end = Time.ofHours( endHour );
   }
 
+  /**************************************** constructor ******************************************/
+  /**
+   * Constructs a work period from start and end time values.
+   *
+   * @param start start time of the work period
+   * @param end   end time of the work period
+   * @throws IllegalArgumentException if {@code start >= end}
+   */
+  public DayWorkPeriod( Time start, Time end )
+  {
+    // construct work period from from start and end hour points
+    if ( start.compareTo( end ) >= 0 )
+      throw new IllegalArgumentException( "start " + start + " >= end " + end );
+
+    m_start = start;
+    m_end = end;
+  }
+
   /***************************************** toString ********************************************/
   /**
    * {@inheritDoc}

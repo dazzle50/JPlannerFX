@@ -22,7 +22,6 @@ import java.io.File;
 
 import javafx.stage.FileChooser;
 import rjc.jplanner.gui.PlanContext;
-import rjc.table.Utils;
 import rjc.table.signal.ObservableStatus.Level;
 
 /*************************************************************************************************/
@@ -66,22 +65,8 @@ public class FileOpen
       return;
     }
 
-    // ensure file is JPlanner XML
-    if ( !validJPlannerXml( file ) )
-    {
-      context.getStatus().update( Level.ERROR, "File '" + file.getPath() + "' not valid plan." );
-      return;
-    }
-
-    // attempt to launch new GUI in separate JVM (probably using ProcessBuilder) to display this plan
-    Utils.trace( "NOT IMPLEMENTED" );
-  }
-
-  /************************************** validJPlannerXml ***************************************/
-  private boolean validJPlannerXml( File file )
-  {
-    // TODO Auto-generated method stub
-    return false;
+    // attempt to read specified file
+    new FileLoad( context, file );
   }
 
 }

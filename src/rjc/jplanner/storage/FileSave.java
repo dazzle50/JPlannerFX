@@ -57,8 +57,7 @@ public class FileSave
       writeStartDocument( writer );
       writeMetaData( xml, file );
 
-      var planMapper = new XmlPlanMapper( context.getPlan() );
-      planMapper.write( xml );
+      new XmlPlanWriter().write( context.getPlan(), xml );
       // TODO guiMapper.write( xml);
 
       xml.endDocument();
