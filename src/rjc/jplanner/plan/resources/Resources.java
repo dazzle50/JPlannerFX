@@ -169,7 +169,15 @@ public class Resources extends ArrayList<Resource>
   /****************************************** findByTag ******************************************/
   public List<Resource> findByTag( String tag )
   {
+    // delegate to resource lookup to return list of resources that use specified tag
     return m_lookup.findByTag( this, tag );
+  }
+
+  /*************************************** invalidateLookup **************************************/
+  public void invalidateLookup()
+  {
+    // invalidate the resource lookup cache
+    m_lookup.invalidate();
   }
 
 }
