@@ -44,18 +44,12 @@ public class Tasks extends ArrayList<Task>
   /****************************************** initialise *****************************************/
   public void initialise()
   {
-    // initialise list with default tasks (including special task 0 which is overall project summary)
+    // initialise list with default tasks
     clear();
     for ( int count = 0; count <= 10; count++ )
       add( new Task() );
 
-    setupTaskZero();
-  }
-
-  /**************************************** setupTaskZero ****************************************/
-  public void setupTaskZero()
-  {
-    // setup special task 0
+    // setup special task 0 (overall project summary)
     get( 0 ).setValue( Task.FIELD.Title.ordinal(), "[OVERALL_PROJECT]", true );
   }
 

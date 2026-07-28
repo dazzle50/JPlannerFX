@@ -38,6 +38,8 @@ import rjc.table.signal.ObservableStatus.Level;
 public class FileLoad
 {
   private XMLStreamReader m_xml;
+  private String          m_savedby;   // who saved the file
+  private String          m_savedWhen; // where file was saved
 
   /***************************************** constructor *****************************************/
   public FileLoad( PlanContext context, File file )
@@ -79,7 +81,27 @@ public class FileLoad
     findElementStart( XmlLabels.XML_JPLANNER );
 
     // document-level attributes include format version and compatibility information
-    traceAttributes();
+    for ( int i = 0; i < m_xml.getAttributeCount(); i++ )
+    {
+      String attrib = m_xml.getAttributeLocalName( i );
+      String value = m_xml.getAttributeValue( i );
+
+      switch ( attrib )
+      {
+        case XmlLabels.XML_FORMAT -> {
+          // ignored for now
+        }
+        case XmlLabels.XML_SAVENAME -> {
+          // ignored
+        }
+        case XmlLabels.XML_SAVEWHERE -> {
+          // ignored
+        }
+        case XmlLabels.XML_SAVEUSER -> m_savedby = value;
+        case XmlLabels.XML_SAVEWHEN -> m_savedWhen = value;
+        default -> Utils.trace( "Unhandled attribute '" + attrib + "' = '" + value + "'" );
+      }
+    }
   }
 
   /***************************************** processPlan *****************************************/
@@ -102,18 +124,6 @@ public class FileLoad
     }
 
     throw new IOException( "Failed to find element '" + element + "'" );
-  }
-
-  /*************************************** traceAttributes ***************************************/
-  private void traceAttributes()
-  {
-    // trace document-level attributes not yet processed by version handling
-    for ( int i = 0; i < m_xml.getAttributeCount(); i++ )
-    {
-      String name = m_xml.getAttributeLocalName( i );
-      String value = m_xml.getAttributeValue( i );
-      Utils.trace( m_xml.getLocalName() + " ---- Attribute: " + name, value );
-    }
   }
 
   /*************************************** closeXmlReader ****************************************/

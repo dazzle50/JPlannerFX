@@ -20,10 +20,10 @@ package rjc.jplanner.gui.tasks;
 
 import javafx.application.Platform;
 import javafx.scene.input.ContextMenuEvent;
-import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.gui.editors.EditorPredecessors;
 import rjc.jplanner.gui.editors.EditorResources;
 import rjc.jplanner.gui.editors.EditorTimeSpan;
+import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
 import rjc.table.data.types.DateTime;
@@ -91,7 +91,7 @@ public class TasksView extends TableView
       case Title, Comment:
         return new EditorText();
 
-      case Duration:
+      case Duration, Work:
         return new EditorTimeSpan();
 
       case Start, End:

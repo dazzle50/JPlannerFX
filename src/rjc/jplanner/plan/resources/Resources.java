@@ -67,7 +67,7 @@ public class Resources extends ArrayList<Resource>
     for ( int count = 0; count <= 5; count++ )
       add( new Resource() );
 
-    // set resource 0 to be the special 'unassigned' resource
+    // setup special resource 0 (resource used for work tasks when no other resources assigned or available)
     get( 0 ).setValue( INITIALS, "[UNASSIGNED]", true );
     m_lookup.invalidate();
   }

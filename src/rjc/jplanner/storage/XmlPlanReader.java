@@ -491,12 +491,13 @@ public final class XmlPlanReader
           case XmlLabels.XML_ALIAS -> resource.setValue( Resource.FIELD.Alias.ordinal(), value, true );
           case XmlLabels.XML_START -> resource.setValue( Resource.FIELD.Start.ordinal(), Date.parse( value ), true );
           case XmlLabels.XML_END -> resource.setValue( Resource.FIELD.End.ordinal(), Date.parse( value ), true );
+          case XmlLabels.XML_AVAIL -> resource.setValue( Resource.FIELD.Available.ordinal(),
+              Double.parseDouble( value ), true );
           // calendar is referenced by id, resolved against calendars already loaded earlier
           case XmlLabels.XML_CALENDAR -> resource.setValue( Resource.FIELD.Calendar.ordinal(),
               m_plan.getCalendar( Integer.parseInt( value ) ), true );
           case XmlLabels.XML_COMMENT -> resource.setValue( Resource.FIELD.Comment.ordinal(), value, true );
-          // not yet supported by the data model - trace so gaps in loaded data are visible
-          case XmlLabels.XML_AVAIL, XmlLabels.XML_COST -> "TODO loading resource attribute '" + attrib + "'";
+          case XmlLabels.XML_COST -> "TODO loading resource attribute '" + attrib + "'";
           default -> "Unhandled attribute '" + attrib + "' = '" + value + "'";
         };
         if ( problem != null )

@@ -134,16 +134,18 @@ public final class XmlPlanWriter
     xml.startElement( XmlLabels.XML_RES_DATA );
     xml.attribute( XmlLabels.XML_COUNT, resources.size() );
 
-    int id = 0;
+    int id = -1;
     for ( var resource : resources )
     {
+      id++;
+
       // skip blank resources
       if ( resource.isBlank() )
         continue;
 
       xml.startElement( XmlLabels.XML_RESOURCE );
 
-      xml.attribute( XmlLabels.XML_ID, id++ );
+      xml.attribute( XmlLabels.XML_ID, id );
       xml.attribute( XmlLabels.XML_INITIALS, resource.getInitials() );
 
       var name = resource.getValue( Resource.FIELD.Name.ordinal() );
@@ -174,6 +176,10 @@ public final class XmlPlanWriter
       if ( end != null )
         xml.attribute( XmlLabels.XML_END, end );
 
+      var avail = resource.getValue( Resource.FIELD.Available.ordinal() );
+      if ( avail != null )
+        xml.attribute( XmlLabels.XML_AVAIL, avail );
+
       var comment = resource.getValue( Resource.FIELD.Comment.ordinal() );
       if ( comment != null )
         xml.attribute( XmlLabels.XML_COMMENT, comment );
@@ -197,16 +203,18 @@ public final class XmlPlanWriter
     xml.startElement( XmlLabels.XML_TASK_DATA );
     xml.attribute( XmlLabels.XML_COUNT, tasks.size() );
 
-    int id = 0;
+    int id = -1;
     for ( var task : tasks )
     {
-      // skip blank tasks (but always include special task 0)
-      if ( id > 0 && task.isBlank() )
+      id++;
+
+      // skip blank tasks
+      if ( task.isBlank() )
         continue;
 
       xml.startElement( XmlLabels.XML_TASK );
 
-      xml.attribute( XmlLabels.XML_ID, id++ );
+      xml.attribute( XmlLabels.XML_ID, id );
       xml.attribute( XmlLabels.XML_TITLE, task.getValue( Task.FIELD.Title.ordinal() ) );
       xml.attribute( XmlLabels.XML_TYPE, task.getTaskType() );
       xml.attribute( XmlLabels.XML_DURATION, task.getValue( Task.FIELD.Duration.ordinal() ) );
