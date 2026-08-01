@@ -36,37 +36,34 @@ import rjc.table.signal.ObservableStatus.Level;
 
 public class MainWindow extends Scene
 {
-  private MenuBar   m_menus;     // menus at top of scene
-  private TabPane   m_tabs;      // tabs containing application functionality
-  private TextField m_statusBar; // status bar at bottom of scene
+  private GridPane    m_grid;      // root grid layout container
+  private PlanContext m_context;   // plan context shared across main window components
+  private MenuBar     m_menus;     // menus at top of scene
+  private TabPane     m_tabs;      // tabs containing application functionality
+  private TextField   m_statusBar; // status bar at bottom of scene
 
   /**************************************** constructor ******************************************/
   public MainWindow()
   {
     // main window scene based on grid layout
     super( new GridPane() );
+    m_grid = (GridPane) getRoot();
 
-    // prepare plan context for this GUI
-    PlanContext context = new PlanContext( this );
-
-    // prepare components
-    m_menus = new MainMenus( context );
-    m_tabs = new MainTabs( context );
-    m_statusBar = createStatusBar( context.getStatus() );
+    // create the plan context, menus, and status bar
+    m_context = new PlanContext( this );
+    m_menus = new MainMenus( m_context );
+    m_statusBar = createStatusBar( m_context.getStatus() );
 
     // arrange the grid
-    GridPane grid = (GridPane) getRoot();
-    grid.add( m_menus, 0, 0 );
-    grid.add( m_tabs, 0, 1 );
-    grid.add( m_statusBar, 0, 2 );
-    GridPane.setHgrow( m_tabs, Priority.ALWAYS );
-    GridPane.setVgrow( m_tabs, Priority.ALWAYS );
+    m_grid.add( m_menus, 0, 0 );
+    m_grid.add( m_statusBar, 0, 2 );
+    rebuildTabs();
   }
 
-  /**************************************** getStatusBar *****************************************/
+  /************************************* createStatusBar *****************************************/
   private TextField createStatusBar( ObservableStatus status )
   {
-    // create status-bar for displaying status messages
+    // create selectable text status-bar for displaying status messages
     TextField statusBar = new TextField();
     statusBar.setFocusTraversable( false );
     statusBar.setEditable( false );
@@ -83,4 +80,22 @@ public class MainWindow extends Scene
 
     return statusBar;
   }
+
+  /***************************************** rebuildTabs *****************************************/
+  public void rebuildTabs()
+  {
+    // do nothing if plan not yet available
+    if ( m_context == null )
+      return;
+
+    // recreate the main window tabs using stored context
+    if ( m_tabs != null )
+      m_grid.getChildren().remove( m_tabs );
+
+    m_tabs = new MainTabs( m_context );
+    m_grid.add( m_tabs, 0, 1 );
+    GridPane.setHgrow( m_tabs, Priority.ALWAYS );
+    GridPane.setVgrow( m_tabs, Priority.ALWAYS );
+  }
+
 }

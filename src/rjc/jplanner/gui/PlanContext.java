@@ -36,39 +36,51 @@ import rjc.table.undo.UndoStack;
  */
 public class PlanContext
 {
-  // core plan and status - marked final for safety
-  private final Plan             m_plan;
+  // context main components
+  private Plan                   m_plan;
   private final ObservableStatus m_status;
   private final UndoStack        m_undoStack;
   private final MainWindow       m_gui;
 
   // data wrappers for TableView data sources
-  private final DaysData         m_dayData;
-  private final CalendarsData    m_calendarData;
-  private final ResourcesData    m_resourceData;
-  private final TasksData        m_taskData;
+  private DaysData               m_dayData;
+  private CalendarsData          m_calendarData;
+  private ResourcesData          m_resourceData;
+  private TasksData              m_taskData;
 
   /**************************************** constructor ******************************************/
   public PlanContext( MainWindow gui )
   {
-    m_plan = new Plan();
-    m_plan.initialise();
-
+    // prepare context contents
     m_status = new ObservableStatus();
     m_undoStack = new UndoStack();
     m_gui = gui;
 
-    // initialise TableView data sources using plan sub-collections
+    var plan = new Plan();
+    plan.initialise();
+    replacePlan( plan );
+  }
+
+  /**************************************** replacePlan ******************************************/
+  public void replacePlan( Plan newPlan )
+  {
+    // rebuild TableView data sources using plan sub-collections
+    m_plan = newPlan;
     m_dayData = new DaysData( m_plan.getDays() );
     m_calendarData = new CalendarsData( m_plan.getCalendars() );
     m_resourceData = new ResourcesData( m_plan.getResources() );
     m_taskData = new TasksData( m_plan.getTasks() );
 
-    // set user-data for tables to allow them to access the wider context
+    // set user-data for tables to allow them to access this context
     m_dayData.setUserData( this );
     m_calendarData.setUserData( this );
     m_resourceData.setUserData( this );
     m_taskData.setUserData( this );
+
+    // previous undo history and status no longer apply to the new plan
+    m_undoStack.clear();
+    m_status.clear();
+    m_gui.rebuildTabs();
   }
 
   /******************************************* getters *******************************************/

@@ -18,6 +18,8 @@
 
 package rjc.jplanner.storage;
 
+import rjc.jplanner.Main;
+
 /*************************************************************************************************/
 /**************** Holds the XML labels used in saving & loading JPlannerFX files *****************/
 /*************************************************************************************************/
@@ -28,7 +30,7 @@ public class XmlLabels
   public static final String ENCODING            = "UTF-8";
 
   // 'JPlanner' labels
-  public static final String FORMAT              = "2026";
+  public static final String FORMAT              = Main.VERSION;
   public static final String XML_JPLANNER        = "JPlanner";
   public static final String XML_FORMAT          = "format";
   public static final String XML_SAVEUSER        = "saved-by";

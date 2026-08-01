@@ -285,4 +285,16 @@ public class Plan
     m_fileLocation = fileLocation;
   }
 
+  /***************************************** setSavedBy ******************************************/
+  public void setSavedBy( String who )
+  {
+    m_savedBy = who;
+  }
+
+  /***************************************** setSavedWhen ****************************************/
+  public void setSavedWhen( DateTime when )
+  {
+    m_savedWhen = when;
+  }
+
 }

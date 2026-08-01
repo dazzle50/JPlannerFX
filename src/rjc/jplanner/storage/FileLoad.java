@@ -29,6 +29,7 @@ import javax.xml.stream.XMLStreamReader;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
+import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus.Level;
 
 /*************************************************************************************************/
@@ -38,8 +39,8 @@ import rjc.table.signal.ObservableStatus.Level;
 public class FileLoad
 {
   private XMLStreamReader m_xml;
-  private String          m_savedby;   // who saved the file
-  private String          m_savedWhen; // where file was saved
+  private String          m_savedBy;   // who saved the file
+  private DateTime        m_savedWhen; // when file was saved
 
   /***************************************** constructor *****************************************/
   public FileLoad( PlanContext context, File file )
@@ -52,18 +53,26 @@ public class FileLoad
       var factory = XMLInputFactory.newInstance();
       m_xml = factory.createXMLStreamReader( input );
 
+      // check file is a valid JPlannerFX XML file and process its attributes
       processJPlanner();
-      var newPlan = processPlan();
 
-      // plan-data was fully consumed, so loading was successful
+      // process plan-data part of XML file
+      var newPlan = processPlan();
       newPlan.setFilename( file.getName() );
       newPlan.setFileLocation( file.getParent() );
-      // TODO do something with the new Plan !!!
+      newPlan.setSavedBy( m_savedBy );
+      newPlan.setSavedWhen( m_savedWhen );
+      context.replacePlan( newPlan );
+
+      // process display-data part of XML file
+      processGUI();
+
+      context.getStatus().update( Level.INFO, "Opened '" + file.getPath() + "'" );
       Utils.trace( "Successfully read '" + file.getPath() + "' " + newPlan );
     }
     catch ( Exception exception )
     {
-      // loading failed before the end of plan-data was reached
+      // problem was encountered processing the file
       Utils.trace( "ERROR reading '" + file.getPath() + "'" );
       exception.printStackTrace();
       context.getStatus().update( Level.ERROR, "Error reading '" + file.getPath() + "' : " + exception.getMessage() );
@@ -97,8 +106,8 @@ public class FileLoad
         case XmlLabels.XML_SAVEWHERE -> {
           // ignored
         }
-        case XmlLabels.XML_SAVEUSER -> m_savedby = value;
-        case XmlLabels.XML_SAVEWHEN -> m_savedWhen = value;
+        case XmlLabels.XML_SAVEUSER -> m_savedBy = value;
+        case XmlLabels.XML_SAVEWHEN -> m_savedWhen = DateTime.parse( value );
         default -> Utils.trace( "Unhandled attribute '" + attrib + "' = '" + value + "'" );
       }
     }
@@ -110,6 +119,24 @@ public class FileLoad
     // position reader on plan-data and delegate its complete contents to the mapper
     findElementStart( XmlLabels.XML_PLAN_DATA );
     return new XmlPlanReader().read( m_xml );
+  }
+
+  /***************************************** processGUI ******************************************/
+  private void processGUI() throws Exception
+  {
+    // position reader on display-data and ..... TODO
+    try
+    {
+      findElementStart( XmlLabels.XML_DISPLAY_DATA );
+    }
+    catch ( IOException exception )
+    {
+      // display data is optional, so if not found, do nothing
+      Utils.trace( "Display data not found" );
+      return;
+    }
+
+    Utils.trace( "Processing display data NOT YET IMPLEMENTED" );
   }
 
   /************************************** findElementStart ***************************************/
