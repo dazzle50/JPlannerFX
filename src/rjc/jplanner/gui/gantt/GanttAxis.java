@@ -24,8 +24,9 @@ import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.text.Text;
+import rjc.table.data.types.DateInterval;
 import rjc.table.data.types.DateTime;
-import rjc.table.data.types.DateTime.IntervalUnit;
+import rjc.table.data.types.DateTimeInterval;
 import rjc.table.view.Colours;
 
 /*************************************************************************************************/
@@ -35,11 +36,11 @@ import rjc.table.view.Colours;
 class GanttAxis extends Canvas
 {
   private GanttScale        m_scale;    // scale defines starts and scaling size
-  private IntervalUnit      m_interval; // axis interval step
+  private DateTimeInterval  m_interval; // axis interval step
   private DateTimeFormatter m_format;   // axis interval label format
 
   /**************************************** constructor ******************************************/
-  public GanttAxis( GanttScale scale, IntervalUnit interval )
+  public GanttAxis( GanttScale scale, DateTimeInterval interval )
   {
     // construct gantt-scale
     super( 0.0, Gantt.GANTTAXIS_HEIGHT );
@@ -47,7 +48,7 @@ class GanttAxis extends Canvas
 
     m_scale = scale;
     m_interval = interval;
-    m_format = DateTimeFormatter.ofPattern( interval == IntervalUnit.MONTH ? "MMM-yy" : "d" );
+    m_format = DateTimeFormatter.ofPattern( interval == DateInterval.MONTH ? "MMM-yy" : "d" );
 
     widthProperty().addListener( ( observable, oldW, newW ) -> widthChange( oldW.intValue(), newW.intValue() ) );
   }
@@ -74,8 +75,8 @@ class GanttAxis extends Canvas
     gc.strokeLine( oldWidth, y, newWidth, y );
 
     // determine first interval
-    DateTime start = m_scale.datetime( oldWidth ).roundDown( m_interval );
-    DateTime end = start.plusInterval( 1, m_interval );
+    DateTime start = m_scale.datetime( oldWidth ).startOf( m_interval );
+    DateTime end = start.plus( 1, m_interval );
     int xs = m_scale.x( start );
     int xe = m_scale.x( end );
 
@@ -90,7 +91,7 @@ class GanttAxis extends Canvas
       double ww = xe - xs - 3.0;
       if ( ww > 1.0 )
       {
-        String label = start.toString( m_format );
+        String label = start.format( m_format );
         Bounds bounds = new Text( label ).getLayoutBounds();
         double yy = ( getHeight() - bounds.getHeight() ) / 2.0 - bounds.getMinY() - 1.0;
         double xx = xs + 1.0;
@@ -102,7 +103,7 @@ class GanttAxis extends Canvas
       // move on to next interval
       start = end;
       xs = xe;
-      end = end.plusInterval( 1, m_interval );
+      end = end.plus( 1, m_interval );
       xe = m_scale.x( end );
     }
     while ( xs < newWidth );

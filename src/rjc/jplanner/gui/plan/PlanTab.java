@@ -55,7 +55,6 @@ public class PlanTab extends Tab
       else
       {
         setContent( null );
-        m_properties.updatePlan();
         context.getPlan().setNotes( m_notes.getText() );
       }
     } );

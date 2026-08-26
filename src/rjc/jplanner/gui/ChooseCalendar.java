@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui;
 
+import rjc.jplanner.plan.calenders.Calendar;
 import rjc.jplanner.plan.calenders.Calendars;
 import rjc.table.Utils;
 import rjc.table.control.ChooseField;
@@ -36,7 +37,14 @@ public class ChooseCalendar extends ChooseField
     super( calendars.toArray() );
   }
 
-  /*************************************** refreshChoices ****************************************/
+  /***************************************** getCalendar *****************************************/
+  public Calendar getCalendar()
+  {
+    // return the selected calendar
+    return (Calendar) getSelected();
+  }
+
+  /**************************************** refreshChoices ***************************************/
   public void refreshChoices()
   {
     // TODO refresh choices as list of calendar names might have changed

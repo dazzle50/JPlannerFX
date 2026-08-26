@@ -19,6 +19,7 @@
 package rjc.jplanner.gui.gantt;
 
 import javafx.beans.property.DoubleProperty;
+import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;
 
@@ -36,7 +37,7 @@ public class GanttScale
   public GanttScale( DateTime start, DoubleProperty scrollBarOffset )
   {
     // initialise the gantt scale
-    m_start = start.toMilliseconds();
+    m_start = start.toSerialMilliseconds();
     m_offset = scrollBarOffset;
     m_millisecondsPP = 4 * Time.MILLIS_PER_HOUR; // default to 4 hours per pixel
   }
@@ -45,18 +46,18 @@ public class GanttScale
   public void setScale( DateTime start, DateTime end, int widthPixels )
   {
     // determine milliseconds per pixel after checking date-times
-    if ( end.toMilliseconds() - start.toMilliseconds() < widthPixels )
+    if ( end.toSerialMilliseconds() - start.toSerialMilliseconds() < widthPixels )
       throw new IllegalArgumentException( "Invalid scale " + start + " " + end + " " + widthPixels );
 
-    m_start = start.toMilliseconds();
-    m_millisecondsPP = ( end.toMilliseconds() - m_start ) / widthPixels;
+    m_start = start.toSerialMilliseconds();
+    m_millisecondsPP = ( end.toSerialMilliseconds() - m_start ) / widthPixels;
   }
 
   /********************************************** x **********************************************/
   public int x( DateTime dt )
   {
     // return x-coordinate from date-time [TODO stretch date-time to full day ?]
-    long dtMilliseconds = dt.toMilliseconds();
+    long dtMilliseconds = dt.toSerialMilliseconds();
 
     if ( dtMilliseconds > m_start )
       return (int) ( ( dtMilliseconds - m_start ) / m_millisecondsPP - m_offset.get() );
@@ -67,21 +68,30 @@ public class GanttScale
   public DateTime datetime( int x )
   {
     // return date-time for specified x-coordinate
-    return DateTime.ofMilliseconds( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
+    return DateTime.ofSerialMilliseconds( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
   }
 
-  /****************************************** getMsPP *******************************************/
+  /****************************************** getMsPP ********************************************/
   public long getMsPP()
   {
     // return milliseconds per pixel
     return m_millisecondsPP;
   }
 
-  /************************************ getStartMilliseconds ************************************/
+  /************************************ getStartMilliseconds *************************************/
   public long getStartMilliseconds()
   {
     // return start date-time in milliseconds
     return m_start;
+  }
+
+  /****************************************** toString *******************************************/
+  @Override
+  public String toString()
+  {
+    // return string representation of gantt scale
+    return Utils.name( this ) + "[start=" + DateTime.ofSerialMilliseconds( m_start ) + " msPP=" + m_millisecondsPP
+        + "]";
   }
 
 }

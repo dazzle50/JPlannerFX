@@ -251,8 +251,8 @@ public class PlanProperties extends ScrollPane
       if ( m_DTformat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_DTformat.getStatus().update( Level.INFO, "Date-time format example: "
-          + DateTime.now().toString( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
+      m_DTformat.getStatus().update( Level.INFO,
+          "Date-time format example: " + DateTime.now().format( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
       m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
@@ -286,7 +286,7 @@ public class PlanProperties extends ScrollPane
       if ( m_Dformat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_Dformat.getStatus().update( Level.INFO, "Date format example: " + Date.now().toString( m_Dformat.getText() ) );
+      m_Dformat.getStatus().update( Level.INFO, "Date format example: " + Date.now().format( m_Dformat.getText() ) );
       m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
     }
     catch ( Exception exception )
@@ -314,9 +314,9 @@ public class PlanProperties extends ScrollPane
     if ( dt == null )
       field.setText( null );
     else if ( m_DTformat.getStatus().isError() )
-      field.setText( dt.toString( DateTimeFormatter.ofPattern( m_plan.getDateTimeFormat() ) ) );
+      field.setText( dt.format( DateTimeFormatter.ofPattern( m_plan.getDateTimeFormat() ) ) );
     else
-      field.setText( dt.toString( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
+      field.setText( dt.format( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
   }
 
   /**************************************** updateFromPlan ***************************************/
@@ -324,7 +324,7 @@ public class PlanProperties extends ScrollPane
   {
     // update the gui property widgets with values from plan
     m_title.setText( m_plan.getTitle() );
-    m_defaultCalendar.setSelected( m_plan.getDefaultCalendar().getName() );
+    m_defaultCalendar.setSelected( m_plan.getDefaultCalendar() );
     m_DTformat.setText( m_plan.getDateTimeFormat() );
     m_Dformat.setText( m_plan.getDateFormat() );
     m_fileName.setText( m_plan.getFilename() );

@@ -26,8 +26,8 @@ import rjc.jplanner.gui.editors.EditorTimeSpan;
 import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
+import rjc.table.data.types.DateInterval;
 import rjc.table.data.types.DateTime;
-import rjc.table.data.types.DateTime.IntervalUnit;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
@@ -100,7 +100,7 @@ public class TasksView extends TableView
       case Deadline:
         var deadline = new EditorDateTime();
         if ( cell.value == null )
-          Platform.runLater( () -> deadline.setValue( DateTime.now().roundUp( IntervalUnit.DAY ) ) );
+          Platform.runLater( () -> deadline.setValue( DateTime.now().endOf( DateInterval.DAY ) ) );
         return deadline;
 
       case Priority:
