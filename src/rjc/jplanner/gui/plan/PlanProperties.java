@@ -18,9 +18,9 @@
 
 package rjc.jplanner.gui.plan;
 
-import java.time.format.DateTimeFormatter;
-
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
+import javafx.collections.WeakListChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -35,10 +35,13 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.stage.PopupWindow;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import rjc.jplanner.gui.ChooseCalendar;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.calenders.Calendar;
 import rjc.table.control.DateTimeField;
 import rjc.table.control.ExpandingField;
 import rjc.table.control.IObservableStatus;
@@ -46,6 +49,8 @@ import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
+import rjc.table.undo.IUndoCommand;
+import rjc.table.undo.UndoStack;
 import rjc.table.view.Colours;
 import rjc.table.view.TableScrollBar;
 
@@ -55,27 +60,173 @@ import rjc.table.view.TableScrollBar;
 
 public class PlanProperties extends ScrollPane
 {
-  private Plan              m_plan;
-  private ObservableStatus  m_status;
-  private NumberOf          m_numberOf;
+  private final Plan                 m_plan;
+  private final ObservableStatus     m_status;
+  private final UndoStack            m_undoStack;
+  private final NumberOf             m_numberOf;
 
-  private GridPane          m_grid         = new GridPane();
-  private ExpandingField    m_title        = new ExpandingField();
-  private DateTimeField     m_defaultStart = new DateTimeField();
-  private ExpandingField    m_actualStart  = new ExpandingField();
-  private ExpandingField    m_end          = new ExpandingField();
-  private ChooseCalendar    m_defaultCalendar;
-  private ExpandingField    m_DTformat     = new ExpandingField();
-  private ExpandingField    m_Dformat      = new ExpandingField();
-  private ExpandingField    m_fileName     = new ExpandingField();
-  private ExpandingField    m_fileLocation = new ExpandingField();
-  private ExpandingField    m_savedBy      = new ExpandingField();
-  private ExpandingField    m_savedWhen    = new ExpandingField();
+  private final GridPane             m_grid                = new GridPane();
+  private final ExpandingField       m_title               = new ExpandingField();
+  private final DateTimeField        m_defaultStart        = new DateTimeField();
+  private final ExpandingField       m_actualStart         = new ExpandingField();
+  private final ExpandingField       m_end                 = new ExpandingField();
+  private final ChooseCalendar       m_defaultCalendar;
+  private final ExpandingField       m_dateTimeFormat      = new ExpandingField();
+  private final ExpandingField       m_dateFormat          = new ExpandingField();
+  private final ExpandingField       m_fileName            = new ExpandingField();
+  private final ExpandingField       m_fileLocation        = new ExpandingField();
+  private final ExpandingField       m_savedBy             = new ExpandingField();
+  private final ExpandingField       m_savedWhen           = new ExpandingField();
 
-  private static Background READONLY       = new Background(
+  private static final Background    READONLY              = new Background(
       new BackgroundFill( Colours.CELL_DISABLED_BACKGROUND, null, null ) );
 
-  public static String      STYLE_TOOLTIP;
+  private static final String        TOOLTIP_STYLE         = "-fx-text-fill: black;"
+      + "-fx-background-color: lightyellow;" + "-fx-padding: 0.2em 1em 0.2em 0.5em;" + "-fx-background-radius: 3px;";
+
+  private static final String        DATE_FORMAT_HELP      = """
+      Symbol\tMeaning\t\t\t\t\tPresentation\tExamples
+      --------\t---------\t\t\t\t\t--------------\t---------
+       G\t\t era\t\t\t\t\t\t text\t\t\t AD; Anno Domini; A
+       u\t\t year\t\t\t\t\t\t year\t\t\t 2004; 04
+       y\t\t year-of-era\t\t\t\t year\t\t\t 2004; 04
+       D\t\t day-of-year\t\t\t\t number\t\t 189
+       M/L\t\t month-of-year\t\t\t number/text\t 7; 07; Jul; July; J
+       d\t\t day-of-month\t\t\t\t number\t\t 10
+
+       U\t\t half-of-year\t\t\t\t number/text\t 2; H2; 2nd half
+       Q/q\t\t quarter-of-year\t\t\t number/text\t 3; 03; Q3; 3rd quarter
+       Y\t\t week-based-year\t\t\t year\t\t\t 1996; 96
+       w\t\t week-of-week-based-year\t number\t\t 27
+       W\t\t week-of-month\t\t\t number\t\t 4
+       E\t\t day-of-week\t\t\t\t text\t\t\t Tue; Tuesday; T
+       e/c\t\t localized day-of-week\t\t number/text\t 2; 02; Tue; Tuesday; T
+       F\t\t aligned-week-of-month\t\t number\t\t 3
+
+       p\t\t pad next\t\t\t\t\t pad modifier\t 1
+       '\t\t escape for text\t\t\t delimiter
+       ''\t\t single quote\t\t\t\t literal\t\t '
+        """;
+
+  private static final String        DATE_TIME_FORMAT_HELP = """
+      Symbol\tMeaning\t\t\t\t\tPresentation\tExamples
+      --------\t---------\t\t\t\t\t--------------\t---------
+       G\t\t era\t\t\t\t\t\t text\t\t\t AD; Anno Domini; A
+       u\t\t year\t\t\t\t\t\t year\t\t\t 2004; 04
+       y\t\t year-of-era\t\t\t\t year\t\t\t 2004; 04
+       D\t\t day-of-year\t\t\t\t number\t\t 189
+       M/L\t\t month-of-year\t\t\t number/text\t 7; 07; Jul; July; J
+       d\t\t day-of-month\t\t\t\t number\t\t 10
+
+       U\t\t half-of-year\t\t\t\t number/text\t 2; H2; 2nd half
+       Q/q\t\t quarter-of-year\t\t\t number/text\t 3; 03; Q3; 3rd quarter
+       Y\t\t week-based-year\t\t\t year\t\t\t 1996; 96
+       w\t\t week-of-week-based-year\t number\t\t 27
+       W\t\t week-of-month\t\t\t number\t\t 4
+       E\t\t day-of-week\t\t\t\t text\t\t\t Tue; Tuesday; T
+       e/c\t\t localized day-of-week\t\t number/text\t 2; 02; Tue; Tuesday; T
+       F\t\t aligned-week-of-month\t\t number\t\t 3
+
+       a\t\t am-pm-of-day\t\t\t text\t\t\t PM
+       h\t\t clock-hour-of-am-pm (1-12)\t number\t\t 12
+       K\t\t hour-of-am-pm (0-11)\t\t number\t\t 0
+       k\t\t clock-hour-of-day (1-24)\t number\t\t 24
+
+       H\t\t hour-of-day (0-24*)\t\t number\t\t 0
+       m\t\t minute-of-hour\t\t\t number\t\t 30
+       s\t\t second-of-minute\t\t\t number\t\t 55
+       S\t\t fraction-of-second\t\t\t fraction\t\t 978
+       A\t\t milli-of-day\t\t\t\t number\t\t 1234
+       N\t\t nano-of-day\t\t\t\t number\t\t 1234000000
+
+       p\t\t pad next\t\t\t\t\t pad modifier\t 1
+       '\t\t escape for text\t\t\t delimiter
+       ''\t\t single quote\t\t\t\t literal\t\t '
+
+      * H can be 24 only for an explicit stored 24:00.
+        """;
+
+  // listener for non-tooltip popups (e.g. menus) when focus within grid
+  private ListChangeListener<Window> m_popupListener       = change ->
+                                                           {
+                                                             while ( change.next() )
+                                                               for ( Window window : change.getAddedSubList() )
+                                                                 if ( window instanceof PopupWindow popup
+                                                                     && !( popup instanceof Tooltip )
+                                                                     && getScene() != null
+                                                                     && popup.getOwnerWindow() == getScene().getWindow()
+                                                                     && m_grid.isFocusWithin() )
+                                                                   updatePlan( null );
+                                                           };
+
+  // record to hold plan values for undo/redo
+  private record Values( String title, DateTime start, Calendar calendar, String dateTimeFormat, String dateFormat )
+  {
+    private static Values from( Plan plan )
+    {
+      return new Values( plan.getTitle(), plan.getDefaultStart(), plan.getDefaultCalendar(), plan.getDateTimeFormat(),
+          plan.getDateFormat() );
+    }
+
+    private void applyTo( Plan plan )
+    {
+      plan.setTitle( title );
+      plan.setDefaultStart( start );
+      plan.setDefaultCalendar( calendar );
+      plan.setDateTimeFormat( dateTimeFormat );
+      plan.setDateFormat( dateFormat );
+    }
+  }
+
+  // undo-command for plan properties edits, which can be merged with consecutive edits
+  private final class PropertiesCommand implements IUndoCommand
+  {
+    // keep the original values fixed while consecutive edits replace the latest values
+    private final Values m_oldValues = Values.from( m_plan );
+    private Values       m_newValues;
+
+    private PropertiesCommand( Values values )
+    {
+      m_newValues = values;
+      if ( isValid() )
+        redo();
+    }
+
+    private void merge( Values values )
+    {
+      // fold a consecutive properties edit into this undo command
+      m_newValues = values;
+      redo();
+    }
+
+    @Override
+    public void redo()
+    {
+      // restore the most recently committed property values
+      m_newValues.applyTo( m_plan );
+      updateFromPlan();
+    }
+
+    @Override
+    public void undo()
+    {
+      // restore the values from before the first merged edit
+      m_oldValues.applyTo( m_plan );
+      updateFromPlan();
+    }
+
+    @Override
+    public String text()
+    {
+      return "Plan properties";
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return !m_oldValues.equals( m_newValues );
+    }
+  }
 
   /**************************************** constructor ******************************************/
   public PlanProperties( PlanContext context )
@@ -83,15 +234,13 @@ public class PlanProperties extends ScrollPane
     // remember plan and setup gui
     m_plan = context.getPlan();
     m_status = context.getStatus();
+    m_undoStack = context.getUndoStack();
     m_numberOf = new NumberOf( m_plan );
     m_defaultCalendar = new ChooseCalendar( m_plan.getCalendars() );
-    setup();
 
-    // set style for tool tips
-    STYLE_TOOLTIP = "-fx-text-fill: black;";
-    STYLE_TOOLTIP += "-fx-background-color: lightyellow;";
-    STYLE_TOOLTIP += "-fx-padding: 0.2em 1em 0.2em 0.5em;";
-    STYLE_TOOLTIP += "-fx-background-radius: 3px;";
+    setup();
+    updateFromPlan();
+    m_status.clear();
   }
 
   /******************************************* setup *********************************************/
@@ -99,6 +248,8 @@ public class PlanProperties extends ScrollPane
   {
     // setup scrolling properties panel
     setMinWidth( 0.0 );
+    setFitToWidth( true );
+    setFitToHeight( true );
 
     // set scroll-bar width (later when it has been created)
     Platform.runLater( () ->
@@ -112,22 +263,20 @@ public class PlanProperties extends ScrollPane
     m_grid.setHgap( 5.0 );
     m_grid.setPadding( new Insets( 5.0 ) );
     setContent( m_grid );
-    setFitToWidth( true );
-    setFitToHeight( true );
 
     // add field rows
     int row = 0;
-    addRow( row++, "Title", m_title, false );
-    addRow( row++, "Default Start", m_defaultStart, false );
-    addRow( row++, "Actual Start", m_actualStart, true );
-    addRow( row++, "End", m_end, true );
-    addRow( row++, "Default Calendar", m_defaultCalendar, false );
-    addRow( row++, "Date-time format", m_DTformat, false );
-    addRow( row++, "Date format", m_Dformat, false );
-    addRow( row++, "File name", m_fileName, true );
-    addRow( row++, "File location", m_fileLocation, true );
-    addRow( row++, "Saved by", m_savedBy, true );
-    addRow( row++, "Saved when", m_savedWhen, true );
+    addRow( m_grid, row++, "Title", m_title, false );
+    addRow( m_grid, row++, "Default Start", m_defaultStart, false );
+    addRow( m_grid, row++, "Actual Start", m_actualStart, true );
+    addRow( m_grid, row++, "End", m_end, true );
+    addRow( m_grid, row++, "Default Calendar", m_defaultCalendar, false );
+    addRow( m_grid, row++, "Date-time format", m_dateTimeFormat, false );
+    addRow( m_grid, row++, "Date format", m_dateFormat, false );
+    addRow( m_grid, row++, "File name", m_fileName, true );
+    addRow( m_grid, row++, "File location", m_fileLocation, true );
+    addRow( m_grid, row++, "Saved by", m_savedBy, true );
+    addRow( m_grid, row++, "Saved when", m_savedWhen, true );
 
     // add number of
     row++;
@@ -135,66 +284,16 @@ public class PlanProperties extends ScrollPane
     GridPane.setHgrow( m_numberOf, Priority.ALWAYS );
     GridPane.setVgrow( m_numberOf, Priority.ALWAYS );
 
-    // set tool tips
-    Tooltip DTtip = new Tooltip(
-        "Symbol\tMeaning\t\t\t\t\tPresentation\tExamples\n" + "--------\t---------\t\t\t\t\t--------------\t---------\n"
-            + " G\t\t era\t\t\t\t\t\t text\t\t\t AD; Anno Domini; A\n" + " u\t\t year\t\t\t\t\t\t year\t\t\t 2004; 04\n"
-            + " y\t\t year-of-era\t\t\t\t year\t\t\t 2004; 04\n" + " D\t\t day-of-year\t\t\t\t number\t\t 189\n"
-            + " M/L\t\t month-of-year\t\t\t number/text\t 7; 07; Jul; July; J\n"
-            + " d\t\t day-of-month\t\t\t\t number\t\t 10\n\n"
-            + " U\t\t half-of-year\t\t\t\t number/text\t 2; H2; 2nd half\n"
-            + " Q/q\t\t quarter-of-year\t\t\t number/text\t 3; 03; Q3; 3rd quarter\n"
-            + " Y\t\t week-based-year\t\t\t year\t\t\t 1996; 96\n" + " w\t\t week-of-week-based-year\t number\t\t 27\n"
-            + " W\t\t week-of-month\t\t\t number\t\t 4\n" + " E\t\t day-of-week\t\t\t\t text\t\t\t Tue; Tuesday; T\n"
-            + " e/c\t\t localized day-of-week\t\t number/text\t 2; 02; Tue; Tuesday; T\n"
-            + " F\t\t week-of-month\t\t\t number\t\t 3\n\n" + " a\t\t am-pm-of-day\t\t\t text\t\t\t PM\n"
-            + " h\t\t clock-hour-of-am-pm (1-12)\t number\t\t 12\n" + " K\t\t hour-of-am-pm (0-11)\t\t number\t\t 0\n"
-            + " k\t\t clock-hour-of-am-pm (1-24)\t number\t\t 0\n\n" + " H\t\t hour-of-day (0-23)\t\t\t number\t\t 0\n"
-            + " m\t\t minute-of-hour\t\t\t number\t\t 30\n" + " s\t\t second-of-minute\t\t\t number\t\t 55\n"
-            + " S\t\t fraction-of-second\t\t\t fraction\t\t 978\n" + " A\t\t milli-of-day\t\t\t\t number\t\t 1234\n"
-            + " N\t\t nano-of-day\t\t\t\t number\t\t 1234000000\n\n" + " p\t\t pad next\t\t\t\t\t pad modifier\t 1\n"
-            + " '\t\t escape for text\t\t\t delimiter\n" + " ''\t\t single quote\t\t\t\t literal\t\t '\n" );
-    DTtip.setStyle( STYLE_TOOLTIP );
-    DTtip.setShowDuration( Duration.INDEFINITE );
-    m_DTformat.setTooltip( DTtip );
-
-    Tooltip Dtip = new Tooltip(
-        "Symbol\tMeaning\t\t\t\t\tPresentation\tExamples\n" + "--------\t---------\t\t\t\t\t--------------\t---------\n"
-            + " G\t\t era\t\t\t\t\t\t text\t\t\t AD; Anno Domini; A\n" + " u\t\t year\t\t\t\t\t\t year\t\t\t 2004; 04\n"
-            + " y\t\t year-of-era\t\t\t\t year\t\t\t 2004; 04\n" + " D\t\t day-of-year\t\t\t\t number\t\t 189\n"
-            + " M/L\t\t month-of-year\t\t\t number/text\t 7; 07; Jul; July; J\n"
-            + " d\t\t day-of-month\t\t\t\t number\t\t 10\n\n"
-            + " U\t\t half-of-year\t\t\t\t number/text\t 2; H2; 2nd half\n"
-            + " Q/q\t\t quarter-of-year\t\t\t number/text\t 3; 03; Q3; 3rd quarter\n"
-            + " Y\t\t week-based-year\t\t\t year\t\t\t 1996; 96\n" + " w\t\t week-of-week-based-year\t number\t\t 27\n"
-            + " W\t\t week-of-month\t\t\t number\t\t 4\n" + " E\t\t day-of-week\t\t\t\t text\t\t\t Tue; Tuesday; T\n"
-            + " e/c\t\t localized day-of-week\t\t number/text\t 2; 02; Tue; Tuesday; T\n"
-            + " F\t\t week-of-month\t\t\t number\t\t 3\n\n" + " p\t\t pad next\t\t\t\t\t pad modifier\t 1\n"
-            + " '\t\t escape for text\t\t\t delimiter\n" + " ''\t\t single quote\t\t\t\t literal\t\t '\n" );
-    Dtip.setStyle( STYLE_TOOLTIP );
-    Dtip.setShowDuration( Duration.INDEFINITE );
-    m_Dformat.setTooltip( Dtip );
-
-    // show updated examples of formats
-    m_DTformat.textProperty().addListener( ( property, oldText, newText ) -> dateTimeFormatChange() );
-    m_DTformat.focusedProperty().addListener( ( property, oldFocus, newFocus ) -> dateTimeFocusChange() );
-    m_DTformat.setOnKeyPressed( event -> keyPressed( event ) );
-    m_Dformat.textProperty().addListener( ( property, oldText, newText ) -> dateFormatChange() );
-    m_Dformat.focusedProperty().addListener( ( property, oldFocus, newFocus ) -> dateFocusChange() );
-    m_Dformat.setOnKeyPressed( event -> keyPressed( event ) );
-
-    // if escape pressed, revert, if return, commit
-    m_title.addEventHandler( KeyEvent.KEY_PRESSED, event -> keyPressed( event ) );
-    m_defaultStart.addEventHandler( KeyEvent.KEY_PRESSED, event -> keyPressed( event ) );
-    m_defaultCalendar.addEventHandler( KeyEvent.KEY_PRESSED, event -> keyPressed( event ) );
+    addFormatHelp();
+    Window.getWindows().addListener( new WeakListChangeListener<>( m_popupListener ) );
   }
 
   /******************************************** addRow *******************************************/
-  private void addRow( int row, String text, Region control, boolean readonly )
+  private void addRow( GridPane grid, int row, String text, Region control, boolean readonly )
   {
     // add row to grid
     Label label = new Label( text );
-    m_grid.addRow( row, label, control );
+    grid.addRow( row, label, control );
     GridPane.setHalignment( label, HPos.RIGHT );
     GridPane.setHgrow( control, Priority.ALWAYS );
 
@@ -205,9 +304,80 @@ public class PlanProperties extends ScrollPane
       field.setBackground( READONLY );
     }
 
+    if ( !readonly && control instanceof TextField field )
+    {
+      field.addEventHandler( KeyEvent.KEY_PRESSED, event -> keyPressed( event ) );
+      field.focusedProperty().addListener( ( properties, oldFocus, newFocus ) ->
+      {
+        if ( oldFocus )
+          updatePlan( field );
+      } );
+    }
+
     // attach the control to application status if has observable status
     if ( control instanceof IObservableStatus field )
       field.setStatus( m_status );
+  }
+
+  /*************************************** addFormatHelp ****************************************/
+  private void addFormatHelp()
+  {
+    // add tooltip for date-time field
+    var dateTimeHelp = new Tooltip( DATE_TIME_FORMAT_HELP );
+    dateTimeHelp.setStyle( TOOLTIP_STYLE );
+    dateTimeHelp.setShowDuration( Duration.INDEFINITE );
+    m_dateTimeFormat.setTooltip( dateTimeHelp );
+
+    // add listener to check date-time format whenever text changes
+    m_dateTimeFormat.textProperty().addListener( ( property, oldText, newText ) ->
+    {
+      String err = checkDateTimeFormat();
+      if ( err == null )
+        m_status.update( Level.INFO, "Date-time format example: " + DateTime.now().format( newText ) );
+      else
+        m_status.update( Level.ERROR, "Date-time format error '" + err + "'" );
+      m_dateTimeFormat.setStyle( m_status.getStyle() );
+    } );
+
+    // add listener to trigger text change format check when date-time format gets focus to show example
+    m_dateTimeFormat.focusedProperty().addListener( ( property, oldFocus, newFocus ) ->
+    {
+      if ( newFocus )
+      {
+        var text = m_dateTimeFormat.getText();
+        m_dateTimeFormat.setText( null );
+        m_dateTimeFormat.setText( text );
+      }
+    } );
+
+    // add tooltip for date field
+    var dateHelp = new Tooltip( DATE_FORMAT_HELP );
+    dateHelp.setStyle( TOOLTIP_STYLE );
+    dateHelp.setShowDuration( Duration.INDEFINITE );
+    m_dateFormat.setTooltip( dateHelp );
+
+    // add listener to check date format whenever text changes
+    m_dateFormat.textProperty().addListener( ( property, oldText, newText ) ->
+    {
+      String err = checkDateFormat();
+      if ( err == null )
+        m_status.update( Level.INFO, "Date format example: " + Date.now().format( newText ) );
+      else
+        m_status.update( Level.ERROR, "Date format error '" + err + "'" );
+      m_dateFormat.setStyle( m_status.getStyle() );
+    } );
+
+    // add listener to trigger text change format check when date format gets focus to show example
+    m_dateFormat.focusedProperty().addListener( ( property, oldFocus, newFocus ) ->
+    {
+      if ( newFocus )
+      {
+        var text = m_dateFormat.getText();
+        m_dateFormat.setText( null );
+        m_dateFormat.setText( text );
+      }
+    } );
+
   }
 
   /***************************************** keyPressed ******************************************/
@@ -220,9 +390,9 @@ public class PlanProperties extends ScrollPane
     if ( event.getCode() == KeyCode.ESCAPE )
     {
       int pos = source.getCaretPosition();
-      if ( source == m_DTformat )
+      if ( source == m_dateTimeFormat )
         source.setText( m_plan.getDateTimeFormat() );
-      if ( source == m_Dformat )
+      if ( source == m_dateFormat )
         source.setText( m_plan.getDateFormat() );
       if ( source == m_title )
         source.setText( m_plan.getTitle() );
@@ -231,92 +401,63 @@ public class PlanProperties extends ScrollPane
       if ( source == m_defaultCalendar )
         source.setText( m_plan.getDefaultCalendar().getName() );
       source.selectRange( pos, pos );
+      event.consume();
     }
 
     // if enter pressed, update plan
     if ( event.getCode() == KeyCode.ENTER )
     {
       int pos = source.getCaretPosition();
-      updatePlan();
+      updatePlan( source );
       source.selectRange( pos, pos );
+      event.consume();
     }
   }
 
-  /************************************* dateTimeFormatChange ************************************/
-  private void dateTimeFormatChange()
+  /************************************* checkDateTimeFormat *************************************/
+  private String checkDateTimeFormat()
   {
-    // update display for date-time format change
+    // check date-time format is valid, return null if okay, else error message
     try
     {
-      if ( m_DTformat.getText().length() < 1 )
+      if ( m_dateTimeFormat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_DTformat.getStatus().update( Level.INFO,
-          "Date-time format example: " + DateTime.now().format( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
-      m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
+      DateTime.now().format( m_dateTimeFormat.getText() );
+      return null;
     }
     catch ( Exception exception )
     {
-      String err = exception.getMessage();
-      m_DTformat.getStatus().update( Level.ERROR, "Date-time format error '" + err + "'" );
-      m_DTformat.setStyle( m_DTformat.getStatus().getStyle() );
+      return exception.getMessage();
     }
-
-    displayDateTime( m_actualStart, m_plan.getEarliestTaskStart() );
-    displayDateTime( m_end, m_plan.getLatestTaskEnd() );
-    displayDateTime( m_savedWhen, m_plan.getSavedWhen() );
   }
 
-  /************************************* dateTimeFocusChange *************************************/
-  private void dateTimeFocusChange()
+  /*************************************** checkDateFormat ***************************************/
+  private String checkDateFormat()
   {
-    // react to focus change
-    if ( m_DTformat.isFocused() )
-      dateTimeFormatChange();
-    else
-      m_DTformat.getStatus().clear();
-  }
-
-  /************************************** dateFormatChange ***************************************/
-  private void dateFormatChange()
-  {
-    // update display for date format change
+    // check date format is valid, return null if okay, else error message
     try
     {
-      if ( m_Dformat.getText().length() < 1 )
+      if ( m_dateFormat.getText().length() < 1 )
         throw new NumberFormatException( "Invalid format" );
 
-      m_Dformat.getStatus().update( Level.INFO, "Date format example: " + Date.now().format( m_Dformat.getText() ) );
-      m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
+      Date.now().format( m_dateFormat.getText() );
+      return null;
     }
     catch ( Exception exception )
     {
-      String err = exception.getMessage();
-      m_Dformat.getStatus().update( Level.ERROR, "Date format error '" + err + "'" );
-      m_Dformat.setStyle( m_Dformat.getStatus().getStyle() );
+      return exception.getMessage();
     }
-  }
-
-  /*************************************** dateFocusChange ***************************************/
-  private void dateFocusChange()
-  {
-    // react to focus change
-    if ( m_Dformat.isFocused() )
-      dateFormatChange();
-    else
-      m_Dformat.getStatus().clear();
   }
 
   /*************************************** displayDateTime ***************************************/
   private void displayDateTime( TextField field, DateTime dt )
   {
-    // display date-time in user specified format, or if that fails in plan format
+    // display date-time in field using plan date-time format, or clear if null
     if ( dt == null )
       field.setText( null );
-    else if ( m_DTformat.getStatus().isError() )
-      field.setText( dt.format( DateTimeFormatter.ofPattern( m_plan.getDateTimeFormat() ) ) );
     else
-      field.setText( dt.format( DateTimeFormatter.ofPattern( m_DTformat.getText() ) ) );
+      field.setText( dt.format( m_plan.getDateTimeFormat() ) );
   }
 
   /**************************************** updateFromPlan ***************************************/
@@ -325,8 +466,8 @@ public class PlanProperties extends ScrollPane
     // update the gui property widgets with values from plan
     m_title.setText( m_plan.getTitle() );
     m_defaultCalendar.setSelected( m_plan.getDefaultCalendar() );
-    m_DTformat.setText( m_plan.getDateTimeFormat() );
-    m_Dformat.setText( m_plan.getDateFormat() );
+    m_dateTimeFormat.setText( m_plan.getDateTimeFormat() );
+    m_dateFormat.setText( m_plan.getDateFormat() );
     m_fileName.setText( m_plan.getFilename() );
     m_fileLocation.setText( m_plan.getFileLocation() );
     m_savedBy.setText( m_plan.getSavedBy() );
@@ -341,9 +482,28 @@ public class PlanProperties extends ScrollPane
   }
 
   /***************************************** updatePlan ******************************************/
-  public void updatePlan()
+  public void updatePlan( TextField field )
   {
-    // TODO get values from gui editors
+    // clear status to remove any message when field loses focus
+    if ( field == null || !field.isFocused() )
+      m_status.clear();
+
+    // update plan with values from gui property widgets via undo command
+    var values = new Values( m_title.getText(), m_defaultStart.getDateTime(), m_defaultCalendar.getCalendar(),
+        checkDateTimeFormat() == null ? m_dateTimeFormat.getText() : m_plan.getDateTimeFormat(),
+        checkDateFormat() == null ? m_dateFormat.getText() : m_plan.getDateFormat() );
+
+    if ( !m_undoStack.isClean() && m_undoStack.getUndoCommand() instanceof PropertiesCommand command )
+    {
+      // merge consecutive property edits into the latest undo command
+      command.merge( values );
+      m_undoStack.commandMerged();
+    }
+    else
+    {
+      // new undo command
+      m_undoStack.push( new PropertiesCommand( values ) );
+    }
   }
 
 }

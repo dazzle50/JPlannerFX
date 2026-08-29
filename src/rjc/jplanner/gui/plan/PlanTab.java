@@ -38,7 +38,7 @@ public class PlanTab extends Tab
     super( "Plan" );
     setClosable( false );
 
-    m_notes = new PlanNotes();
+    m_notes = new PlanNotes( context );
     m_properties = new PlanProperties( context );
     XSplitPane split = new XSplitPane( m_properties, m_notes );
     split.setPreferredDividerPosition( 300 );
@@ -49,14 +49,11 @@ public class PlanTab extends Tab
       if ( isSelected )
       {
         m_properties.updateFromPlan();
-        m_notes.setText( context.getPlan().getNotes() );
+        m_notes.updateFromPlan();
         setContent( split );
       }
       else
-      {
         setContent( null );
-        context.getPlan().setNotes( m_notes.getText() );
-      }
     } );
   }
 
