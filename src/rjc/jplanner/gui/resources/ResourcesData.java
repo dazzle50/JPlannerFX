@@ -39,8 +39,9 @@ import rjc.table.view.cell.CellVisual;
 
 public class ResourcesData extends TableData implements IDataSwapRows, IDataInsertDeleteRows
 {
-  private Resources  m_resources;
-  private CellVisual m_disabledVisual;
+  private final Resources  m_resources;
+  private final CellVisual m_disabledVisual;
+  private final CellVisual m_readonlyVisual;
 
   /**************************************** constructor ******************************************/
   public ResourcesData( Resources resources )
@@ -50,10 +51,12 @@ public class ResourcesData extends TableData implements IDataSwapRows, IDataInse
     setRowCount( m_resources.size() );
     setColumnCount( FIELD.MAX.ordinal() );
 
-    // visual for disabled cells
+    // visual for disabled & read-only cells
     m_disabledVisual = new CellVisual();
     m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
     m_disabledVisual.textPaint = null;
+    m_readonlyVisual = new CellVisual();
+    m_readonlyVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
   }
 
   /****************************************** getValue *******************************************/
@@ -80,6 +83,10 @@ public class ResourcesData extends TableData implements IDataSwapRows, IDataInse
   @Override
   public CellVisual getVisual( int dataColumn, int dataRow )
   {
+    // return read-only visual for special row 0 'unassigned'
+    if ( dataRow == 0 )
+      return m_readonlyVisual;
+
     // return disabled-cells-visual for non-initials field if initials is blank
     if ( dataRow > HEADER && dataColumn > FIELD.Initials.ordinal() )
       if ( m_resources.get( dataRow ).isBlank() )

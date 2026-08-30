@@ -1,20 +1,3 @@
-/**************************************************************************
- *  Copyright (C) 2026 by Richard Crook                                   *
- *  https://github.com/dazzle50/JPlannerFX                                *
- *                                                                        *
- *  This program is free software: you can redistribute it and/or modify  *
- *  it under the terms of the GNU General Public License as published by  *
- *  the Free Software Foundation, either version 3 of the License, or     *
- *  (at your option) any later version.                                   *
- *                                                                        *
- *  This program is distributed in the hope that it will be useful,       *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *  GNU General Public License for more details.                          *
- *                                                                        *
- *  You should have received a copy of the GNU General Public License     *
- *  along with this program.  If not, see http://www.gnu.org/licenses/    *
- **************************************************************************/
 
 package rjc.jplanner.gui;
 
@@ -32,23 +15,45 @@ import rjc.jplanner.gui.tasks.TasksTab;
 
 public class MainTabs extends TabPane
 {
-  private Tab m_plan;      // tab showing overall plan controls & information
+  private Tab m_plan;      // tab showing overall plan controls & information, null if excluded
   private Tab m_tasks;     // tab showing table view of plan tasks and Gantt
   private Tab m_resources; // tab showing table view of plan resources
   private Tab m_calendars; // tab showing table view of plan calendars
   private Tab m_days;      // tab showing table view of plan day-types
 
   /**************************************** constructor ******************************************/
+  /**
+   * Constructs main window tabs including the plan tab.
+   *
+   * @param context plan context shared by all tabs
+   */
   public MainTabs( PlanContext context )
   {
-    // construct main window tabs with optional plan-tabs
-    m_plan = new PlanTab( context );
+    this( context, true );
+  }
+
+  /**************************************** constructor ******************************************/
+  /**
+   * Constructs main window tabs with the plan tab optionally excluded.
+   *
+   * @param context     plan context shared by all tabs
+   * @param includePlan true to include the plan tab, false to omit it
+   */
+  public MainTabs( PlanContext context, boolean includePlan )
+  {
+    // plan tab is optional, remaining tabs are always present
+    if ( includePlan )
+      m_plan = new PlanTab( context );
+
     m_tasks = new TasksTab( context );
     m_resources = new ResourcesTab( context );
     m_calendars = new CalendarsTab( context );
     m_days = new DaysTab( context );
 
-    getTabs().addAll( m_plan, m_tasks, m_resources, m_calendars, m_days );
+    // m_plan is null when excluded, filter it out before adding
+    if ( m_plan != null )
+      getTabs().add( m_plan );
+    getTabs().addAll( m_tasks, m_resources, m_calendars, m_days );
   }
 
 }

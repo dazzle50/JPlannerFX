@@ -39,8 +39,9 @@ import rjc.table.view.cell.CellVisual;
 
 public class TasksData extends TableData implements IDataSwapRows, IDataInsertDeleteRows
 {
-  private Tasks      m_tasks;          // array of tasks to be shown on table
-  private CellVisual m_disabledVisual; // cell visuals for disabled cells
+  private final Tasks      m_tasks;
+  private final CellVisual m_disabledVisual;
+  private final CellVisual m_readonlyVisual;
 
   private record TaskPredecessors( Task task, Predecessors predecessors )
   {
@@ -58,10 +59,12 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
     setRowCount( m_tasks.size() );
     setColumnCount( FIELD.MAX.ordinal() );
 
-    // visual for disabled cells
+    // visual for disabled & read-only cells
     m_disabledVisual = new CellVisual();
     m_disabledVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
     m_disabledVisual.textPaint = null;
+    m_readonlyVisual = new CellVisual();
+    m_readonlyVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
   }
 
   /****************************************** getValue *******************************************/
@@ -88,7 +91,11 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   @Override
   public CellVisual getVisual( int dataColumn, int dataRow )
   {
-    // return disabled-cells-visual for non-initials field if initials is blank
+    // return read-only visual for special row 0 'overall project'
+    if ( dataRow == 0 )
+      return m_readonlyVisual;
+
+    // return disabled visual for non-initials field if initials is blank
     if ( dataRow > HEADER && dataColumn > FIELD.Title.ordinal() )
       if ( m_tasks.get( dataRow ).isBlank() )
         return m_disabledVisual;

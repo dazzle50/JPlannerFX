@@ -59,7 +59,7 @@ public class FileLoad
       // process plan-data part of XML file
       var newPlan = processPlan();
       newPlan.setFilename( file.getName() );
-      newPlan.setFileLocation( file.getParent() );
+      newPlan.setFileLocation( file.getCanonicalFile().getParentFile().getPath() );
       newPlan.setSavedBy( m_savedBy );
       newPlan.setSavedWhen( m_savedWhen );
       context.replacePlan( newPlan );
@@ -68,14 +68,13 @@ public class FileLoad
       processGUI();
 
       context.getStatus().update( Level.INFO, "Opened '" + file.getPath() + "'" );
-      Utils.trace( "Successfully read '" + file.getPath() + "' " + newPlan );
+      Utils.trace( "Successfully read '" + file.getPath() + "'", newPlan );
     }
     catch ( Exception exception )
     {
       // problem was encountered processing the file
-      Utils.trace( "ERROR reading '" + file.getPath() + "'" );
-      exception.printStackTrace();
       context.getStatus().update( Level.ERROR, "Error reading '" + file.getPath() + "' : " + exception.getMessage() );
+      Utils.trace( "ERROR reading '" + file.getPath() + "'", exception );
     }
     finally
     {

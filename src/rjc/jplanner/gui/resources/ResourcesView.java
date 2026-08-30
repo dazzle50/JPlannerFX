@@ -22,6 +22,7 @@ import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
+import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
@@ -64,9 +65,9 @@ public class ResourcesView extends TableView
   @Override
   public AbstractCellEditor getCellEditor( CellDrawer cell )
   {
-    // if cell is disabled (e.g. textPaint is null) then can't edit
+    // if cell is disabled or read-only then can't edit
     cell.getValueVisual();
-    if ( cell.visual.textPaint == null )
+    if ( cell.visual.cellBackground == Colours.CELL_DISABLED_BACKGROUND )
       return null;
 
     // determine editor appropriate for cell

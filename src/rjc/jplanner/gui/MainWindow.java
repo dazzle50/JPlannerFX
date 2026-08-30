@@ -18,6 +18,8 @@
 
 package rjc.jplanner.gui;
 
+import java.io.File;
+
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TabPane;
@@ -27,6 +29,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
+import rjc.jplanner.storage.FileLoad;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
 
@@ -57,7 +60,21 @@ public class MainWindow extends Scene
     // arrange the grid
     m_grid.add( m_menus, 0, 0 );
     m_grid.add( m_statusBar, 0, 2 );
+    loadDefault();
     rebuildTabs();
+
+    m_context.getStatus().update( Level.INFO, "JPlannerFX has started" );
+    m_context.getStatus().clearAfterMillisecs( 2500 );
+
+  }
+
+  /**************************************** loadDefault ******************************************/
+  private void loadDefault()
+  {
+    // attempt to load default plan from current directory, or if not found, from parent directory
+    new FileLoad( m_context, new File( "!default.xml" ) );
+    if ( m_context.getStatus().isError() )
+      new FileLoad( m_context, new File( "../!default.xml" ) );
   }
 
   /************************************* createStatusBar *****************************************/
@@ -75,8 +92,6 @@ public class MainWindow extends Scene
       statusBar.setText( status.getMessage() );
       statusBar.setStyle( status.getStyle() );
     } );
-    status.update( Level.INFO, "JPlannerFX has started" );
-    status.clearAfterMillisecs( 2500 );
 
     return statusBar;
   }

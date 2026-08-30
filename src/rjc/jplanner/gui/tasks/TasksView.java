@@ -80,7 +80,7 @@ public class TasksView extends TableView
   @Override
   public AbstractCellEditor getCellEditor( CellDrawer cell )
   {
-    // if cell is disabled (e.g. textPaint is null) then can't edit
+    // if cell is disabled or read-only then can't edit
     cell.getValueVisual();
     if ( cell.visual.cellBackground == Colours.CELL_DISABLED_BACKGROUND )
       return null;

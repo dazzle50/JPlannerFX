@@ -80,7 +80,7 @@ public class ViewMenu extends Menu
       Stage stage = new Stage();
       stage.setTitle( "JPlannerFX" );
       stage.getIcons().add( Main.getIcon() );
-      stage.setScene( new Scene( new MainTabs( m_context ) ) );
+      stage.setScene( new Scene( new MainTabs( m_context, false ) ) );
       stage.setWidth( 1000 );
       stage.setHeight( 600 );
       stage.show();
