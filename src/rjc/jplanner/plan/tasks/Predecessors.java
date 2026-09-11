@@ -217,6 +217,13 @@ public class Predecessors
     return m_dependencies == null ? 0 : m_dependencies.length;
   }
 
+  /******************************************** get **********************************************/
+  public Dependency get( int index )
+  {
+    // return the dependency at the specified position
+    return m_dependencies[index];
+  }
+
   /****************************************** toString *******************************************/
   @Override
   public String toString()

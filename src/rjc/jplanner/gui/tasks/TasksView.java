@@ -64,6 +64,7 @@ public class TasksView extends TableView
     super.reset();
     getColumnsAxis().setNominalSize( FIELD.Title.ordinal(), 200 );
     getColumnsAxis().setNominalSize( FIELD.Duration.ordinal(), 60 );
+    getColumnsAxis().setNominalSize( FIELD.Work.ordinal(), 60 );
     getColumnsAxis().setNominalSize( FIELD.Start.ordinal(), 140 );
     getColumnsAxis().setNominalSize( FIELD.End.ordinal(), 140 );
     getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );

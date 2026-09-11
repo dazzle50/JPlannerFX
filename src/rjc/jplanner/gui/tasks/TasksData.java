@@ -109,7 +109,6 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
       visual.textAlignment = switch ( FIELD.values()[dataColumn] )
       {
         case Title, Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
-        case Work -> Pos.CENTER_RIGHT;
         default -> Pos.CENTER;
       };
 

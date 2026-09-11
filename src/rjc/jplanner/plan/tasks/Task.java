@@ -80,6 +80,13 @@ public class Task
     return m_type;
   }
 
+  /***************************************** getPriority *****************************************/
+  public int getPriority()
+  {
+    // return the task scheduling priority
+    return m_priority;
+  }
+
   /****************************************** getValue *******************************************/
   public Object getValue( int field )
   {
@@ -115,7 +122,7 @@ public class Task
     }
   }
 
-  /******************************************** isBlank ******************************************/
+  /******************************************* isBlank *******************************************/
   public boolean isBlank()
   {
     // task record is blank if title is null
@@ -242,9 +249,17 @@ public class Task
         }
         return "Not Task-Resources: " + Utils.objectsString( newValue );
 
-      case Cost:
-
       case Work:
+        // check new value is a time-span
+        if ( newValue instanceof TimeSpan ts )
+        {
+          if ( commit )
+            m_work = ts;
+          return null;
+        }
+        return "Not time-span: " + Utils.objectsString( newValue );
+
+      case Cost:
 
       default:
         return "Not implemented";

@@ -26,6 +26,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
 import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.plan.Schedule;
 import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
@@ -36,6 +37,7 @@ public class EditMenu extends Menu
 {
   private MenuItem        m_editUndo;
   private MenuItem        m_editRedo;
+  private PlanContext     m_context;
   private UndoStack       m_undostack;
 
   private static Modifier CONTROL = KeyCombination.CONTROL_DOWN;
@@ -45,13 +47,14 @@ public class EditMenu extends Menu
   {
     // construct edit menu for main window menu bar
     setText( "Edit" );
+    m_context = context;
     m_undostack = context.getUndoStack();
 
     getItems().add( undo() );
     getItems().add( redo() );
     getItems().add( new SeparatorMenuItem() );
-    getItems().add( findReplace() );
     getItems().add( schedule() );
+    getItems().add( findReplace() );
 
     // just before menu is show update the undo/redo menu items
     setOnShowing( event ->
@@ -104,7 +107,7 @@ public class EditMenu extends Menu
   {
     // trigger plan scheduling
     MenuItem editSchedule = new MenuItem( "Schedule" );
-    editSchedule.setDisable( true );
+    editSchedule.setOnAction( event -> Schedule.schedule( m_context.getPlan() ) );
     return editSchedule;
   }
 
