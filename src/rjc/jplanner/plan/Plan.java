@@ -20,8 +20,8 @@ package rjc.jplanner.plan;
 
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.jplanner.plan.calenders.Calendars;
-import rjc.jplanner.plan.days.Day;
-import rjc.jplanner.plan.days.Days;
+import rjc.jplanner.plan.days.DayType;
+import rjc.jplanner.plan.days.DayTypes;
 import rjc.jplanner.plan.resources.Resource;
 import rjc.jplanner.plan.resources.Resources;
 import rjc.jplanner.plan.tasks.Task;
@@ -50,13 +50,13 @@ public class Plan
   private Tasks     tasks;            // list of plan tasks
   private Resources resources;        // list of plan resources
   private Calendars calendars;        // list of plan calendars
-  private Days      daytypes;         // list of plan day types
+  private DayTypes  daytypes;         // list of plan day types
 
   /**************************************** constructor ******************************************/
   public Plan()
   {
     // construct empty but usable Plan
-    daytypes = new Days();
+    daytypes = new DayTypes();
     calendars = new Calendars( this );
     resources = new Resources( this );
     tasks = new Tasks( this );
@@ -144,19 +144,21 @@ public class Plan
     return calendars;
   }
 
-  /********************************************* day *********************************************/
-  public Day getDay( int index )
+  /***************************************** getDayType ******************************************/
+  public DayType getDayType( int index )
   {
     // return day-type corresponding to index
     return daytypes.get( index );
   }
 
-  public int getIndex( Day dayType )
+  /****************************************** getIndex *******************************************/
+  public int getIndex( DayType dayType )
   {
     return daytypes.indexOf( dayType );
   }
 
-  public Days getDays()
+  /***************************************** getDayTypes *****************************************/
+  public DayTypes getDayTypes()
   {
     return daytypes;
   }

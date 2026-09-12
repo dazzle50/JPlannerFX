@@ -66,7 +66,7 @@ public class PlanContext
   {
     // rebuild TableView data sources using plan sub-collections
     m_plan = newPlan;
-    m_dayData = new DaysData( m_plan.getDays() );
+    m_dayData = new DaysData( m_plan.getDayTypes() );
     m_calendarData = new CalendarsData( m_plan.getCalendars() );
     m_resourceData = new ResourcesData( m_plan.getResources() );
     m_taskData = new TasksData( m_plan.getTasks() );

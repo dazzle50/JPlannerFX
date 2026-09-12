@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.DayType;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
 
@@ -32,10 +32,10 @@ import rjc.table.data.types.Date;
 
 public class Calendar
 {
-  private String             m_name;        // name of calendar
-  private Date               m_cycleAnchor; // anchor date of calendar cycle
-  private ArrayList<Day>     m_normal;      // normal basic cycle days
-  private HashMap<Date, Day> m_exceptions;  // exceptions override normal days
+  private String                 m_name;        // name of calendar
+  private Date                   m_cycleAnchor; // anchor date of calendar cycle
+  private ArrayList<DayType>     m_normal;      // normal basic cycle days
+  private HashMap<Date, DayType> m_exceptions;  // exceptions override normal days
 
   public enum FIELD
   {
@@ -43,7 +43,7 @@ public class Calendar
   }
 
   /**************************************** constructor ******************************************/
-  public Calendar( Day day )
+  public Calendar( DayType day )
   {
     // construct simple new calendar
     m_name = "New";
@@ -54,7 +54,7 @@ public class Calendar
   }
 
   /**************************************** constructor ******************************************/
-  public Calendar( String name, Date date, Day... normal )
+  public Calendar( String name, Date date, DayType... normal )
   {
     // construct new calendar
     m_name = name;
@@ -64,7 +64,7 @@ public class Calendar
   }
 
   /**************************************** addException *****************************************/
-  public void addException( int day, int month, int year, Day daytype )
+  public void addException( int day, int month, int year, DayType daytype )
   {
     // add exception to this calendar
     m_exceptions.put( Date.of( year, month, day ), daytype );
@@ -95,13 +95,13 @@ public class Calendar
   }
 
   /***************************************** getNormals ******************************************/
-  public ArrayList<Day> getNormals()
+  public ArrayList<DayType> getNormals()
   {
     return m_normal;
   }
 
   /**************************************** getExceptions ****************************************/
-  public HashMap<Date, Day> getExceptions()
+  public HashMap<Date, DayType> getExceptions()
   {
     return m_exceptions;
   }
@@ -179,11 +179,11 @@ public class Calendar
           return null;
         }
 
-        // check new value is ArrayList<Day> and reasonable size
+        // check new value is ArrayList<DayType> and reasonable size
         try
         {
           @SuppressWarnings( "unchecked" )
-          var newNormal = (ArrayList<Day>) newValue;
+          var newNormal = (ArrayList<DayType>) newValue;
           if ( newNormal.isEmpty() || newNormal.size() > 99 )
             return "Array size not between 1 and 99";
           if ( commit )
@@ -199,7 +199,7 @@ public class Calendar
         // setting normal day-types
         if ( normal >= m_normal.size() )
           return "Normal beyond cycle length";
-        if ( newValue instanceof Day day )
+        if ( newValue instanceof DayType day )
         {
           if ( commit )
             m_normal.set( normal, day );
@@ -214,14 +214,14 @@ public class Calendar
   public boolean isWorking( Date date )
   {
     // return whether date is working or not
-    return getDay( date ).isWorking();
+    return getDayType( date ).hasWorkingTime();
   }
 
-  /******************************************* getDay ********************************************/
-  public Day getDay( Date date )
+  /***************************************** getDayType ******************************************/
+  public DayType getDayType( Date date )
   {
     // if exception exists return it, otherwise return normal cycle day
-    Day day = m_exceptions.get( date );
+    DayType day = m_exceptions.get( date );
     if ( day != null )
       return day;
 

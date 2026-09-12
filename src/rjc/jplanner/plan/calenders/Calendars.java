@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 import rjc.jplanner.Main;
 import rjc.jplanner.plan.Plan;
-import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.DayType;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
 
@@ -47,13 +47,13 @@ public class Calendars extends ArrayList<Calendar>
   /***************************************** initialise ******************************************/
   public void initialise()
   {
-    // these day-types should reflect the default created in Days initialise()
+    // these day-types should reflect the default created in DayTypes initialise()
     var plan = m_weakPlan.get();
-    Day nonWorking = plan.getDay( 0 );
-    Day working = plan.getDay( 1 );
-    Day shortDay = plan.getDay( 2 );
-    Day evening = plan.getDay( 3 );
-    Day fullTime = plan.getDay( 4 );
+    DayType nonWorking = plan.getDayType( 0 );
+    DayType working = plan.getDayType( 1 );
+    DayType shortDay = plan.getDayType( 2 );
+    DayType evening = plan.getDayType( 3 );
+    DayType fullTime = plan.getDayType( 4 );
 
     // initialise list with default calendars
     clear();

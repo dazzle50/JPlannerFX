@@ -152,7 +152,7 @@ public class CalendarsData extends TableData implements IDataSwapColumns, IDataI
   {
     // build the list of columns to insert, substituting defaults for null elements
     var toInsert = new ArrayList<Calendar>( columnData.size() );
-    var defaultDay = ( (PlanContext) getUserData() ).getPlan().getDay( 0 );
+    var defaultDay = ( (PlanContext) getUserData() ).getPlan().getDayType( 0 );
     for ( var data : columnData )
       toInsert.add( data == null ? new Calendar( defaultDay ) : (Calendar) data );
 

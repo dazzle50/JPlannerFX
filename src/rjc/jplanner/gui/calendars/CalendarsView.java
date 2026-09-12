@@ -105,8 +105,8 @@ public class CalendarsView extends TableView
 
       default:
         // normals - select day-types
-        var days = ( (PlanContext) getData().getUserData() ).getPlan().getDays();
-        return new EditorChoose( days.toArray() );
+        var days = ( (PlanContext) getData().getUserData() ).getPlan().getDayTypes();
+        return new EditorChoose( days.asList().toArray() );
     }
   }
 

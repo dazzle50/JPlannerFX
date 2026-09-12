@@ -27,8 +27,8 @@ import javax.xml.stream.XMLStreamReader;
 import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.TimeSpan;
 import rjc.jplanner.plan.calenders.Calendar;
-import rjc.jplanner.plan.days.Day;
-import rjc.jplanner.plan.days.DayWorkPeriod;
+import rjc.jplanner.plan.days.DayType;
+import rjc.jplanner.plan.days.WorkPeriod;
 import rjc.jplanner.plan.resources.Resource;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.table.Utils;
@@ -57,8 +57,8 @@ public final class XmlPlanReader
     m_xml = xml;
     m_calendarName = null;
 
-    // replace existing plan contents while retaining the Plan owned by PlanContext
-    m_plan.getDays().clear();
+    // populate a new plan so a failed load leaves the plan owned by PlanContext unchanged
+    m_plan.getDayTypes().clear();
     m_plan.getCalendars().clear();
     m_plan.getResources().clear();
     m_plan.getTasks().clear();
@@ -66,7 +66,7 @@ public final class XmlPlanReader
     // plan-level attributes (title, default start, format strings etc.) sit on this start element
     processPlanAttributes();
 
-    // process known sections, skip unknown sections, and continue after section failures
+    // process known sections and skip unknown sections; day-data failures abort the load
     while ( m_xml.hasNext() )
     {
       m_xml.next();
@@ -103,6 +103,10 @@ public final class XmlPlanReader
       }
       catch ( Exception exception )
       {
+        // abort day-data loads so FileLoad cannot install a plan with missing or shifted day references.
+        if ( section.equals( XmlLabels.XML_DAY_DATA ) )
+          throw new IOException( "Invalid day-data: " + exception.getMessage(), exception );
+
         // stop the failed section, trace the problem, and continue with later sections
         Utils.trace( "Error processing element '" + section + "': " + exception.getMessage() );
         skipElement( section );
@@ -161,7 +165,17 @@ public final class XmlPlanReader
 
       String element = m_xml.getLocalName();
       if ( element.equals( XmlLabels.XML_DAY ) )
-        processDay();
+      {
+        try
+        {
+          processDay();
+        }
+        catch ( Exception exception )
+        {
+          // the collection size is the positional day index because failed definitions are never added.
+          throw new IOException( "Day " + m_plan.getDayTypes().size() + ": " + exception.getMessage(), exception );
+        }
+      }
       else
       {
         // only day elements are expected directly inside day-data
@@ -188,7 +202,7 @@ public final class XmlPlanReader
 
       switch ( attrib )
       {
-        // id is positional (list index) not stored on Day itself - only its format is checked here
+        // id is positional (list index) not stored on DayType itself - only its format is checked here
         case XmlLabels.XML_ID -> Integer.parseInt( value );
         case XmlLabels.XML_NAME -> name = value;
         case XmlLabels.XML_WORK -> work = Double.parseDouble( value );
@@ -197,7 +211,7 @@ public final class XmlPlanReader
     }
 
     // collect nested work periods contained by the current day definition
-    var periods = new ArrayList<DayWorkPeriod>();
+    var periods = new ArrayList<WorkPeriod>();
 
     while ( m_xml.hasNext() )
     {
@@ -211,7 +225,17 @@ public final class XmlPlanReader
 
       String element = m_xml.getLocalName();
       if ( element.equals( XmlLabels.XML_PERIOD ) )
-        periods.add( processPeriod() );
+      {
+        try
+        {
+          periods.add( processPeriod() );
+        }
+        catch ( Exception exception )
+        {
+          // preserve the nested cause while adding the period's position inside this day definition.
+          throw new IOException( "Period " + periods.size() + ": " + exception.getMessage(), exception );
+        }
+      }
       else
       {
         // only period elements are expected directly inside a day
@@ -220,22 +244,13 @@ public final class XmlPlanReader
       }
     }
 
-    // use Day validation when applying the collected values
-    var day = new Day();
-    String problem = day.setValue( Day.FIELD.Name.ordinal(), name, true );
-    if ( problem == null )
-      problem = day.setValue( Day.FIELD.Work.ordinal(), work, true );
-    if ( problem == null )
-      problem = day.setValue( Day.FIELD.Periods.ordinal(), periods, true );
-    if ( problem != null )
-      // any field rejected by validation aborts this day entirely, rather than adding a partial one
-      throw new IOException( problem );
-
-    m_plan.getDays().add( day );
+    // construct a complete validated definition before changing the collection.
+    var day = new DayType( name, work, periods );
+    m_plan.getDayTypes().add( day );
   }
 
   /**************************************** processPeriod ****************************************/
-  private DayWorkPeriod processPeriod() throws Exception
+  private WorkPeriod processPeriod() throws Exception
   {
     // read the current work-period attributes
     Time start = null;
@@ -258,7 +273,7 @@ public final class XmlPlanReader
 
     // ignore any unexpected child content before returning the period
     skipElement( XmlLabels.XML_PERIOD );
-    return new DayWorkPeriod( start, end );
+    return new WorkPeriod( start, end );
   }
 
   /************************************** processCalendars ***************************************/
@@ -326,9 +341,9 @@ public final class XmlPlanReader
     if ( id == null || id != expectedId )
       throw new IOException( "Calendar id must be " + expectedId + " but was " + id );
 
-    var normals = new ArrayList<Day>();
+    var normals = new ArrayList<DayType>();
     // last exception wins on a duplicate date - no explicit duplicate detection here
-    var exceptions = new HashMap<Date, Day>();
+    var exceptions = new HashMap<Date, DayType>();
 
     while ( m_xml.hasNext() )
     {
@@ -344,8 +359,8 @@ public final class XmlPlanReader
       try
       {
         if ( element.equals( XmlLabels.XML_NORMAL ) )
-          // resolves a day-id reference into the actual Day instance already loaded earlier
-          normals.add( m_plan.getDay( readDayReference() ) );
+          // resolves a day-id reference into the actual DayType instance already loaded earlier
+          normals.add( m_plan.getDayType( readDayReference() ) );
         else if ( element.equals( XmlLabels.XML_EXCEPTION ) )
         {
           Date date = null;
@@ -363,7 +378,7 @@ public final class XmlPlanReader
           }
           if ( date == null || day == null )
             throw new IOException( "Calendar exception requires date and day" );
-          exceptions.put( date, m_plan.getDay( day ) );
+          exceptions.put( date, m_plan.getDayType( day ) );
           skipElement( element );
         }
         else
@@ -385,7 +400,7 @@ public final class XmlPlanReader
     if ( normals.isEmpty() )
       throw new IOException( "Calendar requires at least one normal day" );
 
-    var calendar = new Calendar( name, anchor, normals.toArray( new Day[0] ) );
+    var calendar = new Calendar( name, anchor, normals.toArray( new DayType[0] ) );
     calendar.getExceptions().putAll( exceptions );
     m_plan.getCalendars().add( calendar );
   }

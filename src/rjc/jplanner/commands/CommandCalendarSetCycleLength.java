@@ -22,7 +22,7 @@ import java.util.ArrayList;
 
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calenders.Calendar;
-import rjc.jplanner.plan.days.Day;
+import rjc.jplanner.plan.days.DayType;
 import rjc.table.data.TableData;
 import rjc.table.undo.IUndoCommand;
 
@@ -32,11 +32,11 @@ import rjc.table.undo.IUndoCommand;
 
 public class CommandCalendarSetCycleLength implements IUndoCommand
 {
-  private TableData      m_data;       // table data
-  private int            m_dataColumn; // column in table data (Calendar)
-  private ArrayList<Day> m_newNormals; // new list of normal-cycle-days after command
-  private ArrayList<Day> m_oldNormals; // old list of normal-cycle-days before command
-  private String         m_text;       // text describing command
+  private TableData          m_data;       // table data
+  private int                m_dataColumn; // column in table data (Calendar)
+  private ArrayList<DayType> m_newNormals; // new list of normal-cycle-days after command
+  private ArrayList<DayType> m_oldNormals; // old list of normal-cycle-days before command
+  private String             m_text;       // text describing command
 
   /**************************************** constructor ******************************************/
   public CommandCalendarSetCycleLength( TableData tableData, int dataColumn, int newLength )
@@ -44,7 +44,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
     // initialise private variables
     var calendar = ( (PlanContext) tableData.getUserData() ).getPlan().getCalendar( dataColumn );
     m_oldNormals = calendar.getNormals();
-    m_newNormals = new ArrayList<Day>( m_oldNormals );
+    m_newNormals = new ArrayList<DayType>( m_oldNormals );
     int oldLength = m_oldNormals.size();
 
     if ( newLength == oldLength )
@@ -52,7 +52,7 @@ public class CommandCalendarSetCycleLength implements IUndoCommand
     if ( newLength > oldLength )
     {
       // need to add new normal-cycle-days
-      Day day = m_oldNormals.getLast();
+      DayType day = m_oldNormals.getLast();
       for ( int count = oldLength; count < newLength; count++ )
         m_newNormals.add( day );
     }

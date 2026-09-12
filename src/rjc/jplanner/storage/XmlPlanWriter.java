@@ -56,7 +56,7 @@ public final class XmlPlanWriter
   private void writeDayTypes( XmlWriter xml ) throws Exception
   {
     // write day-type definitions
-    var days = m_plan.getDays();
+    var days = m_plan.getDayTypes();
     xml.startElement( XmlLabels.XML_DAY_DATA );
 
     int id = 0;
@@ -66,7 +66,7 @@ public final class XmlPlanWriter
 
       xml.attribute( XmlLabels.XML_ID, id++ );
       xml.attribute( XmlLabels.XML_NAME, day.getName() );
-      xml.attribute( XmlLabels.XML_WORK, day.getWork() );
+      xml.attribute( XmlLabels.XML_WORK, day.getEquivalentDays() );
 
       // write work periods
       int pid = 0;
@@ -74,8 +74,8 @@ public final class XmlPlanWriter
       {
         xml.startElement( XmlLabels.XML_PERIOD );
         xml.attribute( XmlLabels.XML_ID, pid++ );
-        xml.attribute( XmlLabels.XML_START, period.m_start );
-        xml.attribute( XmlLabels.XML_END, period.m_end );
+        xml.attribute( XmlLabels.XML_START, period.getStart() );
+        xml.attribute( XmlLabels.XML_END, period.getEnd() );
         xml.endElement(); // end XML_PERIOD
       }
 
