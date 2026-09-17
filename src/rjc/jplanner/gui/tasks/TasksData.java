@@ -131,12 +131,12 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   @Override
   protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
-    // if committing title or type, then signal row changed
-    if ( commit && ( dataColumn == FIELD.Title.ordinal() || dataColumn == FIELD.Type.ordinal() ) )
+    // commit before notifying listeners so the row includes any newly copied task default
+    String problem = m_tasks.setValue( dataRow, dataColumn, newValue, commit );
+    if ( problem == null && commit && ( dataColumn == FIELD.Title.ordinal() || dataColumn == FIELD.Type.ordinal() ) )
       signalRowChanged( dataRow );
 
-    // test if value can/could be set
-    return m_tasks.setValue( dataRow, dataColumn, newValue, commit );
+    return problem;
   }
 
   /****************************************** swapRows *******************************************/
@@ -167,8 +167,7 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   @Override
   public boolean insertRows( int insertIndex, List<Object> rowData )
   {
-
-    // check rowData first element is a TasksPredChanges object, if so, extract the tasks and predecessor changes
+    // if row data first element is TasksPredChanges, insert the tasks and update the predecessors
     if ( rowData.get( 0 ) instanceof TasksPredChanges tasksPredChanges )
     {
       // insert the new tasks and update row count
@@ -182,8 +181,21 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
       return true;
     }
 
+    // if row data first element is null, insert blank tasks
+    if ( rowData.get( 0 ) == null )
+    {
+      // insert the new tasks and update row count
+      var blankTasks = new ArrayList<Task>( rowData.size() );
+      for ( int i = 0; i < rowData.size(); i++ )
+        blankTasks.add( new Task() );
+      m_tasks.addAll( insertIndex, blankTasks );
+      setRowCount( getRowCount() + blankTasks.size() );
+
+      return true;
+    }
+
     // otherwise throw an exception, as the rowData is not in the expected format
-    throw new IllegalArgumentException( "rowData must contain a TasksPredChanges object as its first element" );
+    throw new IllegalArgumentException( "Row data not in expected format" );
   }
 
   /***************************************** deleteRows ******************************************/

@@ -18,6 +18,8 @@
 
 package rjc.jplanner.plan;
 
+import java.math.BigDecimal;
+
 /*************************************************************************************************/
 /********************************** Quantity of time with units **********************************/
 /*************************************************************************************************/
@@ -101,6 +103,50 @@ public class TimeSpan
       m_num = Math.rint( num );
     else
       m_num = Math.rint( num * 100.0 ) / 100.0;
+  }
+
+  /******************************************** parse ********************************************/
+  public static TimeSpan parse( Object value )
+  {
+    // blank text and None represent an absent value, including when pasting table cells
+    if ( value == null )
+      return null;
+    if ( value instanceof String text )
+    {
+      text = text.replaceAll( "\\s+", "" );
+      if ( text.isEmpty() || text.equalsIgnoreCase( "None" ) )
+        return null;
+
+      // require a number and a recognised unit rather than interpreting an unknown suffix
+      if ( !text.matches( "(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)[SMHdwmy]" ) )
+        throw new IllegalArgumentException( "Enter a time-span such as 15M or 1H, or None" );
+      TimeSpan parsed = new TimeSpan( text );
+
+      // strict parsing rejects precision loss; existing constructors retain their rounding behaviour
+      if ( Double.isFinite( parsed.getNumber() ) && new BigDecimal( text.substring( 0, text.length() - 1 ) )
+          .compareTo( BigDecimal.valueOf( parsed.getNumber() ) ) != 0 )
+        throw new IllegalArgumentException( "Use whole seconds or at most two decimal places for other units" );
+      value = parsed;
+    }
+
+    if ( !( value instanceof TimeSpan span ) || span.getUnit() == null )
+      throw new IllegalArgumentException( "Value must be a time-span or None" );
+    if ( !Double.isFinite( span.getNumber() ) || span.getNumber() < 0 )
+      throw new IllegalArgumentException( "Time-span must be finite and non-negative" );
+
+    // keep values within the integer-based formatting range so save/load preserves them
+    double maximum = span.getUnit() == Unit.SECONDS ? Integer.MAX_VALUE : Integer.MAX_VALUE / 100.0;
+    if ( span.getNumber() > maximum )
+      throw new IllegalArgumentException( "Time-span is too large" );
+
+    return copyOf( span );
+  }
+
+  /******************************************* copyOf ********************************************/
+  public static TimeSpan copyOf( TimeSpan span )
+  {
+    // copy mutable values so edits cannot change other tasks, defaults or saved undo values
+    return span == null ? null : new TimeSpan( span.m_num, span.m_unit );
   }
 
   /**************************************** toStringLong *****************************************/

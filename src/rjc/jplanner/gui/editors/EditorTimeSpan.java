@@ -48,11 +48,8 @@ public class EditorTimeSpan extends AbstractCellEditor
   @Override
   public void setValue( Object value )
   {
-    // set value depending on type
-    if ( value == null )
-      m_editor.setValue( "1d" );
-    else
-      m_editor.setValue( value );
+    // pass optional time-spans and opening keystrokes through to the control
+    m_editor.setValue( value );
   }
 
   /***************************************** isValueValid ****************************************/

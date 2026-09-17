@@ -40,7 +40,9 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 import rjc.jplanner.gui.ChooseCalendar;
 import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.gui.TimeSpanField;
 import rjc.jplanner.plan.Plan;
+import rjc.jplanner.plan.TimeSpan;
 import rjc.jplanner.plan.calenders.Calendar;
 import rjc.table.control.DateTimeField;
 import rjc.table.control.ExpandingField;
@@ -71,6 +73,7 @@ public class PlanProperties extends ScrollPane
   private final ExpandingField       m_actualStart         = new ExpandingField();
   private final ExpandingField       m_end                 = new ExpandingField();
   private final ChooseCalendar       m_defaultCalendar;
+  private final TimeSpanField        m_defaultEndRounding  = new TimeSpanField();                                       // rounding copied into new tasks
   private final ExpandingField       m_dateTimeFormat      = new ExpandingField();
   private final ExpandingField       m_dateFormat          = new ExpandingField();
   private final ExpandingField       m_fileName            = new ExpandingField();
@@ -160,12 +163,13 @@ public class PlanProperties extends ScrollPane
                                                            };
 
   // record to hold plan values for undo/redo
-  private record Values( String title, DateTime start, Calendar calendar, String dateTimeFormat, String dateFormat )
+  private record Values( String title, DateTime start, Calendar calendar, TimeSpan endRounding, String dateTimeFormat,
+      String dateFormat )
   {
     private static Values from( Plan plan )
     {
-      return new Values( plan.getTitle(), plan.getDefaultStart(), plan.getDefaultCalendar(), plan.getDateTimeFormat(),
-          plan.getDateFormat() );
+      return new Values( plan.getTitle(), plan.getDefaultStart(), plan.getDefaultCalendar(),
+          plan.getDefaultEndRounding(), plan.getDateTimeFormat(), plan.getDateFormat() );
     }
 
     private void applyTo( Plan plan )
@@ -173,6 +177,7 @@ public class PlanProperties extends ScrollPane
       plan.setTitle( title );
       plan.setDefaultStart( start );
       plan.setDefaultCalendar( calendar );
+      plan.setDefaultEndRounding( endRounding );
       plan.setDateTimeFormat( dateTimeFormat );
       plan.setDateFormat( dateFormat );
     }
@@ -267,10 +272,11 @@ public class PlanProperties extends ScrollPane
     // add field rows
     int row = 0;
     addRow( m_grid, row++, "Title", m_title, false );
-    addRow( m_grid, row++, "Default Start", m_defaultStart, false );
-    addRow( m_grid, row++, "Actual Start", m_actualStart, true );
+    addRow( m_grid, row++, "Default start", m_defaultStart, false );
+    addRow( m_grid, row++, "Actual start", m_actualStart, true );
     addRow( m_grid, row++, "End", m_end, true );
-    addRow( m_grid, row++, "Default Calendar", m_defaultCalendar, false );
+    addRow( m_grid, row++, "Default calendar", m_defaultCalendar, false );
+    addRow( m_grid, row++, "Default rounding", m_defaultEndRounding, false );
     addRow( m_grid, row++, "Date-time format", m_dateTimeFormat, false );
     addRow( m_grid, row++, "Date format", m_dateFormat, false );
     addRow( m_grid, row++, "File name", m_fileName, true );
@@ -378,6 +384,20 @@ public class PlanProperties extends ScrollPane
       }
     } );
 
+    // add tooltip, text and focus change listeners for default end rounding field
+    m_defaultEndRounding.setPromptText( "None" );
+    m_defaultEndRounding
+        .setTooltip( new Tooltip( "End rounding copied into new tasks. Existing tasks keep their setting.\r"
+            + "Enter a time-span such as 15M or 1H; clear the field or enter None for no rounding." ) );
+    m_defaultEndRounding.getTooltip().setStyle( TOOLTIP_STYLE );
+    m_defaultEndRounding.textProperty()
+        .addListener( ( property, oldText, newText ) -> showEndRoundingStatus( checkEndRounding() ) );
+    m_defaultEndRounding.focusedProperty().addListener( ( property, oldFocus, newFocus ) ->
+    {
+      // recheck this field on entry so an error from another property cannot hide its description
+      if ( newFocus )
+        showEndRoundingStatus( checkEndRounding() );
+    } );
   }
 
   /***************************************** keyPressed ******************************************/
@@ -400,6 +420,8 @@ public class PlanProperties extends ScrollPane
         displayDateTime( m_defaultStart, m_plan.getDefaultStart() );
       if ( source == m_defaultCalendar )
         source.setText( m_plan.getDefaultCalendar().getName() );
+      if ( source == m_defaultEndRounding )
+        m_defaultEndRounding.setValue( m_plan.getDefaultEndRounding() );
       source.selectRange( pos, pos );
       event.consume();
     }
@@ -450,6 +472,40 @@ public class PlanProperties extends ScrollPane
     }
   }
 
+  /*************************************** checkEndRounding **************************************/
+  private String checkEndRounding()
+  {
+    // check optional rounding is valid, return null if okay, else error message
+    try
+    {
+      if ( !m_defaultEndRounding.isValueValid() )
+        throw new IllegalArgumentException( "Invalid duration" );
+      TimeSpan rounding = TimeSpan.parse( m_defaultEndRounding.getTimeSpan() );
+      if ( rounding != null && rounding.getNumber() <= 0 )
+        throw new IllegalArgumentException( "End rounding must be positive; use None for no rounding" );
+
+      return null;
+    }
+    catch ( IllegalArgumentException exception )
+    {
+      return exception.getMessage();
+    }
+  }
+
+  /************************************* showEndRoundingStatus ***********************************/
+  private void showEndRoundingStatus( String err )
+  {
+    if ( err != null )
+      m_status.update( Level.ERROR, err );
+    else if ( m_defaultEndRounding.isFocused() )
+    {
+      // retain the duration description after validation while the field is being edited
+      TimeSpan rounding = m_defaultEndRounding.getTimeSpan();
+      m_status.update( Level.INFO, rounding == null ? "" : rounding.toStringLong() );
+    }
+    m_defaultEndRounding.setStyle( m_status.getStyle() );
+  }
+
   /*************************************** displayDateTime ***************************************/
   private void displayDateTime( TextField field, DateTime dt )
   {
@@ -466,6 +522,7 @@ public class PlanProperties extends ScrollPane
     // update the gui property widgets with values from plan
     m_title.setText( m_plan.getTitle() );
     m_defaultCalendar.setSelected( m_plan.getDefaultCalendar() );
+    m_defaultEndRounding.setValue( m_plan.getDefaultEndRounding() );
     m_dateTimeFormat.setText( m_plan.getDateTimeFormat() );
     m_dateFormat.setText( m_plan.getDateFormat() );
     m_fileName.setText( m_plan.getFilename() );
@@ -489,9 +546,12 @@ public class PlanProperties extends ScrollPane
       m_status.clear();
 
     // update plan with values from gui property widgets via undo command
-    var values = new Values( m_title.getText(), m_defaultStart.getDateTime(), m_defaultCalendar.getCalendar(),
-        checkDateTimeFormat() == null ? m_dateTimeFormat.getText() : m_plan.getDateTimeFormat(),
-        checkDateFormat() == null ? m_dateFormat.getText() : m_plan.getDateFormat() );
+    var rounding = checkEndRounding() == null ? m_defaultEndRounding.getTimeSpan() : m_plan.getDefaultEndRounding();
+    var dtFormat = checkDateTimeFormat() == null ? m_dateTimeFormat.getText() : m_plan.getDateTimeFormat();
+    var dFormat = checkDateFormat() == null ? m_dateFormat.getText() : m_plan.getDateFormat();
+
+    var values = new Values( m_title.getText(), m_defaultStart.getDateTime(), m_defaultCalendar.getCalendar(), rounding,
+        dtFormat, dFormat );
 
     if ( !m_undoStack.isClean() && m_undoStack.getUndoCommand() instanceof PropertiesCommand command )
     {

@@ -39,6 +39,7 @@ public class Task
   private int           m_priority;     // overall task priority (0 to 999)
   private DateTime      m_deadline;     // task warning deadline
   private String        m_cost;         // calculated cost based on resource use
+  private TimeSpan      m_endRounding;  // individual end rounding, null for none
   private String        m_comment;      // free text comment
 
   @SuppressWarnings( "unused" ) // TODO: remove when implemented
@@ -50,7 +51,7 @@ public class Task
 
   public enum FIELD
   {
-    Title, Duration, Start, End, Work, Predecessors, Resources, Type, Priority, Deadline, Cost, Comment, MAX
+    Title, Duration, Start, End, Work, Predecessors, Resources, Type, Priority, Deadline, Cost, Rounding, Comment, MAX
   }
 
   /**************************************** constructor ******************************************/
@@ -103,6 +104,8 @@ public class Task
         return m_duration;
       case End:
         return m_end;
+      case Rounding:
+        return TimeSpan.copyOf( m_endRounding );
       case Predecessors:
         return m_predecessors;
       case Priority:
@@ -258,6 +261,22 @@ public class Task
           return null;
         }
         return "Not time-span: " + Utils.objectsString( newValue );
+
+      case Rounding:
+        // check new value is time-span, or null
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_endRounding = null;
+          return null;
+        }
+        if ( newValue instanceof TimeSpan ts && ts.getNumber() > 0.0 )
+        {
+          if ( commit )
+            m_endRounding = ts;
+          return null;
+        }
+        return "Not positive time-span: " + Utils.objectsString( newValue );
 
       case Cost:
 

@@ -67,6 +67,7 @@ public class TasksView extends TableView
     getColumnsAxis().setNominalSize( FIELD.Work.ordinal(), 60 );
     getColumnsAxis().setNominalSize( FIELD.Start.ordinal(), 140 );
     getColumnsAxis().setNominalSize( FIELD.End.ordinal(), 140 );
+    getColumnsAxis().setNominalSize( FIELD.Rounding.ordinal(), 70 );
     getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
   }
 
@@ -92,7 +93,7 @@ public class TasksView extends TableView
       case Title, Comment:
         return new EditorText();
 
-      case Duration, Work:
+      case Duration, Work, Rounding:
         return new EditorTimeSpan();
 
       case Start, End:

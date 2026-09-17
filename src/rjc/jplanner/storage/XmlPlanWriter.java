@@ -39,6 +39,7 @@ public final class XmlPlanWriter
     xml.attribute( XmlLabels.XML_TITLE, m_plan.getTitle() );
     xml.attribute( XmlLabels.XML_START, m_plan.getDefaultStart() );
     xml.attribute( XmlLabels.XML_CALENDAR, m_plan.getDefaultCalendar() );
+    xml.attribute( XmlLabels.XML_ROUNDING, m_plan.getDefaultEndRounding() );
     xml.attribute( XmlLabels.XML_DT_FORMAT, m_plan.getDateTimeFormat() );
     xml.attribute( XmlLabels.XML_D_FORMAT, m_plan.getDateFormat() );
     xml.attribute( XmlLabels.XML_NOTES, m_plan.getNotes() );
@@ -241,6 +242,10 @@ public final class XmlPlanWriter
       var resources = task.getValue( Task.FIELD.Resources.ordinal() );
       if ( resources != null )
         xml.attribute( XmlLabels.XML_RESOURCES, resources.toString() );
+
+      var rounding = task.getValue( Task.FIELD.Rounding.ordinal() );
+      if ( rounding != null )
+        xml.attribute( XmlLabels.XML_ROUNDING, rounding );
 
       var comment = task.getValue( Task.FIELD.Comment.ordinal() );
       if ( comment != null )

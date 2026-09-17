@@ -87,6 +87,7 @@ public class XmlLabels
   public static final String XML_PRIORITY        = "priority";
   public static final String XML_DEADLINE        = "deadline";
   public static final String XML_INDENT          = "indent";
+  public static final String XML_ROUNDING        = "rounding";
 
   // 'display' labels
   public static final String XML_DISPLAY_DATA    = "display-data";

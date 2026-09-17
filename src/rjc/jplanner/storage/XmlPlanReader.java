@@ -121,17 +121,18 @@ public final class XmlPlanReader
   private void processPlanAttributes()
   {
     // process plan attributes updating the plan, except calendar which is handled later
-    try
+    for ( int i = 0; i < m_xml.getAttributeCount(); i++ )
     {
-      for ( int i = 0; i < m_xml.getAttributeCount(); i++ )
-      {
-        String attrib = m_xml.getAttributeLocalName( i );
-        String value = m_xml.getAttributeValue( i );
+      String attrib = m_xml.getAttributeLocalName( i );
+      String value = m_xml.getAttributeValue( i );
 
+      try
+      {
         switch ( attrib )
         {
           case XmlLabels.XML_TITLE -> m_plan.setTitle( value );
           case XmlLabels.XML_START -> m_plan.setDefaultStart( DateTime.parse( value ) );
+          case XmlLabels.XML_ROUNDING -> m_plan.setDefaultEndRounding( TimeSpan.parse( value ) );
           // calendar isn't loaded yet at this point, so just remember its name for later lookup
           case XmlLabels.XML_CALENDAR -> m_calendarName = value;
           case XmlLabels.XML_DT_FORMAT -> m_plan.setDateTimeFormat( value );
@@ -141,11 +142,11 @@ public final class XmlPlanReader
           default -> Utils.trace( "Unhandled attribute '" + attrib + "' = '" + value + "'" );
         }
       }
-    }
-    catch ( Exception exception )
-    {
-      // one bad attribute must not prevent the rest of the plan from loading
-      Utils.trace( "Error processing plan-data attributes: " + exception.getMessage() );
+      catch ( Exception exception )
+      {
+        // a rejected optional attribute must not discard the remaining plan properties
+        Utils.trace( "Error processing plan-data attribute '" + attrib + "': " + exception.getMessage() );
+      }
     }
   }
 
@@ -617,6 +618,7 @@ public final class XmlPlanReader
               true );
           case XmlLabels.XML_DEADLINE -> m_plan.getTasks().setValue( id, Task.FIELD.Deadline.ordinal(),
               DateTime.parse( value ), true );
+          case XmlLabels.XML_ROUNDING -> m_plan.getTasks().setValue( id, Task.FIELD.Rounding.ordinal(), value, true );
           case XmlLabels.XML_COMMENT -> m_plan.getTasks().setValue( id, Task.FIELD.Comment.ordinal(), value, true );
           // deferred until all tasks/resources exist - see processTasks and applyTaskReference
           case XmlLabels.XML_PREDS -> {

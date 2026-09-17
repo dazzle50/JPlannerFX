@@ -39,6 +39,7 @@ public class Plan
   private String    m_title;          // plan title
   private DateTime  m_start;          // plan default start date-time for scheduling
   private Calendar  m_calendar;       // plan default calendar
+  private TimeSpan  m_endRounding;    // default end rounding copied into new tasks, null for none
   private String    m_datetimeFormat; // format to display date-times
   private String    m_dateFormat;     // format to display dates
   private String    m_filename;       // filename when saved or loaded
@@ -203,6 +204,12 @@ public class Plan
     return m_calendar;
   }
 
+  /************************************ getDefaultEndRounding ************************************/
+  public TimeSpan getDefaultEndRounding()
+  {
+    return TimeSpan.copyOf( m_endRounding );
+  }
+
   /************************************** getDateTimeFormat **************************************/
   public String getDateTimeFormat()
   {
@@ -261,6 +268,16 @@ public class Plan
   public void setDefaultCalendar( Calendar calendar )
   {
     m_calendar = calendar;
+  }
+
+  /************************************ setDefaultEndRounding ************************************/
+  public void setDefaultEndRounding( TimeSpan rounding )
+  {
+    // validate before assignment so a rejected default leaves the current value intact
+    TimeSpan span = TimeSpan.parse( rounding );
+    if ( span != null && span.getNumber() <= 0 )
+      throw new IllegalArgumentException( "End rounding must be positive; use None for no rounding" );
+    m_endRounding = span;
   }
 
   /*************************************** setDateTimeFormat *************************************/
