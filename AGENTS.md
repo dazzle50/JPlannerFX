@@ -17,6 +17,7 @@ The Java guidance and examples below apply regardless of the project's directory
 - Strive for simple, concise code that is easy to understand and maintain. Keep control flow easy to follow.
 - Use blank lines to separate logical sections of code and make the flow easier to follow. Preserve useful existing spacing, keep closely related statements together, and avoid excessive blank lines.
 - Follow established patterns in the project. Prefer familiar Java constructs; avoid exotic language techniques or clever abstractions when a straightforward solution is sufficient.
+- Before introducing a new implementation pattern, inspect nearby code and comparable features. Follow the relevant existing approach for class structure, UI behaviour, validation, and undo/redo. If existing approaches differ, prefer the closest comparable implementation unless it has a clear defect.
 - Avoid unnecessary helper methods and layers of indirection. Extract a helper when it meaningfully clarifies the code, reduces duplication, or supports reuse.
 - Make code easy to use and reuse through clear names, straightforward interfaces, and minimal coupling. Avoid speculative generalisation for needs the project does not have.
 - Take appropriate steps to achieve strong performance in likely performance-sensitive areas. Choose suitable algorithms and data structures, avoid unnecessary repeated work and allocations in frequently executed paths, and measure when performance trade-offs are uncertain. Keep optimisations focused and explain any non-obvious complexity they require.
@@ -52,7 +53,7 @@ public class NameCollection
 {
   private final List<String> m_names; // names available for lookup
 
-  /**************************************** constructor ******************************************/
+  /***************************************** constructor *****************************************/
   public NameCollection( List<String> names )
   {
     // copy names so later changes to the supplied list do not affect lookup
@@ -72,7 +73,7 @@ public class NameCollection
 Explain the reason for a constraint or sequence beside the relevant code. For example, an undo operation may need saved values to restore the original state. This method excerpt assumes an undo interface and an existing `apply` method:
 
 ```java
-  /******************************************* undo **********************************************/
+  /******************************************** undo *********************************************/
   @Override
   public void undo()
   {

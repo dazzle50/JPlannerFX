@@ -286,7 +286,7 @@ public class DaysData extends TableData implements IDataSwapRows, IDataInsertDel
   /**************************************** prepareRows ******************************************/
   // prepare an immutable row list without inserting, preserving supplied day-type objects
   // reject a null list, invalid row types or duplicate names; null elements receive defaults
-  public List<DayType> prepareRows( List<Object> rowData )
+  private List<DayType> prepareRows( List<Object> rowData )
   {
     // collect existing day-type names
     Objects.requireNonNull( rowData, "rowData" );
