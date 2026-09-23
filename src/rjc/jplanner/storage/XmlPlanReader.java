@@ -31,6 +31,7 @@ import rjc.jplanner.plan.days.DayType;
 import rjc.jplanner.plan.days.WorkPeriod;
 import rjc.jplanner.plan.resources.Resource;
 import rjc.jplanner.plan.tasks.Task;
+import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
@@ -610,6 +611,10 @@ public final class XmlPlanReader
           case XmlLabels.XML_TITLE -> m_plan.getTasks().setValue( id, Task.FIELD.Title.ordinal(), value, true );
           case XmlLabels.XML_DURATION -> m_plan.getTasks().setValue( id, Task.FIELD.Duration.ordinal(),
               new TimeSpan( value ), true );
+          case XmlLabels.XML_TYPE -> m_plan.getTasks().setValue( id, Task.FIELD.Type.ordinal(),
+              TaskType.valueOf( value ), true );
+          case XmlLabels.XML_WORK -> m_plan.getTasks().setValue( id, Task.FIELD.Work.ordinal(), TimeSpan.parse( value ),
+              true );
           case XmlLabels.XML_PRIORITY -> m_plan.getTasks().setValue( id, Task.FIELD.Priority.ordinal(),
               Integer.parseInt( value ), true );
           case XmlLabels.XML_START -> m_plan.getTasks().setValue( id, Task.FIELD.Start.ordinal(),
@@ -618,7 +623,8 @@ public final class XmlPlanReader
               true );
           case XmlLabels.XML_DEADLINE -> m_plan.getTasks().setValue( id, Task.FIELD.Deadline.ordinal(),
               DateTime.parse( value ), true );
-          case XmlLabels.XML_ROUNDING -> m_plan.getTasks().setValue( id, Task.FIELD.Rounding.ordinal(), value, true );
+          case XmlLabels.XML_ROUNDING -> m_plan.getTasks().setValue( id, Task.FIELD.Rounding.ordinal(),
+              TimeSpan.parse( value ), true );
           case XmlLabels.XML_COMMENT -> m_plan.getTasks().setValue( id, Task.FIELD.Comment.ordinal(), value, true );
           // deferred until all tasks/resources exist - see processTasks and applyTaskReference
           case XmlLabels.XML_PREDS -> {
@@ -630,9 +636,7 @@ public final class XmlPlanReader
             yield null;
           }
           // not yet supported by the data model - trace so gaps in loaded data are visible
-          case XmlLabels.XML_TYPE -> "TODO loading task type '" + value + "'";
-          case XmlLabels.XML_WORK, XmlLabels.XML_COST, XmlLabels.XML_INDENT -> "TODO loading task attribute '" + attrib
-              + "'";
+          case XmlLabels.XML_COST, XmlLabels.XML_INDENT -> "TODO loading task attribute '" + attrib + "'";
           default -> "Unhandled attribute '" + attrib + "' = '" + value + "'";
         };
         if ( problem != null )

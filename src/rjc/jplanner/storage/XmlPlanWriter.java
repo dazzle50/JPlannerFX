@@ -217,9 +217,14 @@ public final class XmlPlanWriter
 
       xml.attribute( XmlLabels.XML_ID, id );
       xml.attribute( XmlLabels.XML_TITLE, task.getValue( Task.FIELD.Title.ordinal() ) );
-      xml.attribute( XmlLabels.XML_TYPE, task.getTaskType() );
+      xml.attribute( XmlLabels.XML_TYPE, task.getTaskType().name() );
       xml.attribute( XmlLabels.XML_DURATION, task.getValue( Task.FIELD.Duration.ordinal() ) );
       xml.attribute( XmlLabels.XML_PRIORITY, task.getValue( Task.FIELD.Priority.ordinal() ) );
+
+      // write optional work effort
+      var work = task.getValue( Task.FIELD.Work.ordinal() );
+      if ( work != null )
+        xml.attribute( XmlLabels.XML_WORK, work );
 
       // write optional date-time fields
       var start = task.getValue( Task.FIELD.Start.ordinal() );

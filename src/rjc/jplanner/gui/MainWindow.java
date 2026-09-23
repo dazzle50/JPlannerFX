@@ -20,6 +20,7 @@ package rjc.jplanner.gui;
 
 import java.io.File;
 
+import javafx.beans.binding.Bindings;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TabPane;
@@ -27,8 +28,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import rjc.jplanner.storage.FileLoad;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
@@ -43,7 +47,8 @@ public class MainWindow extends Scene
   private PlanContext m_context;   // plan context shared across main window components
   private MenuBar     m_menus;     // menus at top of scene
   private TabPane     m_tabs;      // tabs containing application functionality
-  private TextField   m_statusBar; // status bar at bottom of scene
+  private HBox        m_statusBar; // status bar at bottom of scene
+  private TextField   m_jobField;  // job status field in status bar
 
   /**************************************** constructor ******************************************/
   public MainWindow()
@@ -78,22 +83,49 @@ public class MainWindow extends Scene
   }
 
   /************************************* createStatusBar *****************************************/
-  private TextField createStatusBar( ObservableStatus status )
+  private HBox createStatusBar( ObservableStatus status )
   {
-    // create selectable text status-bar for displaying status messages
-    TextField statusBar = new TextField();
-    statusBar.setFocusTraversable( false );
-    statusBar.setEditable( false );
-    statusBar.setBackground( new Background( new BackgroundFill( Color.gray( 0.96 ), null, null ) ) );
+    // create two selectable text fields side by side
+    TextField statusField = new TextField();
+    m_jobField = new TextField();
+    for ( TextField field : new TextField[] { statusField, m_jobField } )
+    {
+      field.setFocusTraversable( false );
+      field.setEditable( false );
+      field.setBackground( new Background( new BackgroundFill( Color.gray( 0.96 ), null, null ) ) );
+      field.setMinWidth( 0.0 );
+      field.setMaxWidth( Double.MAX_VALUE );
+    }
+
+    // size the job field to its text, including insets and room for the caret
+    Text text = new Text();
+    text.textProperty().bind( m_jobField.textProperty() );
+    text.fontProperty().bind( m_jobField.fontProperty() );
+    m_jobField.prefWidthProperty()
+        .bind(
+            Bindings.createDoubleBinding(
+                () -> Math.ceil( text.getLayoutBounds().getWidth() ) + m_jobField.getInsets().getLeft()
+                    + m_jobField.getInsets().getRight() + 2.0,
+                text.layoutBoundsProperty(), m_jobField.insetsProperty() ) );
+    m_jobField.setMinWidth( Region.USE_PREF_SIZE );
+    m_jobField.setMaxWidth( Region.USE_PREF_SIZE );
+    HBox.setHgrow( statusField, Priority.ALWAYS );
 
     // display status changes on status-bar using runLater so can handle signals from other threads
     status.addLaterListener( ( sender, msg ) ->
     {
-      statusBar.setText( status.getMessage() );
-      statusBar.setStyle( status.getStyle() );
+      statusField.setText( status.getMessage() );
+      statusField.setStyle( status.getStyle() );
     } );
 
-    return statusBar;
+    return new HBox( statusField, m_jobField );
+  }
+
+  /*************************************** getJobTextField ***************************************/
+  public TextField getJobTextField()
+  {
+    // return the job status text field in the status bar
+    return m_jobField;
   }
 
   /***************************************** rebuildTabs *****************************************/
