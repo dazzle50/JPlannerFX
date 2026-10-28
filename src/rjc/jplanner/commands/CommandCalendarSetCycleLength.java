@@ -21,7 +21,7 @@ package rjc.jplanner.commands;
 import java.util.ArrayList;
 
 import rjc.jplanner.gui.PlanContext;
-import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calendars.Calendar;
 import rjc.jplanner.plan.days.DayType;
 import rjc.table.data.TableData;
 import rjc.table.undo.IUndoCommand;

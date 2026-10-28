@@ -18,7 +18,7 @@
 
 package rjc.jplanner.plan.resources;
 
-import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calendars.Calendar;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;

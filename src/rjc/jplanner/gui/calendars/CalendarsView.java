@@ -21,7 +21,7 @@ package rjc.jplanner.gui.calendars;
 import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
 import rjc.jplanner.gui.PlanContext;
-import rjc.jplanner.plan.calenders.Calendar.FIELD;
+import rjc.jplanner.plan.calendars.Calendar.FIELD;
 import rjc.table.Utils;
 import rjc.table.data.TableData;
 import rjc.table.view.TableContextMenu;

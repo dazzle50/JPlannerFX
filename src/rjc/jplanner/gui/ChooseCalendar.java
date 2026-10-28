@@ -18,8 +18,8 @@
 
 package rjc.jplanner.gui;
 
-import rjc.jplanner.plan.calenders.Calendar;
-import rjc.jplanner.plan.calenders.Calendars;
+import rjc.jplanner.plan.calendars.Calendar;
+import rjc.jplanner.plan.calendars.Calendars;
 import rjc.table.Utils;
 import rjc.table.control.ChooseField;
 

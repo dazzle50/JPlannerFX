@@ -16,15 +16,19 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan.calenders;
+package rjc.jplanner.plan.calendars;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 
 import rjc.jplanner.plan.days.DayType;
+import rjc.jplanner.plan.days.DayType.Direction;
 import rjc.table.Utils;
 import rjc.table.data.types.Date;
+import rjc.table.data.types.DateTime;
+import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
 /********************************* Single calendar for planning **********************************/
@@ -230,5 +234,155 @@ public class Calendar
       normal += m_normal.size();
 
     return m_normal.get( normal );
+  }
+
+  /************************************** nextWorkingStart ***************************************/
+  // find the earliest working start in [from, limit]; null means none within that interval.
+  public DateTime nextWorkingStart( DateTime from, DateTime limit )
+  {
+    validateSearch( from, limit, Direction.FORWARD );
+    long last = limit.toSerialMilliseconds();
+    Date date = from.getDate();
+    Time time = from.getTime();
+
+    while ( true )
+    {
+      Time start = getDayType( date ).nextWorkingStart( time );
+      if ( start != null )
+      {
+        DateTime result = DateTime.of( date, start );
+        return result.toSerialMilliseconds() <= last ? result : null;
+      }
+
+      // allow a start at the next midnight when it is exactly the inclusive limit.
+      long nextMidnight = ( (long) date.getEpochDay() + 1 ) * Time.MILLIS_PER_DAY;
+      if ( date.equals( Date.MAX_VALUE ) || nextMidnight > last )
+        return null;
+      date = date.plusDays( 1 );
+      time = Time.MIN_VALUE;
+    }
+  }
+
+  /************************************ previousWorkingFinish ************************************/
+  // find the latest working finish in [limit, from]; null does not prove global impossibility.
+  public DateTime previousWorkingFinish( DateTime from, DateTime limit )
+  {
+    validateSearch( from, limit, Direction.BACKWARD );
+    long first = limit.toSerialMilliseconds();
+    Date date = from.getDate();
+    Time time = from.getTime();
+
+    while ( true )
+    {
+      Time finish = getDayType( date ).previousWorkingFinish( time );
+      if ( finish != null )
+      {
+        DateTime result = DateTime.of( date, finish );
+        return result.toSerialMilliseconds() >= first ? result : null;
+      }
+
+      // the previous date's 24:00 is the same instant as this date's 00:00.
+      long midnight = (long) date.getEpochDay() * Time.MILLIS_PER_DAY;
+      if ( date.equals( Date.MIN_VALUE ) || midnight < first )
+        return null;
+      date = date.plusDays( -1 );
+      time = Time.MAX_VALUE;
+    }
+  }
+
+  /************************************ workingMillisBetween *************************************/
+  // sum working time across dates; reversing the endpoints negates the result.
+  public long workingMillisBetween( DateTime from, DateTime to )
+  {
+    long first = Objects.requireNonNull( from, "from" ).toSerialMilliseconds();
+    long last = Objects.requireNonNull( to, "to" ).toSerialMilliseconds();
+    if ( first > last )
+      return -workingMillisBetween( to, from );
+
+    long total = 0;
+    while ( first < last )
+    {
+      DateTime position = DateTime.ofSerialMilliseconds( first );
+      long midnight = (long) position.getEpochDay() * Time.MILLIS_PER_DAY;
+      long end = Math.min( last, midnight + Time.MILLIS_PER_DAY );
+      Time finish = Time.ofMilliseconds( (int) ( end - midnight ) );
+      total += getDayType( position.getDate() ).workingMillisBetween( position.getTime(), finish );
+      first = end;
+    }
+    return total;
+  }
+
+  /************************************ equivalentDaysBetween ************************************/
+  // each date supplies its own weight, including exceptions and partial working days.
+  public double equivalentDaysBetween( DateTime from, DateTime to )
+  {
+    long first = Objects.requireNonNull( from, "from" ).toSerialMilliseconds();
+    long last = Objects.requireNonNull( to, "to" ).toSerialMilliseconds();
+    if ( first > last )
+      return -equivalentDaysBetween( to, from );
+
+    double total = 0.0;
+    double correction = 0.0;
+    while ( first < last )
+    {
+      DateTime position = DateTime.ofSerialMilliseconds( first );
+      long midnight = (long) position.getEpochDay() * Time.MILLIS_PER_DAY;
+      long end = Math.min( last, midnight + Time.MILLIS_PER_DAY );
+      Time finish = Time.ofMilliseconds( (int) ( end - midnight ) );
+      double days = getDayType( position.getDate() ).equivalentDaysBetween( position.getTime(), finish );
+
+      // compensate summation so small daily contributions are not repeatedly lost to rounding.
+      double adjusted = days - correction;
+      double next = total + adjusted;
+      correction = ( next - total ) - adjusted;
+      total = next;
+      first = end;
+    }
+    return total;
+  }
+
+  /************************************ advanceWorkingMillis *************************************/
+  // advance a non-negative amount in the requested direction, including completion at limit.
+  // zero preserves from; null means insufficient work before the limit, not global impossibility.
+  public DateTime advanceWorkingMillis( DateTime from, long amount, Direction direction, DateTime limit )
+  {
+    validateSearch( from, limit, direction );
+    if ( amount < 0 )
+      throw new IllegalArgumentException( "Working amount must not be negative" );
+    if ( amount == 0 )
+      return from;
+
+    boolean forward = direction == Direction.FORWARD;
+    long last = limit.toSerialMilliseconds();
+    Date date = from.getDate();
+    Time time = from.getTime();
+    while ( true )
+    {
+      long midnight = (long) date.getEpochDay() * Time.MILLIS_PER_DAY;
+      int boundary = (int) ( forward ? Math.min( Time.MILLIS_PER_DAY, last - midnight )
+          : Math.max( 0, last - midnight ) );
+      DayType day = getDayType( date );
+      int capacity = Math.abs( day.workingMillisBetween( time, Time.ofMilliseconds( boundary ) ) );
+      if ( amount <= capacity )
+        return DateTime.of( date, day.advanceWorkingMillis( time, (int) amount, direction ) );
+      amount -= capacity;
+
+      // check the limit before stepping, including the minimum/maximum representable dates.
+      if ( midnight + boundary == last || date.equals( forward ? Date.MAX_VALUE : Date.MIN_VALUE ) )
+        return null;
+      date = date.plusDays( forward ? 1 : -1 );
+      time = forward ? Time.MIN_VALUE : Time.MAX_VALUE;
+    }
+  }
+
+  /*************************************** validateSearch ****************************************/
+  // compare timeline positions so 24:00 and the following 00:00 share the same bound.
+  private static void validateSearch( DateTime from, DateTime limit, Direction direction )
+  {
+    long start = Objects.requireNonNull( from, "from" ).toSerialMilliseconds();
+    long end = Objects.requireNonNull( limit, "limit" ).toSerialMilliseconds();
+    Objects.requireNonNull( direction, "direction" );
+    if ( direction == Direction.FORWARD ? end < start : end > start )
+      throw new IllegalArgumentException( "Search limit is opposite to the requested direction" );
   }
 }

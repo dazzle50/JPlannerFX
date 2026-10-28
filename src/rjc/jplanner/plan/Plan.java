@@ -18,8 +18,8 @@
 
 package rjc.jplanner.plan;
 
-import rjc.jplanner.plan.calenders.Calendar;
-import rjc.jplanner.plan.calenders.Calendars;
+import rjc.jplanner.plan.calendars.Calendar;
+import rjc.jplanner.plan.calendars.Calendars;
 import rjc.jplanner.plan.days.DayType;
 import rjc.jplanner.plan.days.DayTypes;
 import rjc.jplanner.plan.resources.Resource;

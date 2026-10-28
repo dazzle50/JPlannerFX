@@ -210,6 +210,14 @@ public final class DayType
     return a <= b ? total : -total;
   }
 
+  /************************************ equivalentDaysBetween ************************************/
+  // equivalent days are proportional to working time; an empty day contributes nothing.
+  public double equivalentDaysBetween( Time from, Time to )
+  {
+    int millis = workingMillisBetween( from, to );
+    return m_workingMillis == 0 || millis == 0 ? 0.0 : (double) millis / m_workingMillis * m_equivalentDays;
+  }
+
   /************************************ advanceWorkingMillis *************************************/
   // skip breaks, returning the reached boundary for exact completion without crossing dates
   // zero returns from; negative amounts or insufficient capacity are argument errors

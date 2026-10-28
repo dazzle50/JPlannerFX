@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.TimeSpan;
-import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calendars.Calendar;
 import rjc.jplanner.plan.days.DayType;
 import rjc.jplanner.plan.days.WorkPeriod;
 import rjc.jplanner.plan.resources.Resource;

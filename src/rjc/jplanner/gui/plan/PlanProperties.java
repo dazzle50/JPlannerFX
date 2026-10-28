@@ -43,7 +43,7 @@ import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.TimeSpanField;
 import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.TimeSpan;
-import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calendars.Calendar;
 import rjc.table.control.DateTimeField;
 import rjc.table.control.ExpandingField;
 import rjc.table.control.IObservableStatus;

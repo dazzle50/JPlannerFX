@@ -22,7 +22,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.tasks.TasksView;
-import rjc.jplanner.plan.calenders.Calendar;
+import rjc.jplanner.plan.calendars.Calendar;
 import rjc.table.data.types.Date;
 import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;

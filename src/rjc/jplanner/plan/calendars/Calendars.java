@@ -16,7 +16,7 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan.calenders;
+package rjc.jplanner.plan.calendars;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
