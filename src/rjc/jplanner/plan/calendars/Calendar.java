@@ -21,6 +21,7 @@ package rjc.jplanner.plan.calendars;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import rjc.jplanner.plan.days.DayType;
@@ -169,8 +170,24 @@ public class Calendar
         return "Not date: " + Utils.objectsString( newValue );
 
       case Exceptions:
-        // TODO setting calendar exceptions
-        return "Not implemented: " + Utils.objectsString( newValue );
+        if ( !( newValue instanceof Map<?, ?> exceptions ) )
+          return "Exceptions must be a map of dates to day types";
+
+        // validate all entries before changing the calendar to avoid partial updates
+        var replacement = new HashMap<Date, DayType>();
+        for ( var entry : exceptions.entrySet() )
+        {
+          if ( !( entry.getKey() instanceof Date date ) || !( entry.getValue() instanceof DayType day ) )
+            return "Each exception requires a date and a day type";
+          replacement.put( date, day );
+        }
+        if ( commit )
+        {
+          // copy first so caller maps and undo snapshots never become live calendar state
+          m_exceptions.clear();
+          m_exceptions.putAll( replacement );
+        }
+        return null;
 
       case Cycle:
         // check new value is integer and in range
@@ -229,6 +246,13 @@ public class Calendar
     if ( day != null )
       return day;
 
+    return getNormalDayType( date );
+  }
+
+  /************************************** getNormalDayType ***************************************/
+  public DayType getNormalDayType( Date date )
+  {
+    // return the normal cycle day without applying calendar exceptions
     int normal = ( date.getEpochDay() - m_cycleAnchor.getEpochDay() ) % m_normal.size();
     if ( normal < 0 )
       normal += m_normal.size();

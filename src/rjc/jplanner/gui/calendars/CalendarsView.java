@@ -18,14 +18,16 @@
 
 package rjc.jplanner.gui.calendars;
 
+import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
+import rjc.jplanner.commands.CommandCalendarSetExceptions;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calendars.Calendar.FIELD;
-import rjc.table.Utils;
 import rjc.table.data.TableData;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
+import rjc.table.view.TableContextMenuBuilder;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -83,7 +85,8 @@ public class CalendarsView extends TableView
         return new EditorDate();
 
       case Exceptions:
-        Utils.trace( "EDIT EXCEPTIONS - NOT YET IMPLEMENTED" );
+        // return no cell editor so checks such as Delete skip the exceptions cell
+        // openEditor opens the dialog only when the user requests an edit
         return null;
 
       case Cycle:
@@ -110,15 +113,46 @@ public class CalendarsView extends TableView
     }
   }
 
+  /***************************************** openEditor ******************************************/
+  @Override
+  public void openEditor( Object value )
+  {
+    // if user has requested to edit the exceptions cell, then open the exceptions dialog
+    int dataColumn = getColumnsAxis().getDataIndex( getFocusCell().getColumn() );
+    int dataRow = getRowsAxis().getDataIndex( getFocusCell().getRow() );
+    if ( dataRow == FIELD.Exceptions.ordinal() )
+    {
+      // open the exceptions dialog for the selected calendar
+      if ( dataColumn < 0 || dataColumn >= getData().getColumnCount() )
+        return;
+      AbstractCellEditor.endEditing();
+      var context = (PlanContext) getData().getUserData();
+      var plan = context.getPlan();
+      var dialog = new CalendarExceptionsDialog( getScene().getWindow(), plan, plan.getCalendar( dataColumn ) );
+
+      dialog.showAndWait().ifPresent( exceptions -> getUndoStack()
+          .push( new CommandCalendarSetExceptions( (CalendarsData) getData(), dataColumn, exceptions ) ) );
+      requestFocus();
+    }
+
+    else
+      super.openEditor( value );
+  }
+
   /*************************************** openContextMenu ***************************************/
   @Override
   public void openContextMenu( ContextMenuEvent event )
   {
-    // build context menu
-    var menu = new TableContextMenu( this );
+    // keyboard menus use the focus cell even when the mouse has never entered the table
+    if ( event.isKeyboardTrigger() && ( getFocusCell().getColumn() < 0 || getFocusCell().getRow() < 0 ) )
+      return;
+    var menu = event.isKeyboardTrigger()
+        ? new TableContextMenuBuilder().buildMenu( new ContextMenu(), this, getFocusCell().getRow(),
+            getFocusCell().getColumn() )
+        : new TableContextMenu( this );
 
     // loop through menu items find item with text "Add column" and rename it
-    menu.getItems().stream().filter( item -> item.getText().equals( "Add column" ) )
+    menu.getItems().stream().filter( item -> "Add column".equals( item.getText() ) )
         .forEach( item -> item.setText( "Add new calendar" ) );
 
     // show the context menu if it has any items

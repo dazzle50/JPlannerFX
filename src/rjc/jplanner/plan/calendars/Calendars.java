@@ -20,6 +20,7 @@ package rjc.jplanner.plan.calendars;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Map;
 
 import rjc.jplanner.Main;
 import rjc.jplanner.plan.Plan;
@@ -88,6 +89,12 @@ public class Calendars extends ArrayList<Calendar>
         if ( index != calendarIndex && newName.equals( get( index ).getName() ) )
           return "Name not unique (clash with calendar " + ( index + 1 ) + ")";
     }
+
+    // exceptions must refer to the actual plan-owned day types, not copies with matching names
+    if ( field == Calendar.FIELD.Exceptions.ordinal() && newValue instanceof Map<?, ?> exceptions )
+      for ( var value : exceptions.values() )
+        if ( !( value instanceof DayType day ) || m_weakPlan.get().getDayTypes().indexOf( day ) < 0 )
+          return "Exception day type does not belong to this plan";
 
     // delegate to calendar to set value, and return any error message
     return get( calendarIndex ).setValue( field, newValue, commit );
