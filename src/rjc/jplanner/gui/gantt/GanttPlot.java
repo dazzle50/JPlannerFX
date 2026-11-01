@@ -18,133 +18,70 @@
 
 package rjc.jplanner.gui.gantt;
 
+import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.tasks.TasksView;
-import rjc.jplanner.plan.calendars.Calendar;
-import rjc.table.data.types.Date;
-import rjc.table.data.types.DateTime;
-import rjc.table.data.types.Time;
+import rjc.table.signal.IListener;
+import rjc.table.signal.ISignal;
 
 /*************************************************************************************************/
-/***************** GanttPlot provides a view of the plan tasks and dependencies ******************/
+/********************** Canvas and refresh coordination for the Gantt plot **********************/
 /*************************************************************************************************/
 
 class GanttPlot extends Canvas
 {
-  private TasksView  m_view;  // associated tasks table-view for vertical scaling
-  private GanttScale m_scale; // horizontal scaling for this gantt
+  private final GanttRenderer m_renderer;        // draws the plot contents
+  private final IListener     m_refreshListener; // requests redraw after model or row changes
+  private final ISignal[]     m_refreshSources;  // observed sources while the plot is attached
+  private boolean             m_redrawRequested; // whether a redraw is already queued
 
   /**************************************** constructor ******************************************/
   public GanttPlot( TasksView view, GanttScale scale )
   {
-    // construct gantt-scale
+    // construct the plot canvas and its renderer
     super( 0.0, 0.0 );
     setManaged( false );
-    m_view = view;
-    m_scale = scale;
+    m_renderer = new GanttRenderer( view, scale );
+    m_refreshListener = ( sender, message ) -> redraw();
 
-    widthProperty().addListener( ( observable, oldW, newW ) -> widthChange( oldW.intValue(), newW.intValue() ) );
-    heightProperty().addListener( ( observable, oldH, newH ) -> heightChange( oldH.intValue(), newH.intValue() ) );
+    var context = (PlanContext) view.getData().getUserData();
+    m_refreshSources = new ISignal[] { view.getData(), view.getData().rowCountProperty(),
+        view.getRowsAxis().getTotalPixelsProperty(), view.getZoom(), context.getCalendarsTableData(),
+        context.getDaysTableData(), context.getUndoStack() };
+
+    widthProperty().addListener( ( observable, oldValue, newValue ) -> redraw() );
+    heightProperty().addListener( ( observable, oldValue, newValue ) -> redraw() );
+    layoutYProperty().addListener( ( observable, oldValue, newValue ) -> redraw() );
+    view.getCanvas().heightProperty().addListener( ( observable, oldValue, newValue ) -> redraw() );
+    view.getVerticalScrollBar().valueProperty().addListener( ( observable, oldValue, newValue ) -> redraw() );
+
+    // detach shared model listeners when changing tabs or replacing a plan
+    sceneProperty().addListener( ( observable, oldScene, newScene ) ->
+    {
+      for ( ISignal source : m_refreshSources )
+      {
+        if ( oldScene != null )
+          source.removeListener( m_refreshListener );
+        if ( newScene != null )
+          source.addListener( m_refreshListener );
+      }
+      redraw();
+    } );
   }
 
   /******************************************* redraw ********************************************/
   public void redraw()
   {
-    // redraw whole gantt-scale
-    getGraphicsContext2D().clearRect( 0, 0, getWidth(), getHeight() );
-    widthChange( 0, (int) getWidth() );
-  }
-
-  /***************************************** widthChange *****************************************/
-  private void widthChange( int oldWidth, int newWidth )
-  {
-    GraphicsContext gc = getGraphicsContext2D();
-    int h = (int) getHeight();
-    int w = (int) getWidth();
-
-    // draw only if increase in width
-    if ( h <= 0 || newWidth <= oldWidth )
+    // combine requests and wait until edits and row geometry changes have finished
+    if ( m_redrawRequested || getScene() == null )
       return;
-
-    // draw gantt scale between old-width and new-width
-    gc.setFill( Gantt.GANTT_BACKGROUND );
-    gc.fillRect( oldWidth, 0, w - oldWidth, h );
-
-    // draw gantt plot
-    shadeNonWorking( oldWidth, 0, w - oldWidth, (int) getHeight() );
-    drawTasks( 0, (int) getHeight() );
-    drawDependencies();
-  }
-
-  /**************************************** heightChange *****************************************/
-  private void heightChange( int oldHeight, int newHeight )
-  {
-    GraphicsContext gc = getGraphicsContext2D();
-    int h = (int) getHeight();
-    int w = (int) getWidth();
-
-    // draw only if increase in height
-    if ( w <= 0 || newHeight <= oldHeight )
-      return;
-
-    // draw gantt scale between old-height and new-height
-    gc.setFill( Gantt.GANTT_BACKGROUND );
-    gc.fillRect( 0, oldHeight, w, h - oldHeight );
-
-    // draw gantt plot
-    shadeNonWorking( 0, oldHeight, (int) getWidth(), h - oldHeight );
-    drawTasks( oldHeight, h - oldHeight );
-    drawDependencies();
-  }
-
-  /*************************************** shadeNonWorking ****************************************/
-  private void shadeNonWorking( int x, int y, int w, int h )
-  {
-    // shade non-working time on gantt-plot
-    Calendar calendar = ( (PlanContext) m_view.getData().getUserData() ).getPlan().getDefaultCalendar();
-    Date date = m_scale.datetime( x - 1 ).getDate();
-    int endEpoch = m_scale.datetime( x + w ).getDate().getEpochDay();
-    int startShadeEpoch;
-
-    GraphicsContext gc = getGraphicsContext2D();
-    gc.setFill( Gantt.GANTT_NONWORKING );
-    do
+    m_redrawRequested = true;
+    Platform.runLater( () ->
     {
-      // find start of non-working period
-      if ( !calendar.isWorking( date ) )
-      {
-        startShadeEpoch = date.getEpochDay();
-
-        // find end of non-working period
-        do
-          date = date.plusDays( 1 );
-        while ( date.getEpochDay() <= endEpoch && !calendar.isWorking( date ) );
-
-        // if width at least 1 pixel shade non-working period
-        long width = ( date.getEpochDay() - startShadeEpoch ) * Time.MILLIS_PER_DAY / m_scale.getMsPP();
-        if ( width > 0L )
-        {
-          long xe = m_scale.x( DateTime.of( date, Time.MIN_VALUE ) );
-          gc.fillRect( xe - width, y, width, h );
-        }
-      }
-
-      date = date.plusDays( 1 );
-    }
-    while ( date.getEpochDay() <= endEpoch );
-  }
-
-  /****************************************** drawTasks ******************************************/
-  private void drawTasks( int y, int h )
-  {
-    // draw tasks on gantt
-  }
-
-  /*************************************** drawDependencies **************************************/
-  private void drawDependencies()
-  {
-    // draw dependencies on gantt for each task
+      m_redrawRequested = false;
+      if ( getScene() != null && getWidth() > 0.0 && getHeight() > 0.0 )
+        m_renderer.draw( getGraphicsContext2D(), getWidth(), getHeight(), getLayoutY() );
+    } );
   }
 }

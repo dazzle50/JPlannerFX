@@ -71,6 +71,14 @@ public class Gantt extends Region
     m_plot = new GanttPlot( view, m_scale );
     getChildren().addAll( m_axes.get( 0 ), m_axes.get( 1 ), m_plot, m_scrollBar );
 
+    // keep the timeline headers and plot on the same horizontal offset
+    m_scrollBar.valueProperty().addListener( ( observable, oldValue, newValue ) ->
+    {
+      for ( var axis : m_axes )
+        axis.redraw();
+      m_plot.redraw();
+    } );
+
     // property containing height in pixels of all gantt axes (for 'Tasks' table-view header height)
     m_axesHeight = new ObservableInteger( (int) ( m_axes.get( 0 ).getHeight() + m_axes.get( 1 ).getHeight() ) );
 

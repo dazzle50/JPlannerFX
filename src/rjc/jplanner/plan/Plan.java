@@ -185,16 +185,38 @@ public class Plan
   /************************************ getEarliestTaskStart *************************************/
   public DateTime getEarliestTaskStart()
   {
-    // TODO return start date-time of earliest starting plan task, or null if no tasks
+    // find the earliest available start, skipping the overall-project task and blank rows
     DateTime earliest = null;
+    for ( int index = 1; index < tasks.size(); index++ )
+    {
+      Task task = tasks.get( index );
+      if ( task.isBlank() )
+        continue;
+
+      DateTime start = (DateTime) task.getValue( Task.FIELD.Start.ordinal() );
+      if ( start != null && ( earliest == null || start.compareTo( earliest ) < 0 ) )
+        earliest = start;
+    }
+
     return earliest;
   }
 
   /************************************** getLatestTaskEnd ***************************************/
   public DateTime getLatestTaskEnd()
   {
-    // TODO return end date-time of latest ending plan task, or null if no tasks
+    // find the latest available end, skipping the overall-project task and blank rows
     DateTime latest = null;
+    for ( int index = 1; index < tasks.size(); index++ )
+    {
+      Task task = tasks.get( index );
+      if ( task.isBlank() )
+        continue;
+
+      DateTime end = (DateTime) task.getValue( Task.FIELD.End.ordinal() );
+      if ( end != null && ( latest == null || end.compareTo( latest ) > 0 ) )
+        latest = end;
+    }
+
     return latest;
   }
 

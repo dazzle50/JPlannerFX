@@ -95,13 +95,6 @@ public class CalendarExceptionsView extends TableView
     } );
   }
 
-  /****************************************** relocate *******************************************/
-  @Override
-  public void relocate( double x, double y )
-  {
-    // do nothing when relocate called - to prevent jitter when using split-pane
-  }
-
   /******************************************** reset ********************************************/
   @Override
   public void reset()

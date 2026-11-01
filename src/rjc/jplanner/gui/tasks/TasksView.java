@@ -71,13 +71,6 @@ public class TasksView extends TableView
     getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
   }
 
-  /****************************************** relocate *******************************************/
-  @Override
-  public void relocate( double x, double y )
-  {
-    // do nothing when relocate called - to prevent jitter when using split-pane
-  }
-
   /**************************************** getCellEditor ****************************************/
   @Override
   public AbstractCellEditor getCellEditor( CellDrawer cell )
