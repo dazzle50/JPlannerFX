@@ -77,8 +77,10 @@ class GanttAxis extends Canvas
     // determine first interval
     DateTime start = m_scale.datetime( oldWidth ).startOf( m_interval );
     DateTime end = start.plus( 1, m_interval );
-    int xs = m_scale.x( start );
-    int xe = m_scale.x( end );
+
+    // use floating-point coordinates so wide intervals cannot overflow during subtraction
+    double xs = m_scale.x( start );
+    double xe = m_scale.x( end );
 
     // draw intervals until past new-width
     do

@@ -29,9 +29,12 @@ import rjc.table.data.types.Time;
 
 public class GanttScale
 {
-  private long           m_start;          // gantt start date-time in milliseconds
-  private long           m_millisecondsPP; // milliseconds per pixel
-  private DoubleProperty m_offset;         // offset from gantt scroll-bar value
+  static final long      DEFAULT_MS_PP = 4L * Time.MILLIS_PER_HOUR; // default to 4 hours per pixel
+  static final long      MIN_MS_PP     = 1L;                        // minimum supported milliseconds per pixel
+
+  private long           m_start;                                   // gantt start date-time in milliseconds
+  private long           m_millisecondsPP;                          // milliseconds per pixel
+  private DoubleProperty m_offset;                                  // offset from gantt scroll-bar value
 
   /**************************************** constructor ******************************************/
   public GanttScale( DateTime start, DoubleProperty scrollBarOffset )
@@ -39,18 +42,28 @@ public class GanttScale
     // initialise the gantt scale
     m_start = start.toSerialMilliseconds();
     m_offset = scrollBarOffset;
-    m_millisecondsPP = 4 * Time.MILLIS_PER_HOUR; // default to 4 hours per pixel
+    m_millisecondsPP = DEFAULT_MS_PP;
   }
 
   /****************************************** setScale *******************************************/
   public void setScale( DateTime start, DateTime end, int widthPixels )
   {
     // determine milliseconds per pixel after checking date-times
-    if ( end.toSerialMilliseconds() - start.toSerialMilliseconds() < widthPixels )
+    if ( widthPixels <= 0 || end.toSerialMilliseconds() - start.toSerialMilliseconds() < widthPixels * MIN_MS_PP )
       throw new IllegalArgumentException( "Invalid scale " + start + " " + end + " " + widthPixels );
 
     m_start = start.toSerialMilliseconds();
     m_millisecondsPP = ( end.toSerialMilliseconds() - m_start ) / widthPixels;
+  }
+
+  /****************************************** setScale *******************************************/
+  void setScale( long start, long millisecondsPP )
+  {
+    // a positive scale prevents division by zero and reversed timeline coordinates
+    if ( millisecondsPP < MIN_MS_PP )
+      throw new IllegalArgumentException( "Invalid milliseconds per pixel " + millisecondsPP );
+    m_start = start;
+    m_millisecondsPP = millisecondsPP;
   }
 
   /********************************************** x **********************************************/
@@ -59,16 +72,22 @@ public class GanttScale
     // return x-coordinate from date-time [TODO stretch date-time to full day ?]
     long dtMilliseconds = dt.toSerialMilliseconds();
 
-    if ( dtMilliseconds > m_start )
-      return (int) ( ( dtMilliseconds - m_start ) / m_millisecondsPP - m_offset.get() );
-    return (int) ( ( m_start - dtMilliseconds ) / -m_millisecondsPP - m_offset.get() );
+    // floating-point conversion saturates distant off-screen dates instead of wrapping the integer
+    return (int) ( (double) ( dtMilliseconds - m_start ) / m_millisecondsPP - m_offset.get() );
   }
 
   /****************************************** datetime *******************************************/
   public DateTime datetime( int x )
   {
     // return date-time for specified x-coordinate
-    return DateTime.ofSerialMilliseconds( m_start + ( x + (int) m_offset.get() ) * m_millisecondsPP );
+    return DateTime.ofSerialMilliseconds( milliseconds( x ) );
+  }
+
+  /**************************************** milliseconds *****************************************/
+  long milliseconds( double x )
+  {
+    // retain fractional pixel positions and scroll offsets before rounding to a stored millisecond
+    return m_start + Math.round( ( x + m_offset.get() ) * m_millisecondsPP );
   }
 
   /****************************************** getMsPP ********************************************/
