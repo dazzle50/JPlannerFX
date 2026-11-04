@@ -65,6 +65,28 @@ public class Tasks extends ArrayList<Task>
     return count;
   }
 
+  /*************************************** buildHierarchy ***************************************/
+  public TaskHierarchy buildHierarchy()
+  {
+    // build once per operation or refresh; rebuild after task order, titles, or indentation change
+    return new TaskHierarchy( this );
+  }
+
+  /***************************************** setIndents ******************************************/
+  public void setIndents( int[] indents )
+  {
+    // loading may supply rows in any order, so validate the complete outline before changing tasks
+    if ( indents.length != size() )
+      throw new IllegalArgumentException( "Expected " + size() + " task indentation values" );
+    for ( int index = 0; index < indents.length; index++ )
+      if ( indents[index] < 0 )
+        throw new IllegalArgumentException( "Task " + index + " indentation cannot be negative: " + indents[index] );
+
+    new TaskHierarchy( this, indents );
+    for ( int index = 0; index < indents.length; index++ )
+      get( index ).setIndent( indents[index] );
+  }
+
   /****************************************** setValue *******************************************/
   public String setValue( int taskIndex, int field, Object newValue, boolean commit )
   {

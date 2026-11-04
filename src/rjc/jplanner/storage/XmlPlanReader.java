@@ -67,7 +67,7 @@ public final class XmlPlanReader
     // plan-level attributes (title, default start, format strings etc.) sit on this start element
     processPlanAttributes();
 
-    // process known sections and skip unknown sections; day-data failures abort the load
+    // process known sections; invalid day references or task structure must abort the load
     while ( m_xml.hasNext() )
     {
       m_xml.next();
@@ -75,6 +75,8 @@ public final class XmlPlanReader
       // reached the closing tag for plan-data - loading is complete
       if ( m_xml.isEndElement() && m_xml.getLocalName().equals( XmlLabels.XML_PLAN_DATA ) )
       {
+        if ( m_plan.getTasks().isEmpty() )
+          throw new IOException( "Missing tasks-data containing project task 0" );
         finishLoad();
         return m_plan;
       }
@@ -104,9 +106,9 @@ public final class XmlPlanReader
       }
       catch ( Exception exception )
       {
-        // abort day-data loads so FileLoad cannot install a plan with missing or shifted day references.
-        if ( section.equals( XmlLabels.XML_DAY_DATA ) )
-          throw new IOException( "Invalid day-data: " + exception.getMessage(), exception );
+        // skipped task definitions could silently reparent descendants; preserve the current plan instead
+        if ( section.equals( XmlLabels.XML_DAY_DATA ) || section.equals( XmlLabels.XML_TASK_DATA ) )
+          throw new IOException( "Invalid " + section + ": " + exception.getMessage(), exception );
 
         // stop the failed section, trace the problem, and continue with later sections
         Utils.trace( "Error processing element '" + section + "': " + exception.getMessage() );
@@ -536,19 +538,27 @@ public final class XmlPlanReader
     // pre-size with blank tasks so processTask can populate by id in any order
     int count = readCount();
     var tasks = m_plan.getTasks();
-    tasks.clear();
+    if ( count == 0 )
+      throw new IOException( "Task count must include project task 0" );
+    if ( !tasks.isEmpty() )
+      throw new IOException( "Duplicate tasks-data section" );
     for ( int i = 0; i < count; i++ )
       tasks.add( new Task() );
 
-    // raw text collected per task id, applied only once every task exists (see below)
+    // collect references and indentation per task id, applying them only once every task exists
     var predecessors = new String[count];
     var resources = new String[count];
+    var indents = new int[count];
+    var seen = new boolean[count];
 
     while ( m_xml.hasNext() )
     {
       m_xml.next();
       if ( m_xml.isEndElement() && m_xml.getLocalName().equals( XmlLabels.XML_TASK_DATA ) )
       {
+        // missing indent attributes retain zero; validate only after all titles and row positions are known
+        tasks.setIndents( indents );
+
         // now that every task slot is populated, cross-references can finally be resolved
         for ( int id = 0; id < count; id++ )
         {
@@ -563,22 +573,13 @@ public final class XmlPlanReader
       String element = m_xml.getLocalName();
       if ( !element.equals( XmlLabels.XML_TASK ) )
       {
-        // only task elements are expected directly inside task-data
+        // only task elements are expected directly inside tasks-data
         Utils.trace( "Unhandled element '" + element + "' inside '" + XmlLabels.XML_TASK_DATA + "'" );
         skipElement( element );
         continue;
       }
 
-      try
-      {
-        processTask( count, predecessors, resources );
-      }
-      catch ( Exception exception )
-      {
-        // one bad task leaves its slot blank rather than aborting the whole section
-        Utils.trace( "Error processing task: " + exception.getMessage() );
-        skipCurrentElement();
-      }
+      processTask( indents, seen, predecessors, resources );
     }
 
     // ran out of stream before finding the closing tag - malformed xml
@@ -586,7 +587,7 @@ public final class XmlPlanReader
   }
 
   /***************************************** processTask *****************************************/
-  private void processTask( int count, String[] predecessors, String[] resources ) throws Exception
+  private void processTask( int[] indents, boolean[] seen, String[] predecessors, String[] resources ) throws Exception
   {
     // read the current task's id attribute, which must resolve to one of the pre-allocated slots
     Integer id = null;
@@ -595,8 +596,23 @@ public final class XmlPlanReader
         id = Integer.parseInt( m_xml.getAttributeValue( i ) );
 
     // id must resolve to one of the slots pre-allocated by processTasks
-    if ( id == null || id < 0 || id >= count )
+    if ( id == null || id < 0 || id >= indents.length )
       throw new IOException( "Invalid task id: " + id );
+    if ( seen[id] )
+      throw new IOException( "Duplicate task id: " + id );
+    seen[id] = true;
+
+    // indentation cannot use the optional-attribute fallback because a default could change the hierarchy
+    String indent = m_xml.getAttributeValue( null, XmlLabels.XML_INDENT );
+    if ( indent != null )
+      try
+      {
+        indents[id] = Integer.parseInt( indent );
+      }
+      catch ( NumberFormatException exception )
+      {
+        throw new IOException( "Task " + id + " has invalid indentation: '" + indent + "'", exception );
+      }
 
     for ( int i = 0; i < m_xml.getAttributeCount(); i++ )
     {
@@ -607,7 +623,7 @@ public final class XmlPlanReader
         // each branch returns null on success, or a description of why the value was rejected
         String problem = switch ( attrib )
         {
-          case XmlLabels.XML_ID -> null;
+          case XmlLabels.XML_ID, XmlLabels.XML_INDENT -> null;
           case XmlLabels.XML_TITLE -> m_plan.getTasks().setValue( id, Task.FIELD.Title.ordinal(), value, true );
           case XmlLabels.XML_DURATION -> m_plan.getTasks().setValue( id, Task.FIELD.Duration.ordinal(),
               new TimeSpan( value ), true );
@@ -636,7 +652,7 @@ public final class XmlPlanReader
             yield null;
           }
           // not yet supported by the data model - trace so gaps in loaded data are visible
-          case XmlLabels.XML_COST, XmlLabels.XML_INDENT -> "TODO loading task attribute '" + attrib + "'";
+          case XmlLabels.XML_COST -> "TODO loading task attribute '" + attrib + "'";
           default -> "Unhandled attribute '" + attrib + "' = '" + value + "'";
         };
         if ( problem != null )

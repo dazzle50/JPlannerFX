@@ -38,16 +38,11 @@ public class Task
   private TaskType      m_type;         // task type
   private int           m_priority;     // overall task priority (0 to 999)
   private DateTime      m_deadline;     // task warning deadline
-  private String        m_cost;         // calculated cost based on resource use
+  private String        m_cost;         // calculated cost based on resource use TODO
   private TimeSpan      m_endRounding;  // individual end rounding, null for none
   private String        m_comment;      // free text comment
 
-  @SuppressWarnings( "unused" ) // TODO: remove when implemented
   private int           m_indent;       // task indent level, zero for no indent
-  @SuppressWarnings( "unused" ) // TODO: remove when implemented
-  private int           m_summaryStart; // index of this task's summary, ultimately task 0
-  @SuppressWarnings( "unused" ) // TODO: remove when implemented
-  private int           m_summaryEnd;   // if summary, index of summary end, otherwise -1
 
   public enum FIELD
   {
@@ -62,8 +57,6 @@ public class Task
     m_type = TaskType.ASAP_FIXED_DURATION;
     m_priority = 100;
     m_indent = 0;
-    m_summaryStart = 0;
-    m_summaryEnd = -1;
   }
 
   /***************************************** toString ********************************************/
@@ -86,6 +79,22 @@ public class Task
   {
     // return the task scheduling priority
     return m_priority;
+  }
+
+  /****************************************** getIndent ******************************************/
+  public int getIndent()
+  {
+    return m_indent;
+  }
+
+  /****************************************** setIndent ******************************************/
+  void setIndent( int indent )
+  {
+    // validate the individual value; the complete outline is checked when building its hierarchy
+    if ( indent < 0 )
+      throw new IllegalArgumentException( "Task indentation cannot be negative: " + indent );
+
+    m_indent = indent;
   }
 
   /****************************************** getValue *******************************************/

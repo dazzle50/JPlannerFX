@@ -33,6 +33,9 @@ public final class XmlPlanWriter
   /******************************************** write ********************************************/
   public void write( Plan plan, XmlWriter xml ) throws Exception
   {
+    // reject malformed outlines before emitting plan data rather than saving an unloadable hierarchy
+    plan.getTasks().buildHierarchy();
+
     // write plan to XML stream
     m_plan = plan;
     xml.startElement( XmlLabels.XML_PLAN_DATA );
@@ -217,6 +220,7 @@ public final class XmlPlanWriter
 
       xml.attribute( XmlLabels.XML_ID, id );
       xml.attribute( XmlLabels.XML_TITLE, task.getValue( Task.FIELD.Title.ordinal() ) );
+      xml.attribute( XmlLabels.XML_INDENT, task.getIndent() );
       xml.attribute( XmlLabels.XML_TYPE, task.getTaskType().name() );
       xml.attribute( XmlLabels.XML_DURATION, task.getValue( Task.FIELD.Duration.ordinal() ) );
       xml.attribute( XmlLabels.XML_PRIORITY, task.getValue( Task.FIELD.Priority.ordinal() ) );

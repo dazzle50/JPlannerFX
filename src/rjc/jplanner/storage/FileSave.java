@@ -49,6 +49,17 @@ public class FileSave
       return;
     }
 
+    // validate before opening the destination, which would otherwise truncate an existing file
+    try
+    {
+      context.getPlan().getTasks().buildHierarchy();
+    }
+    catch ( IllegalStateException exception )
+    {
+      context.getStatus().update( Level.ERROR, "Cannot save invalid task hierarchy: " + exception.getMessage() );
+      return;
+    }
+
     // attempt to write JPlannerFX file to the specified file
     Utils.trace( "Starting to write '" + file.getPath() + "'" );
     try ( var writer = Files.newBufferedWriter( file.toPath(), Charset.forName( XmlLabels.ENCODING ) );
