@@ -27,6 +27,9 @@ import java.util.function.IntFunction;
 
 import javax.xml.stream.XMLStreamWriter;
 
+import rjc.table.data.types.DateTime;
+import rjc.table.data.types.Time;
+
 /*************************************************************************************************/
 /******** Simple XML writer for generated XML documents preserving whitespace characters *********/
 /*************************************************************************************************/
@@ -102,6 +105,7 @@ public final class XmlWriter implements AutoCloseable
   /****************************************** attribute ******************************************/
   /**
    * Writes an attribute on the current open start element.
+   * Time and date-time values omit zero trailing components, retaining at least hours and minutes.
    *
    * @param name the attribute name
    * @param value the attribute value; {@code null} is written as an empty string
@@ -117,13 +121,34 @@ public final class XmlWriter implements AutoCloseable
     if ( !m_startElementOpen )
       throw new IllegalStateException( "attributes must be written immediately after startElement" );
 
+    String text;
+    if ( value instanceof Time time )
+      text = formatTime( time );
+    else if ( value instanceof DateTime dateTime )
+      // retain the stored date and explicit 24:00 endpoint without normalising to the next day
+      text = dateTime.getDate() + " " + formatTime( dateTime.getTime() );
+    else
+      text = value == null ? "" : value.toString();
+
     m_writer.write( ' ' );
     m_writer.write( name );
     m_writer.write( "=\"" );
-    writeEscaped( value == null ? "" : value.toString(), XmlWriter::attributeReplacement );
+    writeEscaped( text, XmlWriter::attributeReplacement );
     m_writer.write( '"' );
 
     return this;
+  }
+
+  /***************************************** formatTime ******************************************/
+  private static String formatTime( Time time )
+  {
+    // omit only zero trailing components so saved values retain their full precision
+    int components = 2;
+    if ( time.getMillisecond() != 0 )
+      components = 4;
+    else if ( time.getSecond() != 0 )
+      components = 3;
+    return time.formatComponents( components );
   }
 
   /********************************************* text ********************************************/

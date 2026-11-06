@@ -20,8 +20,11 @@ package rjc.jplanner.gui.tasks;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import rjc.jplanner.plan.tasks.Predecessors;
 import rjc.jplanner.plan.tasks.Task;
@@ -39,9 +42,12 @@ import rjc.table.view.cell.CellVisual;
 
 public class TasksData extends TableData implements IDataSwapRows, IDataInsertDeleteRows
 {
-  private final Tasks      m_tasks;
-  private final CellVisual m_disabledVisual;
-  private final CellVisual m_readonlyVisual;
+  private static final double            TITLE_INDENT_WIDTH = 16.0;            // logical pixels per task indentation level
+
+  private final Tasks                    m_tasks;                              // tasks displayed by this data source
+  private final CellVisual               m_disabledVisual;                     // visual for disabled cells
+  private final CellVisual               m_readonlyVisual;                     // visual for read-only cells
+  private final Map<Integer, CellVisual> m_titleVisuals     = new HashMap<>(); // title visuals by indentation level
 
   private record TaskPredecessors( Task task, Predecessors predecessors )
   {
@@ -95,6 +101,22 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
     if ( dataRow == 0 )
       return m_readonlyVisual;
 
+    // keep title spacing separate from the shared default visual so other cells cannot inherit it
+    if ( dataRow > HEADER && dataColumn == FIELD.Title.ordinal() )
+    {
+      var task = m_tasks.get( dataRow );
+      int indent = task.isBlank() ? 0 : task.getIndent();
+      return m_titleVisuals.computeIfAbsent( indent, level ->
+      {
+        var visual = new CellVisual();
+        var insets = visual.textInsets;
+        visual.textAlignment = Pos.CENTER_LEFT;
+        visual.textInsets = new Insets( insets.getTop(), insets.getRight(), insets.getBottom(),
+            insets.getLeft() + level * TITLE_INDENT_WIDTH );
+        return visual;
+      } );
+    }
+
     // return disabled visual for non-initials field if initials is blank
     if ( dataRow > HEADER && dataColumn > FIELD.Title.ordinal() )
       if ( m_tasks.get( dataRow ).isBlank() )
@@ -108,7 +130,7 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
       // different fields have different text alignments
       visual.textAlignment = switch ( FIELD.values()[dataColumn] )
       {
-        case Title, Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
+        case Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
         default -> Pos.CENTER;
       };
 
