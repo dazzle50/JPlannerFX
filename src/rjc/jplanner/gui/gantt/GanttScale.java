@@ -70,10 +70,15 @@ public class GanttScale
   public int x( DateTime dt )
   {
     // return x-coordinate from date-time [TODO stretch date-time to full day ?]
-    long dtMilliseconds = dt.toSerialMilliseconds();
-
     // floating-point conversion saturates distant off-screen dates instead of wrapping the integer
-    return (int) ( (double) ( dtMilliseconds - m_start ) / m_millisecondsPP - m_offset.get() );
+    return (int) x( dt.toSerialMilliseconds() );
+  }
+
+  /********************************************** x **********************************************/
+  double x( long milliseconds )
+  {
+    // interval boundaries can lie just beyond compact date storage at either end of the timeline
+    return (double) ( milliseconds - m_start ) / m_millisecondsPP - m_offset.get();
   }
 
   /****************************************** datetime *******************************************/
