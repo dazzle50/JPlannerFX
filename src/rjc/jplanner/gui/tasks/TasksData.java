@@ -19,14 +19,12 @@
 package rjc.jplanner.gui.tasks;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import rjc.jplanner.plan.tasks.Predecessors;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Task.FIELD;
 import rjc.jplanner.plan.tasks.Tasks;
@@ -48,14 +46,6 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   private final CellVisual               m_disabledVisual;                     // visual for disabled cells
   private final CellVisual               m_readonlyVisual;                     // visual for read-only cells
   private final Map<Integer, CellVisual> m_titleVisuals     = new HashMap<>(); // title visuals by indentation level
-
-  private record TaskPredecessors( Task task, Predecessors predecessors )
-  {
-  }
-
-  private record TasksPredChanges( List<Task> tasks, List<TaskPredecessors> changes )
-  {
-  }
 
   /**************************************** constructor ******************************************/
   public TasksData( Tasks tasks )
@@ -153,9 +143,17 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   @Override
   protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
-    // commit before notifying listeners so the row includes any newly copied task default
+    if ( dataColumn == FIELD.Title.ordinal() )
+    {
+      if ( commit )
+        return "Task titles require a title-and-indentation command";
+      m_tasks.proposedTitle( dataRow, newValue );
+      return null;
+    }
+
+    // notify after task-type changes; title commands apply their own complete-state notification
     String problem = m_tasks.setValue( dataRow, dataColumn, newValue, commit );
-    if ( problem == null && commit && ( dataColumn == FIELD.Title.ordinal() || dataColumn == FIELD.Type.ordinal() ) )
+    if ( problem == null && commit && dataColumn == FIELD.Type.ordinal() )
       signalRowChanged( dataRow );
 
     return problem;
@@ -167,100 +165,100 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
    *
    * @param row1  data-based index of the first row
    * @param row2  data-based index of the second row
-   * @return {@code true} always, as the swap cannot fail
+   * @return never returns while task reordering is unsupported
+   * @throws UnsupportedOperationException because per-swap rejection cannot validate a complete reorder
    */
   @Override
   public boolean swapRows( int row1, int row2 )
   {
-    Collections.swap( m_tasks, row1, row2 );
-    return true;
+    throw new UnsupportedOperationException( "Task row reordering is temporarily unavailable" );
+  }
+
+  /*************************************** checkInsertRows ***************************************/
+  public void checkInsertRows( int[] dataRows )
+  {
+    if ( dataRows == null )
+      throw new IllegalArgumentException( "Insertion targets must not be null" );
+
+    for ( int row : dataRows )
+      if ( row <= 0 || row > m_tasks.size() )
+        throw new IllegalArgumentException( "Cannot insert before project task 0 or outside the task list" );
+    m_tasks.buildHierarchy();
+  }
+
+  /************************************** checkRowsDeletable *************************************/
+  @Override
+  public String checkRowsDeletable( int[] dataRows )
+  {
+    if ( dataRows == null )
+      return "Deletion targets must not be null";
+
+    for ( int row : dataRows )
+      if ( row <= 0 || row >= m_tasks.size() || !m_tasks.get( row ).isBlank() )
+        return "Use whole-group deletion for named tasks; project task 0 cannot be deleted";
+    return null;
   }
 
   /***************************************** insertRows ******************************************/
   /**
-   * Inserts tasks and restores their historic predecessor dependencies.
+   * Inserts blank tasks or restores the original blank objects retained by insertion history.
    *
    * @param insertIndex  the data-based index at which to insert the tasks
-   * @param rowData      a non-null list containing a {@code TasksPredChanges} object as its first element
-   * @return {@code true} if the tasks and dependencies were successfully restored
-   * @throws IllegalArgumentException if {@code rowData} is empty, does not contain a {@code TasksPredChanges} 
-   *                                  object as its first element, or if {@code insertIndex} is out of bounds
+   * @param rowData      null entries for new blank tasks, or the original blank task objects for restoration
+   * @return {@code true} if the blank tasks were successfully inserted
+   * @throws IllegalArgumentException if data is invalid, contains named tasks, or insertion would precede task 0
    */
   @Override
   public boolean insertRows( int insertIndex, List<Object> rowData )
   {
-    // if row data first element is TasksPredChanges, insert the tasks and update the predecessors
-    if ( rowData.get( 0 ) instanceof TasksPredChanges tasksPredChanges )
+    checkInsertRows( new int[] { insertIndex } );
+    if ( rowData == null || rowData.isEmpty() )
+      throw new IllegalArgumentException( "Expected insertion data" );
+
+    // validate the whole payload before insertion; history restores the same blank objects
+    boolean defaults = rowData.getFirst() == null;
+    var blankTasks = new ArrayList<Task>( rowData.size() );
+    for ( Object value : rowData )
     {
-      // insert the new tasks and update row count
-      m_tasks.addAll( insertIndex, tasksPredChanges.tasks() );
-      setRowCount( getRowCount() + tasksPredChanges.tasks().size() );
-
-      // loop through the predecessor changes and restore the predecessors for each task
-      for ( TaskPredecessors change : tasksPredChanges.changes() )
-        change.task().setValue( FIELD.Predecessors.ordinal(), change.predecessors(), true );
-
-      return true;
-    }
-
-    // if row data first element is null, insert blank tasks
-    if ( rowData.get( 0 ) == null )
-    {
-      // insert the new tasks and update row count
-      var blankTasks = new ArrayList<Task>( rowData.size() );
-      for ( int i = 0; i < rowData.size(); i++ )
+      if ( defaults && value == null )
         blankTasks.add( new Task() );
-      m_tasks.addAll( insertIndex, blankTasks );
-      setRowCount( getRowCount() + blankTasks.size() );
-
-      return true;
+      else if ( !defaults && value instanceof Task task && task.isBlank() )
+        blankTasks.add( task );
+      else
+        throw new IllegalArgumentException( "Expected all null entries or all blank task objects" );
     }
 
-    // otherwise throw an exception, as the rowData is not in the expected format
-    throw new IllegalArgumentException( "Row data not in expected format" );
+    m_tasks.addAll( insertIndex, blankTasks );
+    setRowCount( m_tasks.size() );
+    return true;
   }
 
   /***************************************** deleteRows ******************************************/
   /**
-   * Deletes a contiguous range of tasks and updates dependent predecessors.
+   * Deletes an exact contiguous range of blank rows, retaining objects for insertion redo.
+   * Named tasks require the separate whole-group command; this method never expands a range.
    *
    * @param deleteIndex  the data-based index of the first task to delete
    * @param count        the number of consecutive tasks to delete
-   * @return a list of size {@code count} containing a {@code TasksPredChanges} object as its first element followed by padding nulls, used for undo operations
+   * @return the original blank task objects in row order, retained for insertion redo
    * @throws IllegalArgumentException if {@code deleteIndex} or {@code count} are out of valid bounds
    */
   @Override
   public List<Object> deleteRows( int deleteIndex, int count )
   {
-    // snapshot the tasks being removed before clearing the sublist
-    var removedTasks = new ArrayList<Task>( m_tasks.subList( deleteIndex, deleteIndex + count ) );
+    if ( count <= 0 || deleteIndex <= 0 || deleteIndex > m_tasks.size() - count )
+      throw new IllegalArgumentException( "Invalid blank-row deletion range" );
+
+    m_tasks.buildHierarchy();
+    for ( int row = deleteIndex; row < deleteIndex + count; row++ )
+      if ( !m_tasks.get( row ).isBlank() )
+        throw new IllegalArgumentException( "Named tasks require whole-group deletion" );
+
+    // retain only blank objects; supported dependencies cannot target blank rows
+    var removedTasks = new ArrayList<Object>( m_tasks.subList( deleteIndex, deleteIndex + count ) );
     m_tasks.subList( deleteIndex, deleteIndex + count ).clear();
-    setRowCount( getRowCount() - count );
-
-    // loop through remaining tasks and remove any dependencies that reference the deleted tasks
-    var predecessorChanges = new ArrayList<TaskPredecessors>();
-    for ( Task task : m_tasks )
-    {
-      Predecessors beforeRemove = task.getPredecessors();
-      if ( beforeRemove == null )
-        continue;
-
-      // altered predecessors will have shorter length than before
-      Predecessors afterRemove = Predecessors.withoutTasks( beforeRemove, removedTasks );
-      if ( afterRemove == null || beforeRemove.size() != afterRemove.size() )
-      {
-        task.setValue( FIELD.Predecessors.ordinal(), afterRemove, true );
-        predecessorChanges.add( new TaskPredecessors( task, beforeRemove ) );
-      }
-    }
-
-    // create undo data for the deleted tasks and any predecessor changes, add nulls to list to match size of deleted rows
-    var undoData = new ArrayList<Object>();
-    undoData.add( new TasksPredChanges( removedTasks, predecessorChanges ) );
-    while ( undoData.size() < count )
-      undoData.add( null );
-
-    return undoData;
+    setRowCount( m_tasks.size() );
+    return removedTasks;
   }
 
 }

@@ -19,6 +19,7 @@
 package rjc.jplanner.plan.tasks;
 
 import java.util.Arrays;
+import java.util.List;
 
 /*************************************************************************************************/
 /************************ Immutable snapshot of task outline relationships ************************/
@@ -30,13 +31,19 @@ public final class TaskHierarchy
   private final int[] m_subtreeEnds;   // inclusive last nonblank subtree indexes, -1 for blank rows
 
   /**************************************** constructor ******************************************/
-  TaskHierarchy( Tasks tasks )
+  TaskHierarchy( List<Task> tasks )
   {
     this( tasks, null );
   }
 
   /**************************************** constructor ******************************************/
-  TaskHierarchy( Tasks tasks, int[] indents )
+  TaskHierarchy( List<Task> tasks, int[] indents )
+  {
+    this( tasks, indents, -1, false );
+  }
+
+  /**************************************** constructor ******************************************/
+  TaskHierarchy( List<Task> tasks, int[] indents, int titleRow, boolean titleBlank )
   {
     // supplied indentation allows a proposed outline to be checked without changing live task inputs
     // task 0 is the structural root even when its title is blank
@@ -60,7 +67,7 @@ public final class TaskHierarchy
       Task task = tasks.get( index );
       if ( task == null )
         throw new IllegalStateException( "Task " + index + " is missing; blank rows require a task object" );
-      if ( task.isBlank() )
+      if ( index == titleRow ? titleBlank : task.isBlank() )
         continue;
 
       // the active chain must contain a parent for the requested level, including after blank rows

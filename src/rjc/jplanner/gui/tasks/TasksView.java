@@ -19,7 +19,9 @@
 package rjc.jplanner.gui.tasks;
 
 import javafx.application.Platform;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import rjc.jplanner.commands.CommandTaskSetTitle;
 import rjc.jplanner.gui.editors.EditorPredecessors;
 import rjc.jplanner.gui.editors.EditorResources;
 import rjc.jplanner.gui.editors.EditorTimeSpan;
@@ -28,10 +30,12 @@ import rjc.jplanner.plan.tasks.TaskType;
 import rjc.table.data.TableData;
 import rjc.table.data.types.DateInterval;
 import rjc.table.data.types.DateTime;
+import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
+import rjc.table.view.axis.TableAxis;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
 import rjc.table.view.editor.EditorChoose;
@@ -45,15 +49,18 @@ import rjc.table.view.editor.EditorText;
 
 public class TasksView extends TableView
 {
+  private final TasksViewInput m_input; // input safeguards and selection targeting for this view
 
   /**************************************** constructor ******************************************/
   public TasksView( TableData data, String name )
   {
-    // construct the table view
+    // construct the table view before wrapping the library's input handlers
     super( data, name );
 
-    // set table view properties
-    TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
+    // keep unsupported row reordering, sorting, and filtering unavailable
+    TableContextMenu.disable( this, TableMenuItems.COLUMN_SORT, TableMenuItems.ROW_SORT,
+        TableMenuItems.ROW_FILTER_TEXT );
+    m_input = new TasksViewInput( this );
   }
 
   /******************************************** reset ********************************************/
@@ -83,7 +90,28 @@ public class TasksView extends TableView
     // determine editor appropriate for cell
     switch ( FIELD.values()[cell.dataColumn] )
     {
-      case Title, Comment:
+      case Title:
+        // capture the edited model row for the title-and-indentation command
+        final int dataRow = cell.dataRow;
+        return new EditorText()
+        {
+          /*************************************** commit ****************************************/
+          @Override
+          protected boolean commit()
+          {
+            try
+            {
+              return getUndoStack().push( new CommandTaskSetTitle( (TasksData) getData(), dataRow, getValue() ) );
+            }
+            catch ( IllegalArgumentException | IllegalStateException exception )
+            {
+              getStatus().update( Level.ERROR, exception.getMessage() );
+              return false;
+            }
+          }
+        };
+
+      case Comment:
         return new EditorText();
 
       case Duration, Work, Rounding:
@@ -122,16 +150,29 @@ public class TasksView extends TableView
   @Override
   public void openContextMenu( ContextMenuEvent event )
   {
-    // build context menu
-    var menu = new TableContextMenu( this );
-
-    // loop through menu items find item with text "Add row" and rename it
-    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
-        .forEach( item -> item.setText( "Add new task" ) );
+    // focus positions locate keyboard menus, but never supply a fallback indentation target
+    boolean keyboardTrigger = event.isKeyboardTrigger();
+    var position = keyboardTrigger ? getFocusCell() : getMouseCell();
+    if ( position.getRow() < TableAxis.HEADER || position.getColumn() < TableAxis.HEADER )
+      return;
+    var menu = buildContextMenu( position.getRow(), position.getColumn(), keyboardTrigger );
 
     // show the context menu if it has any items
-    if ( menu != null && !menu.getItems().isEmpty() )
+    if ( !menu.getItems().isEmpty() )
       menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
+  /*************************************** buildContextMenu **************************************/
+  protected ContextMenu buildContextMenu( int viewRow, int viewColumn, boolean keyboardTrigger )
+  {
+    // build a fresh menu so its handlers retain this request's trigger coordinates
+    return new TasksContextMenu( this, m_input, viewRow, viewColumn, keyboardTrigger );
+  }
+
+  /************************************** getIndentDataRows **************************************/
+  protected int[] getIndentDataRows( int viewRow, int viewColumn, boolean keyboardTrigger )
+  {
+    // keep the view's target-resolution hook available to subclasses and menu actions
+    return m_input.getIndentDataRows( viewRow, viewColumn, keyboardTrigger );
+  }
 }
