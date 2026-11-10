@@ -23,6 +23,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import rjc.jplanner.commands.CommandTasksDelete;
 import rjc.jplanner.commands.CommandTasksIndent;
+import rjc.table.HashSetInt;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.undo.commands.CommandInsertIndexes;
 import rjc.table.view.TableContextMenu;
@@ -117,6 +118,29 @@ final class TasksContextMenu extends ContextMenu
     getItems().addAll( indent, outdent );
   }
 
+  /*************************************** editVisibility ****************************************/
+  private void editVisibility( boolean hidden )
+  {
+    // finish editing before resolving targets so the command sees the committed task and selection
+    AbstractCellEditor.endEditing();
+    var rows = m_view.getRowsAxis();
+    HashSetInt targets;
+    if ( hidden )
+    {
+      targets = new HashSetInt();
+      for ( int row : m_input.getRowActionViewRows( m_triggerRow ).toArray() )
+        if ( rows.isVisible( row ) )
+          targets.add( row );
+    }
+    else
+    {
+      targets = m_view.getSelection().getSelectedRows();
+      if ( targets == null )
+        targets = rows.getHiddenViewIndexes();
+    }
+    m_view.getRowVisibility().setHidden( targets, hidden );
+  }
+
   /**************************************** addRowAction *****************************************/
   private void addRowAction( String text, int viewRow, boolean delete )
   {
@@ -128,6 +152,32 @@ final class TasksContextMenu extends ContextMenu
   // reuse the standard header actions while replacing task row edits with guarded commands
   private class MenuBuilder extends TableContextMenuBuilder
   {
+    /***************************************** addHideRow ***************************************/
+    @Override
+    protected TableContextMenuBuilder addHideRow()
+    {
+      if ( TableContextMenu.isEnabled( TasksContextMenu.this.m_view, TableMenuItems.ROW_HIDE ) )
+      {
+        var item = new MenuItem( "Hide" );
+        item.setOnAction( event -> editVisibility( true ) );
+        getItems().add( item );
+      }
+      return this;
+    }
+
+    /***************************************** addShowRow ***************************************/
+    @Override
+    protected TableContextMenuBuilder addShowRow()
+    {
+      if ( TableContextMenu.isEnabled( TasksContextMenu.this.m_view, TableMenuItems.ROW_SHOW ) )
+      {
+        var item = new MenuItem( "Unhide" );
+        item.setOnAction( event -> editVisibility( false ) );
+        getItems().add( item );
+      }
+      return this;
+    }
+
     /************************************* buildRowHeader **************************************/
     @Override
     protected ContextMenu buildRowHeader()

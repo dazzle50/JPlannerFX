@@ -31,6 +31,7 @@ import rjc.table.data.TableData;
 import rjc.table.data.types.DateInterval;
 import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus.Level;
+import rjc.table.undo.UndoStack;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
@@ -49,7 +50,8 @@ import rjc.table.view.editor.EditorText;
 
 public class TasksView extends TableView
 {
-  private final TasksViewInput m_input; // input safeguards and selection targeting for this view
+  private final TasksViewInput     m_input;         // input safeguards and selection targeting for this view
+  private final TasksRowVisibility m_rowVisibility; // independent collapse and manual hiding state
 
   /**************************************** constructor ******************************************/
   public TasksView( TableData data, String name )
@@ -61,6 +63,7 @@ public class TasksView extends TableView
     TableContextMenu.disable( this, TableMenuItems.COLUMN_SORT, TableMenuItems.ROW_SORT,
         TableMenuItems.ROW_FILTER_TEXT );
     m_input = new TasksViewInput( this );
+    m_rowVisibility = new TasksRowVisibility( this, m_input );
   }
 
   /******************************************** reset ********************************************/
@@ -76,6 +79,31 @@ public class TasksView extends TableView
     getColumnsAxis().setNominalSize( FIELD.End.ordinal(), 140 );
     getColumnsAxis().setNominalSize( FIELD.Rounding.ordinal(), 70 );
     getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
+    // reset also runs during superclass construction, before task view components exist
+    if ( m_rowVisibility != null )
+      m_rowVisibility.reset();
+  }
+
+  /************************************** getRowVisibility ***************************************/
+  TasksRowVisibility getRowVisibility()
+  {
+    return m_rowVisibility;
+  }
+
+  /**************************************** setUndostack *****************************************/
+  @Override
+  public void setUndostack( UndoStack undostack )
+  {
+    super.setUndostack( undostack );
+    if ( m_rowVisibility != null )
+      m_rowVisibility.observeUndoStack( getUndoStack() );
+  }
+
+  /**************************************** getCellDrawer ****************************************/
+  @Override
+  public CellDrawer getCellDrawer()
+  {
+    return new TasksCellDrawer();
   }
 
   /**************************************** getCellEditor ****************************************/

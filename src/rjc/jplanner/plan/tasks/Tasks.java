@@ -116,7 +116,7 @@ public class Tasks extends ArrayList<Task>
     for ( int row : dataRows )
     {
       if ( row == 0 )
-        throw new IllegalArgumentException( "Task 0 cannot be indented or outdented" );
+        throw new IllegalArgumentException( "The project summary cannot be indented or outdented" );
       if ( row < 0 || row >= size() )
         throw new IllegalArgumentException( "Invalid task row: " + row );
     }
@@ -131,6 +131,7 @@ public class Tasks extends ArrayList<Task>
 
     // original subtree boundaries prevent overlaps or newly acquired children changing tasks twice
     int end = 0;
+    int previousIndent = -1;
     for ( int row = 1; row < size(); row++ )
     {
       if ( get( row ).isBlank() )
@@ -138,7 +139,16 @@ public class Tasks extends ArrayList<Task>
       if ( selected[row] )
         end = Math.max( end, hierarchy.getSubtreeEndIndex( row ) );
       if ( row <= end )
+      {
         proposal[row] += direction;
+        // the original outline is valid, so these failures describe the requested user move
+        if ( proposal[row] < 0 )
+          throw new IllegalStateException( "Task " + row + " is already at the top level." );
+        if ( proposal[row] > previousIndent + 1 )
+          throw new IllegalStateException(
+              "Task " + row + " needs a task above it at the same level before it can be indented" );
+      }
+      previousIndent = proposal[row];
     }
 
     // validate the complete candidate without changing live task inputs
@@ -172,8 +182,7 @@ public class Tasks extends ArrayList<Task>
       title = null;
     Task task = get( dataRow );
     if ( title == null && !task.isBlank() )
-      throw new IllegalArgumentException( hierarchy.hasChildren( dataRow ) ? "A summary title cannot be cleared"
-          : "Delete the task row instead of clearing its title" );
+      throw new IllegalArgumentException( "Title length must be at least 1 character" );
 
     int indent = task.getIndent();
     if ( task.isBlank() && title != null )

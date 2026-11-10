@@ -18,6 +18,7 @@
 
 package rjc.jplanner.gui.tasks;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +26,10 @@ import java.util.Map;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.text.FontWeight;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Task.FIELD;
+import rjc.jplanner.plan.tasks.TaskHierarchy;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.data.IDataInsertDeleteRows;
 import rjc.table.data.IDataSwapRows;
@@ -40,12 +43,17 @@ import rjc.table.view.cell.CellVisual;
 
 public class TasksData extends TableData implements IDataSwapRows, IDataInsertDeleteRows
 {
-  private static final double            TITLE_INDENT_WIDTH = 16.0;            // logical pixels per task indentation level
+  private static final double            TITLE_INDENT_WIDTH    = 16.0;            // logical pixels per task indentation level
+  static final double                    TITLE_CONTROL_WIDTH   = 16.0;            // logical pixels reserved before each title
 
-  private final Tasks                    m_tasks;                              // tasks displayed by this data source
-  private final CellVisual               m_disabledVisual;                     // visual for disabled cells
-  private final CellVisual               m_readonlyVisual;                     // visual for read-only cells
-  private final Map<Integer, CellVisual> m_titleVisuals     = new HashMap<>(); // title visuals by indentation level
+  private final Tasks                    m_tasks;                                 // tasks displayed by this data source
+  private final CellVisual               m_disabledVisual;                        // visual for disabled cells
+  private final CellVisual               m_readonlyVisual;                        // visual for read-only project cells
+  private final CellVisual               m_projectTitleVisual;                    // read-only project title with an empty control space
+  private final CellVisual               m_summaryVisual;                         // visual for summary data cells
+  private final Map<Integer, CellVisual> m_titleVisuals        = new HashMap<>(); // ordinary title visuals by indentation level
+  private final Map<Integer, CellVisual> m_summaryTitleVisuals = new HashMap<>(); // summary title visuals by indentation level
+  private TaskHierarchy                  m_hierarchy;                             // cached outline relationships for row styling
 
   /**************************************** constructor ******************************************/
   public TasksData( Tasks tasks )
@@ -61,6 +69,31 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
     m_disabledVisual.textPaint = null;
     m_readonlyVisual = new CellVisual();
     m_readonlyVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_readonlyVisual.textWeight = FontWeight.BOLD;
+    m_projectTitleVisual = new CellVisual();
+    m_projectTitleVisual.cellBackground = Colours.CELL_DISABLED_BACKGROUND;
+    m_projectTitleVisual.textWeight = FontWeight.BOLD;
+    m_projectTitleVisual.textAlignment = Pos.CENTER_LEFT;
+    var insets = m_projectTitleVisual.textInsets;
+    m_projectTitleVisual.textInsets = new Insets( insets.getTop(), insets.getRight(), insets.getBottom(),
+        insets.getLeft() + TITLE_CONTROL_WIDTH );
+    m_summaryVisual = new CellVisual();
+    m_summaryVisual.textWeight = FontWeight.BOLD;
+
+    // register before view listeners so outline changes invalidate the snapshot before repainting
+    addListener( ( sender, message ) ->
+    {
+      if ( message[0] == DataChange.WHOLE_TABLE )
+        ( (TasksData) sender ).m_hierarchy = null;
+    } );
+    // signal registries retain listeners, so do not retain this data source through the row count
+    var weakData = new WeakReference<>( this );
+    rowCountProperty().addListener( ( _, _ ) ->
+    {
+      var data = weakData.get();
+      if ( data != null )
+        data.m_hierarchy = null;
+    } );
   }
 
   /****************************************** getValue *******************************************/
@@ -79,62 +112,98 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
     if ( dataColumn == HEADER )
       return dataRow;
 
+    // derive the displayed role without replacing the stored ordinary task type
+    if ( dataColumn == FIELD.Type.ordinal() && isSummary( dataRow ) )
+      return "Summary";
+
     // otherwise return value from tasks array
     return m_tasks.get( dataRow ).getValue( dataColumn );
+  }
+
+  /***************************************** isSummary *******************************************/
+  boolean isSummary( int dataRow )
+  {
+    // task 0 remains the overall-project summary even when it has no children
+    if ( dataRow == 0 )
+      return true;
+    return getHierarchy().hasChildren( dataRow );
+  }
+
+  /**************************************** getHierarchy *****************************************/
+  TaskHierarchy getHierarchy()
+  {
+    if ( m_hierarchy == null )
+      m_hierarchy = m_tasks.buildHierarchy();
+    return m_hierarchy;
+  }
+
+  /****************************************** getTasks *******************************************/
+  Tasks getTasks()
+  {
+    return m_tasks;
   }
 
   /***************************************** getVisual *******************************************/
   @Override
   public CellVisual getVisual( int dataColumn, int dataRow )
   {
+    // row numbers and column headings retain normal weight, including the project row number
+    if ( dataRow == HEADER || dataColumn == HEADER )
+    {
+      var visual = super.getVisual( dataColumn, dataRow );
+      visual.textAlignment = Pos.CENTER;
+      return visual;
+    }
+
     // return read-only visual for special row 0 'overall project'
     if ( dataRow == 0 )
-      return m_readonlyVisual;
+      return dataColumn == FIELD.Title.ordinal() ? m_projectTitleVisual : m_readonlyVisual;
+
+    var task = m_tasks.get( dataRow );
+    boolean summary = isSummary( dataRow );
 
     // keep title spacing separate from the shared default visual so other cells cannot inherit it
-    if ( dataRow > HEADER && dataColumn == FIELD.Title.ordinal() )
+    if ( dataColumn == FIELD.Title.ordinal() )
     {
-      var task = m_tasks.get( dataRow );
       int indent = task.isBlank() ? 0 : task.getIndent();
-      return m_titleVisuals.computeIfAbsent( indent, level ->
+      var titleVisuals = summary ? m_summaryTitleVisuals : m_titleVisuals;
+      return titleVisuals.computeIfAbsent( indent, level ->
       {
         var visual = new CellVisual();
         var insets = visual.textInsets;
+        visual.textWeight = summary ? FontWeight.BOLD : FontWeight.NORMAL;
         visual.textAlignment = Pos.CENTER_LEFT;
         visual.textInsets = new Insets( insets.getTop(), insets.getRight(), insets.getBottom(),
-            insets.getLeft() + level * TITLE_INDENT_WIDTH );
+            insets.getLeft() + level * TITLE_INDENT_WIDTH + TITLE_CONTROL_WIDTH );
         return visual;
       } );
     }
 
-    // return disabled visual for non-initials field if initials is blank
-    if ( dataRow > HEADER && dataColumn > FIELD.Title.ordinal() )
-      if ( m_tasks.get( dataRow ).isBlank() )
-        return m_disabledVisual;
+    // return disabled visual for non-title fields if the task is blank
+    if ( task.isBlank() )
+      return m_disabledVisual;
 
-    var visual = super.getVisual( dataColumn, dataRow );
-    visual.textAlignment = Pos.CENTER;
+    var visual = summary ? m_summaryVisual : super.getVisual( dataColumn, dataRow );
 
-    if ( dataRow > HEADER && dataColumn > HEADER )
+    // different fields have different text alignments
+    visual.textAlignment = switch ( FIELD.values()[dataColumn] )
     {
-      // different fields have different text alignments
-      visual.textAlignment = switch ( FIELD.values()[dataColumn] )
-      {
-        case Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
-        default -> Pos.CENTER;
-      };
+      case Comment, Predecessors, Resources -> Pos.CENTER_LEFT;
+      default -> Pos.CENTER;
+    };
 
-      // different task types have different fields read-only (shown by cell background colour)
-      var type = m_tasks.get( dataRow ).getTaskType();
-      visual.cellBackground = switch ( FIELD.values()[dataColumn] )
-      {
-        case Duration -> type.durationBackground();
-        case Start -> type.startBackground();
-        case End -> type.endBackground();
-        case Work -> type.workBackground();
-        default -> Colours.CELL_DEFAULT_BACKGROUND;
-      };
-    }
+    // summary results and cost are read-only; ordinary tasks follow their scheduling type
+    var type = task.getTaskType();
+    visual.cellBackground = switch ( FIELD.values()[dataColumn] )
+    {
+      case Duration -> summary ? Colours.CELL_DISABLED_BACKGROUND : type.durationBackground();
+      case Start -> summary ? Colours.CELL_DISABLED_BACKGROUND : type.startBackground();
+      case End -> summary ? Colours.CELL_DISABLED_BACKGROUND : type.endBackground();
+      case Work -> summary ? Colours.CELL_DISABLED_BACKGROUND : type.workBackground();
+      case Cost -> Colours.CELL_DISABLED_BACKGROUND;
+      case Type -> summary ? Colours.CELL_DISABLED_BACKGROUND : Colours.CELL_DEFAULT_BACKGROUND;
+      default -> Colours.CELL_DEFAULT_BACKGROUND;
+    };
 
     return visual;
   }
@@ -143,16 +212,38 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   @Override
   protected String setValue( int dataColumn, int dataRow, Object newValue, boolean commit )
   {
+    // guard both preview and commit; XML loading and exact model restoration bypass the table
+    String problem = switch ( FIELD.values()[dataColumn] )
+    {
+      case Cost -> "Cost is read-only";
+      case Duration -> isSummary( dataRow ) ? "Summary duration is read-only" : null;
+      case Start -> isSummary( dataRow ) ? "Summary start is read-only" : null;
+      case End -> isSummary( dataRow ) ? "Summary end is read-only" : null;
+      case Work -> isSummary( dataRow ) ? "Summary work is read-only" : null;
+      case Type -> isSummary( dataRow ) ? "Summary task type cannot be changed" : null;
+      default -> null;
+    };
+    if ( problem != null )
+      return problem;
+
     if ( dataColumn == FIELD.Title.ordinal() )
     {
       if ( commit )
         return "Task titles require a title-and-indentation command";
-      m_tasks.proposedTitle( dataRow, newValue );
-      return null;
+      try
+      {
+        m_tasks.proposedTitle( dataRow, newValue );
+        return null;
+      }
+      catch ( IllegalArgumentException | IllegalStateException exception )
+      {
+        // return validation problems directly so the editor shows only the readable message
+        return exception.getMessage();
+      }
     }
 
     // notify after task-type changes; title commands apply their own complete-state notification
-    String problem = m_tasks.setValue( dataRow, dataColumn, newValue, commit );
+    problem = m_tasks.setValue( dataRow, dataColumn, newValue, commit );
     if ( problem == null && commit && dataColumn == FIELD.Type.ordinal() )
       signalRowChanged( dataRow );
 

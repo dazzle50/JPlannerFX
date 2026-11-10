@@ -18,21 +18,28 @@
 
 package rjc.jplanner.gui.tasks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.tasks.Task.FIELD;
+import rjc.jplanner.plan.tasks.TaskHierarchy;
 import rjc.table.HashSetInt;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.view.axis.TableAxis;
+import rjc.table.view.cell.ViewPosition;
 import rjc.table.view.cursor.Cursors;
 import rjc.table.view.cursor.RowReorderCursor;
+import rjc.table.view.editor.AbstractCellEditor;
 
 /*************************************************************************************************/
 /******************* Task table input safeguards and selection-based targeting *******************/
@@ -42,6 +49,9 @@ final class TasksViewInput
 {
   private final TasksView m_view;                             // view whose library handlers are extended
   private final BitSet    m_columnHeaderAreas = new BitSet(); // selection areas created by column-header gestures
+  private boolean         m_collapseGesture;                  // primary mouse gesture belongs to a summary box
+  private int             m_selectionRevision;                // newest input or queued selection repair
+  private int             m_selectionClearCount;              // explicit selection clears, including command completion
 
   /**************************************** constructor ******************************************/
   TasksViewInput( TasksView view )
@@ -98,15 +108,160 @@ final class TasksViewInput
     {
       // clear origin markers when areas are removed; newly added areas default to body selections
       int count = (int) message[0];
+      if ( count == 0 )
+        m_selectionClearCount++;
       if ( count < m_columnHeaderAreas.length() )
         m_columnHeaderAreas.clear( count, m_columnHeaderAreas.length() );
     } );
     m_view.addEventFilter( KeyEvent.KEY_PRESSED, this::checkKeyPressed );
+    m_view.addEventFilter( MouseEvent.MOUSE_PRESSED, this::checkCollapsePressed );
+    for ( var type : List.of( MouseEvent.MOUSE_DRAGGED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED ) )
+      m_view.addEventFilter( type, event ->
+      {
+        if ( m_collapseGesture && ( event.getButton() == MouseButton.PRIMARY || event.isPrimaryButtonDown() ) )
+        {
+          event.consume();
+          if ( event.getEventType() == MouseEvent.MOUSE_CLICKED )
+            m_collapseGesture = false;
+        }
+      } );
+  }
+
+  /************************************ checkCollapsePressed *************************************/
+  private void checkCollapsePressed( MouseEvent event )
+  {
+    m_selectionRevision++;
+    if ( event.getButton() != MouseButton.PRIMARY )
+      return;
+    m_collapseGesture = false;
+    // scene coordinates also handle clicks on an active title editor covering the control space
+    var point = m_view.sceneToLocal( event.getSceneX(), event.getSceneY() );
+    int column = m_view.getColumnIndex( (int) point.getX() );
+    int row = m_view.getRowIndex( (int) point.getY() );
+    if ( column < 0 || column >= m_view.getColumnsAxis().getCount() || row < 0 || row >= m_view.getRowsAxis().getCount()
+        || point.getX() < m_view.getHeaderWidth() || point.getY() < m_view.getHeaderHeight()
+        || point.getX() >= m_view.getCanvas().getWidth() || point.getY() >= m_view.getCanvas().getHeight() )
+      return;
+    var cell = (TasksCellDrawer) m_view.getCellDrawer();
+    cell.setIndex( m_view, column, row );
+    cell.getValueVisual();
+    var box = cell.getCollapseBox();
+    if ( box == null || !box.contains( point ) || point.getX() >= cell.x + cell.w || point.getY() >= cell.y + cell.h )
+      return;
+
+    m_collapseGesture = true;
+    event.consume();
+    // double-clicking a box toggles once and never starts a title editor
+    if ( event.getClickCount() != 1 )
+      return;
+    var task = ( (TasksData) m_view.getData() ).getTasks().get( cell.dataRow );
+    AbstractCellEditor.endEditing();
+    var visibility = m_view.getRowVisibility();
+    visibility.setCollapsed( task, !visibility.isCollapsed( task ) );
+    m_view.requestFocus();
+  }
+
+  /********************************* updateSelectionAfterHiding **********************************/
+  void updateSelectionAfterHiding( TaskHierarchy hierarchy, BitSet collapsedRows )
+  {
+    var rows = m_view.getRowsAxis();
+    var selection = m_view.getSelection();
+    var areas = selection.getAreas();
+    var retainedAreas = new ArrayList<int[]>();
+    var headerAreas = new BitSet();
+    boolean changed = false;
+
+    // exclude collapsed descendants, retaining manual hidden selections for the Unhide action
+    for ( int index = 0; index < areas.size(); index++ )
+    {
+      int[] area = areas.get( index );
+      int start = -1;
+      for ( int row = area[1]; row <= area[3] + 1; row++ )
+      {
+        boolean retained = row <= area[3] && !collapsedRows.get( rows.getDataIndex( row ) );
+        if ( row <= area[3] && !retained )
+          changed = true;
+        if ( retained && start < 0 )
+          start = row;
+        if ( !retained && start >= 0 )
+        {
+          headerAreas.set( retainedAreas.size(), m_columnHeaderAreas.get( index ) );
+          retainedAreas.add( new int[] { area[0], start, area[2], row - 1 } );
+          start = -1;
+        }
+      }
+    }
+    if ( changed )
+      restoreSelection( retainedAreas, headerAreas );
+
+    // hidden focus and anchors move to the nearest visible ancestor, including collapsed summaries
+    boolean positionChanged = false;
+    for ( var position : new ViewPosition[] { m_view.getFocusCell(), m_view.getSelectCell() } )
+    {
+      int row = position.getRow();
+      if ( rows.isVisible( row ) )
+        continue;
+      int dataRow = rows.getDataIndex( row );
+      while ( dataRow >= 0 && !rows.isVisible( rows.getViewIndex( dataRow ) ) )
+        dataRow = hierarchy.getParentIndex( dataRow );
+      int visibleRow;
+      if ( dataRow >= 0 )
+        visibleRow = rows.getViewIndex( dataRow );
+      else if ( row < 0 )
+        visibleRow = rows.getFirstVisible();
+      else
+        visibleRow = rows.getPreviousVisible( row );
+      int visibleColumn = m_view.getColumnsAxis().getVisible( position.getColumn() );
+      positionChanged |= position.getColumn() != visibleColumn || position.getRow() != visibleRow;
+      position.setPosition( visibleColumn, visibleRow );
+    }
+    if ( changed && retainedAreas.isEmpty() && m_view.getFocusCell().isVisible() )
+    {
+      var focus = m_view.getFocusCell();
+      selection.select( focus.getColumn(), focus.getRow(), focus.getColumn(), focus.getRow() );
+    }
+
+    if ( changed || positionChanged )
+    {
+      var savedAreas = selection.getAreas();
+      var savedHeaders = (BitSet) m_columnHeaderAreas.clone();
+      int revision = ++m_selectionRevision;
+      int clearCount = m_selectionClearCount;
+      int focusColumn = m_view.getFocusCell().getColumn();
+      int focusRow = m_view.getFocusCell().getRow();
+      int anchorColumn = m_view.getSelectCell().getColumn();
+      int anchorRow = m_view.getSelectCell().getRow();
+      // moving the anchor queues the library's selection.update(); restore after it has run
+      Platform.runLater( () ->
+      {
+        if ( revision != m_selectionRevision || focusColumn != m_view.getFocusCell().getColumn()
+            || focusRow != m_view.getFocusCell().getRow() || anchorColumn != m_view.getSelectCell().getColumn()
+            || anchorRow != m_view.getSelectCell().getRow() )
+          return;
+        // a command may deliberately clear selection after its visibility notifications
+        if ( clearCount != m_selectionClearCount )
+          restoreSelection( List.of(), new BitSet() );
+        else
+          restoreSelection( savedAreas, savedHeaders );
+      } );
+    }
+  }
+
+  /************************************** restoreSelection ***************************************/
+  private void restoreSelection( List<int[]> areas, BitSet headerAreas )
+  {
+    var selection = m_view.getSelection();
+    selection.clear();
+    for ( int[] area : areas )
+      selection.select( area[0], area[1], area[2], area[3] );
+    m_columnHeaderAreas.clear();
+    m_columnHeaderAreas.or( headerAreas );
   }
 
   /*************************************** checkKeyPressed ***************************************/
   private void checkKeyPressed( KeyEvent event )
   {
+    m_selectionRevision++;
     // text input inside an active editor retains the editor's ordinary key handling
     for ( Node node = event.getTarget() instanceof Node target ? target : null; node != null; node = node.getParent() )
       if ( node instanceof TextInputControl )
