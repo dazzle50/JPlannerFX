@@ -18,12 +18,12 @@
 
 package rjc.jplanner.gui.days;
 
-import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandDayTypeSetPeriodCount;
 import rjc.jplanner.gui.days.DaysData.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
+import rjc.table.view.TableContextMenuBuilder;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -48,6 +48,17 @@ public class DaysView extends TableView
     // set table view properties
     TableContextMenu.disable( this, TableMenuItems.COLUMN_HIDE, TableMenuItems.COLUMN_SHOW );
     TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
+
+    // customise append wording while retaining the library's actions and popup lifecycle
+    TableContextMenu.setBuilder( this, new TableContextMenuBuilder()
+    {
+      /************************************* getAppendRowLabel ***********************************/
+      @Override
+      protected String getAppendRowLabel()
+      {
+        return "Add new day-type";
+      }
+    } );
   }
 
   /******************************************** reset ********************************************/
@@ -118,22 +129,6 @@ public class DaysView extends TableView
         // work period start & end times - hours & minutes only
         return new EditorTime( true, true, false, false );
     }
-  }
-
-  /*************************************** openContextMenu ***************************************/
-  @Override
-  public void openContextMenu( ContextMenuEvent event )
-  {
-    // build context menu
-    var menu = new TableContextMenu( this );
-
-    // loop through menu items find item with text "Add row" and rename it
-    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
-        .forEach( item -> item.setText( "Add new day-type" ) );
-
-    // show the context menu if it has any items
-    if ( !menu.getItems().isEmpty() )
-      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

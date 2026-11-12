@@ -37,22 +37,18 @@ import rjc.table.view.editor.AbstractCellEditor;
 
 final class TasksContextMenu extends ContextMenu
 {
-  private final TasksView      m_view;            // view providing data, history, and status
-  private final TasksViewInput m_input;           // row-action targeting with the view's selection rules
-  private final boolean        m_keyboardTrigger; // keyboard actions use selection without a clicked-row fallback
-  private final int            m_triggerRow;      // triggering view row, resolved again when the action runs
-  private final int            m_triggerColumn;   // triggering view column, including the row-header marker
+  private final TasksView      m_view;       // view providing data, history, and status
+  private final TasksViewInput m_input;      // row-action targeting with the view's selection rules
+  private final int            m_triggerRow; // triggering view row, resolved again when the action runs
 
   /**************************************** constructor ******************************************/
-  TasksContextMenu( TasksView view, TasksViewInput input, int viewRow, int viewColumn, boolean keyboardTrigger )
+  TasksContextMenu( TasksView view, TasksViewInput input, int viewRow, int viewColumn )
   {
     m_view = view;
     m_input = input;
     m_triggerRow = viewRow;
-    m_triggerColumn = viewColumn;
-    m_keyboardTrigger = keyboardTrigger;
 
-    // keep the builder local; the library's static registry would retain this view through it
+    // build a fresh menu with guarded task actions and the standard column-header actions
     new MenuBuilder().buildMenu( this, view, viewRow, viewColumn );
   }
 
@@ -63,7 +59,7 @@ final class TasksContextMenu extends ContextMenu
     AbstractCellEditor.endEditing();
     try
     {
-      int[] dataRows = m_view.getIndentDataRows( m_triggerRow, m_triggerColumn, m_keyboardTrigger );
+      int[] dataRows = m_view.getIndentDataRows();
       if ( dataRows.length > 0 )
         m_view.getUndoStack().push( new CommandTasksIndent( (TasksData) m_view.getData(), dataRows, direction ) );
     }
@@ -135,7 +131,8 @@ final class TasksContextMenu extends ContextMenu
     else
     {
       targets = m_view.getSelection().getSelectedRows();
-      if ( targets == null )
+      // unhide all on full visible coverage without adding hidden rows to other command targets
+      if ( targets == null || m_view.getSelection().areAllVisibleRowsSelected() )
         targets = rows.getHiddenViewIndexes();
     }
     m_view.getRowVisibility().setHidden( targets, hidden );

@@ -20,7 +20,6 @@ package rjc.jplanner.gui.tasks;
 
 import javafx.application.Platform;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandTaskSetTitle;
 import rjc.jplanner.gui.editors.EditorPredecessors;
 import rjc.jplanner.gui.editors.EditorResources;
@@ -36,7 +35,6 @@ import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableView;
-import rjc.table.view.axis.TableAxis;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
 import rjc.table.view.editor.EditorChoose;
@@ -174,33 +172,25 @@ public class TasksView extends TableView
     }
   }
 
-  /*************************************** openContextMenu ***************************************/
+  /******************************** contextMenuSelectionChanged **********************************/
   @Override
-  public void openContextMenu( ContextMenuEvent event )
+  protected void contextMenuSelectionChanged( int viewRow, int viewColumn )
   {
-    // focus positions locate keyboard menus, but never supply a fallback indentation target
-    boolean keyboardTrigger = event.isKeyboardTrigger();
-    var position = keyboardTrigger ? getFocusCell() : getMouseCell();
-    if ( position.getRow() < TableAxis.HEADER || position.getColumn() < TableAxis.HEADER )
-      return;
-    var menu = buildContextMenu( position.getRow(), position.getColumn(), keyboardTrigger );
-
-    // show the context menu if it has any items
-    if ( !menu.getItems().isEmpty() )
-      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
+    m_input.contextMenuSelectionChanged( viewRow );
   }
 
   /*************************************** buildContextMenu **************************************/
+  @Override
   protected ContextMenu buildContextMenu( int viewRow, int viewColumn, boolean keyboardTrigger )
   {
     // build a fresh menu so its handlers retain this request's trigger coordinates
-    return new TasksContextMenu( this, m_input, viewRow, viewColumn, keyboardTrigger );
+    return new TasksContextMenu( this, m_input, viewRow, viewColumn );
   }
 
   /************************************** getIndentDataRows **************************************/
-  protected int[] getIndentDataRows( int viewRow, int viewColumn, boolean keyboardTrigger )
+  protected int[] getIndentDataRows()
   {
     // keep the view's target-resolution hook available to subclasses and menu actions
-    return m_input.getIndentDataRows( viewRow, viewColumn, keyboardTrigger );
+    return m_input.getIndentDataRows();
   }
 }

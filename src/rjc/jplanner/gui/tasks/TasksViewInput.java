@@ -64,18 +64,10 @@ final class TasksViewInput
       if ( cursor instanceof RowReorderCursor )
         m_view.setCursor( Cursors.ROWS_HOVER );
     } );
-    // preserve context selections before the library cursor can clear them, for every menu action
+    // record origins after the library handles primary selection and column reordering
     var mousePressed = m_view.getOnMousePressed();
     m_view.setOnMousePressed( event ->
     {
-      int viewRow = m_view.getMouseCell().getRow();
-      int viewColumn = m_view.getMouseCell().getColumn();
-      if ( event.getButton() == MouseButton.SECONDARY && isContextSelected( viewRow, viewColumn ) )
-      {
-        m_view.requestFocus();
-        event.consume();
-        return;
-      }
       mousePressed.handle( event );
       if ( event.getButton() == MouseButton.PRIMARY )
       {
@@ -92,14 +84,8 @@ final class TasksViewInput
     var mouseReleased = m_view.getOnMouseReleased();
     m_view.setOnMouseReleased( event ->
     {
-      // context clicks never start a resize/reorder gesture, so its primary-button release must not run
-      if ( event.getButton() == MouseButton.SECONDARY )
-      {
-        event.consume();
-        return;
-      }
       // column reordering rebuilds its column selection on release; resizing leaves origins unchanged
-      boolean columnReorder = m_view.getCursor() == Cursors.COLUMNS_REORDER;
+      boolean columnReorder = event.getButton() == MouseButton.PRIMARY && m_view.getCursor() == Cursors.COLUMNS_REORDER;
       mouseReleased.handle( event );
       if ( columnReorder )
         m_columnHeaderAreas.set( 0, m_view.getSelection().getAreas().size() );
@@ -125,6 +111,15 @@ final class TasksViewInput
             m_collapseGesture = false;
         }
       } );
+  }
+
+  /******************************** contextMenuSelectionChanged **********************************/
+  void contextMenuSelectionChanged( int viewRow )
+  {
+    // a new popup selection supersedes queued visibility repair, even with unchanged focus/anchor
+    m_selectionRevision++;
+    if ( viewRow == TableAxis.HEADER )
+      m_columnHeaderAreas.set( m_view.getSelection().getAreas().size() - 1 );
   }
 
   /************************************ checkCollapsePressed *************************************/
@@ -315,29 +310,11 @@ final class TasksViewInput
         }
   }
 
-  /************************************** isContextSelected **************************************/
-  private boolean isContextSelected( int viewRow, int viewColumn )
-  {
-    if ( viewRow < TableAxis.HEADER || viewRow >= m_view.getRowsAxis().getCount() || viewColumn < TableAxis.HEADER
-        || viewColumn >= m_view.getColumnsAxis().getCount() )
-      return false;
-    if ( viewColumn == TableAxis.HEADER )
-      return m_view.getSelection().hasRowSelection( viewRow );
-    if ( viewRow == TableAxis.HEADER )
-      return m_view.getSelection().hasColumnSelection( viewColumn );
-    return m_view.getSelection().isCellSelected( viewColumn, viewRow );
-  }
-
   /************************************** getIndentDataRows **************************************/
-  int[] getIndentDataRows( int viewRow, int viewColumn, boolean keyboardTrigger )
+  int[] getIndentDataRows()
   {
     var rows = m_view.getRowsAxis();
     int count = rows.getCount();
-    // only a real mouse context click can target a row outside the current selection
-    if ( !keyboardTrigger && !isContextSelected( viewRow, viewColumn ) )
-      return viewRow >= 0 && viewRow < count && rows.isVisible( viewRow ) ? new int[] { rows.getDataIndex( viewRow ) }
-          : new int[0];
-
     var areas = m_view.getSelection().getAreas();
     if ( areas.isEmpty() || m_columnHeaderAreas.cardinality() == areas.size() )
       return new int[0];
@@ -370,12 +347,7 @@ final class TasksViewInput
     {
       var rows = m_view.getSelection().getSelectedRows();
       if ( rows != null )
-      {
-        // adjoining areas can cover a row without any individual area spanning every column
-        if ( rows.isEmpty() )
-          rows.add( viewRow );
         return rows;
-      }
       rows = new HashSetInt();
       for ( int row = 0; row < m_view.getRowsAxis().getCount(); row++ )
         rows.add( row );

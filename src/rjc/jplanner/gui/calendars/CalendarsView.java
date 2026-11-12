@@ -18,8 +18,6 @@
 
 package rjc.jplanner.gui.calendars;
 
-import javafx.scene.control.ContextMenu;
-import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.commands.CommandCalendarSetCycleLength;
 import rjc.jplanner.commands.CommandCalendarSetExceptions;
 import rjc.jplanner.gui.PlanContext;
@@ -52,6 +50,17 @@ public class CalendarsView extends TableView
     // set table view properties
     TableContextMenu.disable( this, TableMenuItems.ROW_HIDE, TableMenuItems.ROW_SHOW );
     TableContextMenu.disable( this, TableMenuItems.COLUMN_SORT, TableMenuItems.COLUMN_FILTER_TEXT );
+
+    // customise append wording while retaining the library's actions and popup lifecycle
+    TableContextMenu.setBuilder( this, new TableContextMenuBuilder()
+    {
+      /*********************************** getAppendColumnLabel **********************************/
+      @Override
+      protected String getAppendColumnLabel()
+      {
+        return "Add new calendar";
+      }
+    } );
   }
 
   /******************************************** reset ********************************************/
@@ -137,27 +146,6 @@ public class CalendarsView extends TableView
 
     else
       super.openEditor( value );
-  }
-
-  /*************************************** openContextMenu ***************************************/
-  @Override
-  public void openContextMenu( ContextMenuEvent event )
-  {
-    // keyboard menus use the focus cell even when the mouse has never entered the table
-    if ( event.isKeyboardTrigger() && ( getFocusCell().getColumn() < 0 || getFocusCell().getRow() < 0 ) )
-      return;
-    var menu = event.isKeyboardTrigger()
-        ? new TableContextMenuBuilder().buildMenu( new ContextMenu(), this, getFocusCell().getRow(),
-            getFocusCell().getColumn() )
-        : new TableContextMenu( this );
-
-    // loop through menu items find item with text "Add column" and rename it
-    menu.getItems().stream().filter( item -> "Add column".equals( item.getText() ) )
-        .forEach( item -> item.setText( "Add new calendar" ) );
-
-    // show the context menu if it has any items
-    if ( menu != null && !menu.getItems().isEmpty() )
-      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

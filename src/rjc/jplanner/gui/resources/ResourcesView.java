@@ -18,13 +18,13 @@
 
 package rjc.jplanner.gui.resources;
 
-import javafx.scene.input.ContextMenuEvent;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
+import rjc.table.view.TableContextMenuBuilder;
 import rjc.table.view.TableView;
 import rjc.table.view.cell.CellDrawer;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -48,6 +48,17 @@ public class ResourcesView extends TableView
 
     // set table view properties
     TableContextMenu.disable( this, TableMenuItems.ROW_SORT, TableMenuItems.ROW_FILTER_TEXT );
+
+    // customise append wording while retaining the library's actions and popup lifecycle
+    TableContextMenu.setBuilder( this, new TableContextMenuBuilder()
+    {
+      /************************************* getAppendRowLabel ***********************************/
+      @Override
+      protected String getAppendRowLabel()
+      {
+        return "Add new resource";
+      }
+    } );
   }
 
   /******************************************** reset ********************************************/
@@ -101,22 +112,6 @@ public class ResourcesView extends TableView
       default:
         return null;
     }
-  }
-
-  /*************************************** openContextMenu ***************************************/
-  @Override
-  public void openContextMenu( ContextMenuEvent event )
-  {
-    // build context menu
-    var menu = new TableContextMenu( this );
-
-    // loop through menu items find item with text "Add row" and rename it
-    menu.getItems().stream().filter( item -> item.getText().equals( "Add row" ) )
-        .forEach( item -> item.setText( "Add new resource" ) );
-
-    // show the context menu if it has any items
-    if ( menu != null && !menu.getItems().isEmpty() )
-      menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
   }
 
 }

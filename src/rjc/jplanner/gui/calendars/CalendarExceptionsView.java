@@ -27,8 +27,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import rjc.jplanner.plan.calendars.Calendar;
 import rjc.jplanner.plan.days.DayTypes;
 import rjc.table.control.ChooseField;
@@ -61,17 +59,6 @@ public class CalendarExceptionsView extends TableView
     m_days = days;
     TableContextMenu.disableAll( this );
     setFocusTraversable( true );
-
-    // preserve multi-row selection instead of the standard table's right-click clearing it
-    addEventFilter( MouseEvent.MOUSE_PRESSED, event ->
-    {
-      if ( event.getButton() == MouseButton.SECONDARY )
-      {
-        if ( m_editor == null )
-          requestFocus();
-        event.consume();
-      }
-    } );
 
     // keep chronological rows and fixed column order while retaining header selection and resizing
     cursorProperty().addListener( ( property, oldCursor, newCursor ) ->
@@ -209,25 +196,24 @@ public class CalendarExceptionsView extends TableView
     selectDate( m_data.getDate( 0 ), 0 );
   }
 
-  /*************************************** openContextMenu ***************************************/
+  /************************************* prepareContextMenu **************************************/
   @Override
-  public void openContextMenu( ContextMenuEvent event )
+  protected boolean prepareContextMenu( ContextMenuEvent event )
   {
-    if ( !finishEditing() )
-      return;
+    // retain invalid draft input before the common lifecycle can change focus or selection
+    return finishEditing();
+  }
 
-    // right-click on an unselected row targets it; existing multi-row selections remain intact
-    int row = getMouseCell().getRow();
-    if ( !event.isKeyboardTrigger() && row >= 0 && row < m_data.getRowCount()
-        && !getSelection().hasRowSelection( row ) )
-      selectDate( m_data.getDate( getRowsAxis().getDataIndex( row ) ), 0 );
-
+  /************************************** buildContextMenu ***************************************/
+  @Override
+  protected ContextMenu buildContextMenu( int viewRow, int viewColumn, boolean keyboardTrigger )
+  {
     var add = new MenuItem( "Add exception" );
     add.setOnAction( action -> addException() );
     var remove = new MenuItem( "Remove selected exceptions" );
     remove.setDisable( selectedDates().isEmpty() );
     remove.setOnAction( action -> removeSelected() );
-    new ContextMenu( add, remove ).show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
+    return new ContextMenu( add, remove );
   }
 
   // draft editors retain invalid input on focus loss; only explicit cancellation abandons it
