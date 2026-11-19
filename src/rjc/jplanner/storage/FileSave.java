@@ -20,20 +20,24 @@ package rjc.jplanner.storage;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.plan.Plan;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
 import rjc.table.signal.ObservableStatus.Level;
 
 /*************************************************************************************************/
-/********************** Save Plan and display details to file in XML format **********************/
+/************************** Save plan data and metadata to an XML file ***************************/
 /*************************************************************************************************/
 
 public class FileSave
 {
+  private boolean m_successful; // whether writing and save bookkeeping completed
 
   /***************************************** constructor *****************************************/
   public FileSave( PlanContext context, File file )
@@ -42,75 +46,104 @@ public class FileSave
     if ( context == null || context.getPlan() == null )
       throw new IllegalArgumentException( "PlanContext and Plan must not be null" );
 
-    // if file exists already, check file can be written
-    if ( file.exists() && !file.canWrite() )
-    {
-      context.getStatus().update( Level.ERROR, "Could not write to '" + file.getPath() + "'" );
-      return;
-    }
-
-    // validate before opening the destination, which would otherwise truncate an existing file
+    // finish edits after any file chooser returns, including edits in additional plan windows
+    context.getGui().finishEditing();
+    Plan plan = context.getPlan();
+    String savedBy = System.getProperty( "user.name", "" );
+    DateTime savedWhen = DateTime.now();
+    File target;
+    Utils.trace( "Starting to write '" + file.getPath() + "'" );
     try
     {
-      context.getPlan().getTasks().buildHierarchy();
-    }
-    catch ( IllegalStateException exception )
-    {
-      context.getStatus().update( Level.ERROR, "Cannot save invalid task hierarchy: " + exception.getMessage() );
-      return;
-    }
-
-    // attempt to write JPlannerFX file to the specified file
-    Utils.trace( "Starting to write '" + file.getPath() + "'" );
-    try ( var writer = Files.newBufferedWriter( file.toPath(), Charset.forName( XmlLabels.ENCODING ) );
-        var xml = new XmlWriter( writer ) )
-    {
-      writeStartDocument( writer );
-      writeMetaData( xml, file );
-
-      new XmlPlanWriter().write( context.getPlan(), xml );
-      // TODO guiMapper.write( xml);
-
-      xml.endDocument();
-      xml.flush();
+      target = write( plan, file, savedBy, savedWhen );
     }
     catch ( Exception exception )
     {
-      // some sort of exception thrown
-      Utils.trace( "ERROR writing '" + file.getPath() + "'" );
-      exception.printStackTrace();
+      // failed writing leaves the destination, plan metadata and clean position unchanged
+      Utils.trace( "ERROR writing '" + file.getPath() + "'", exception );
       context.getStatus().update( Level.ERROR,
           "Error writing to '" + file.getPath() + "' : " + exception.getMessage() );
       return;
     }
 
-    // successfully wrote file
-    Utils.trace( "Successfully wrote '" + file.getPath() + "'" );
+    // publish the same metadata written to XML only after the destination has been replaced
+    plan.setFilename( target.getName() );
+    plan.setFileLocation( target.getParent() );
+    plan.setSavedBy( savedBy );
+    plan.setSavedWhen( savedWhen );
+    context.getUndoStack().setClean();
+    m_successful = true;
+    context.getGui().refreshPlanDetails();
+    context.getStatus().update( Level.INFO, "Saved '" + target.getPath() + "'" );
+    Utils.trace( "Successfully wrote '" + target.getPath() + "'" );
+  }
+
+  /**************************************** isSuccessful *****************************************/
+  public boolean isSuccessful()
+  {
+    return m_successful;
+  }
+
+  /***************************************** saveCurrent *****************************************/
+  public static boolean saveCurrent( PlanContext context )
+  {
+    // unnamed plans need a destination; named plans reuse their saved location
+    Plan plan = context.getPlan();
+    if ( plan.getFilename().isBlank() )
+      return new FileSaveAs( context ).isSuccessful();
+
+    return new FileSave( context, new File( plan.getFileLocation(), plan.getFilename() ) ).isSuccessful();
+  }
+
+  /******************************************** write ********************************************/
+  static File write( Plan plan, File file, String savedBy, DateTime savedWhen ) throws Exception
+  {
+    File target = file.getCanonicalFile();
+    if ( target.exists() && ( !target.isFile() || !target.canWrite() ) )
+      throw new IOException( "Could not write to '" + target.getPath() + "'" );
+
+    var destination = target.toPath();
+    var temporary = Files.createTempFile( destination.getParent(), ".jplanner-", ".tmp" );
+    try
+    {
+      // finish and close the temporary file before replacing the destination
+      try ( var writer = Files.newBufferedWriter( temporary, Charset.forName( XmlLabels.ENCODING ) );
+          var xml = new XmlWriter( writer ) )
+      {
+        writeStartDocument( writer );
+        writeMetadata( xml, target, savedBy, savedWhen );
+        new XmlPlanWriter().write( plan, xml );
+        // display-data persistence is not implemented
+        xml.endDocument();
+        xml.flush();
+      }
+
+      // an unsupported atomic replacement fails the save instead of risking the existing file
+      Files.move( temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING );
+      return target;
+    }
+    finally
+    {
+      Files.deleteIfExists( temporary );
+    }
   }
 
   /************************************** writeStartDocument *************************************/
-  private void writeStartDocument( BufferedWriter writer ) throws Exception
+  private static void writeStartDocument( BufferedWriter writer ) throws IOException
   {
     // write the XML declaration using the same character set as the output writer
-    writer.write( "<?xml version=\"" );
-    writer.write( XmlLabels.VERSION );
-    writer.write( "\" encoding=\"" );
-    writer.write( XmlLabels.ENCODING );
-    writer.write( "\"?>" );
+    writer.write( "<?xml version=\"" + XmlLabels.VERSION + "\" encoding=\"" + XmlLabels.ENCODING + "\"?>" );
   }
 
-  /**************************************** writeMetaData ****************************************/
-  private void writeMetaData( XmlWriter xml, File file ) throws Exception
+  /**************************************** writeMetadata ****************************************/
+  private static void writeMetadata( XmlWriter xml, File file, String savedBy, DateTime savedWhen ) throws IOException
   {
-    // write the JPlannerFX meta-data to the XML stream
+    // write the JPlannerFX metadata to the XML stream
     xml.startElement( XmlLabels.XML_JPLANNER );
     xml.attribute( XmlLabels.XML_FORMAT, XmlLabels.FORMAT );
-    String saveUser = System.getProperty( "user.name" );
-    xml.attribute( XmlLabels.XML_SAVEUSER, saveUser );
-    DateTime saveWhen = DateTime.now();
-    xml.attribute( XmlLabels.XML_SAVEWHEN, saveWhen.toString() );
+    xml.attribute( XmlLabels.XML_SAVEUSER, savedBy );
+    xml.attribute( XmlLabels.XML_SAVEWHEN, savedWhen );
     xml.attribute( XmlLabels.XML_SAVENAME, file.getName() );
     xml.attribute( XmlLabels.XML_SAVEWHERE, file.getParent() );
   }
-
 }

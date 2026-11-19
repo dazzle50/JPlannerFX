@@ -26,7 +26,9 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
 import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.storage.FileNew;
 import rjc.jplanner.storage.FileOpen;
+import rjc.jplanner.storage.FileSave;
 import rjc.jplanner.storage.FileSaveAs;
 import rjc.table.Utils;
 
@@ -64,7 +66,7 @@ public class FileMenu extends Menu
     // start a new plan
     MenuItem fileNew = new MenuItem( "New" );
     fileNew.setAccelerator( new KeyCodeCombination( KeyCode.N, CONTROL ) );
-    fileNew.setOnAction( event -> Utils.trace( "NEW - NOT YET IMPLEMENTED" ) );
+    fileNew.setOnAction( event -> new FileNew( m_context ) );
     return fileNew;
   }
 
@@ -84,7 +86,7 @@ public class FileMenu extends Menu
     // save plan to file
     MenuItem fileSave = new MenuItem( "Save" );
     fileSave.setAccelerator( new KeyCodeCombination( KeyCode.S, CONTROL ) );
-    fileSave.setOnAction( event -> Utils.trace( "SAVE - NOT YET IMPLEMENTED" ) );
+    fileSave.setOnAction( event -> FileSave.saveCurrent( m_context ) );
     return fileSave;
   }
 

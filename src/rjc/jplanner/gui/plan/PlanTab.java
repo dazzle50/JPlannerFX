@@ -48,8 +48,7 @@ public class PlanTab extends Tab
     {
       if ( isSelected )
       {
-        m_properties.updateFromPlan();
-        m_notes.updateFromPlan();
+        updateFromPlan();
         setContent( split );
       }
       else
@@ -67,5 +66,22 @@ public class PlanTab extends Tab
   public PlanProperties getPlanProperties()
   {
     return m_properties;
+  }
+
+  /**************************************** finishEditing ****************************************/
+  public void finishEditing()
+  {
+    // only the focused panel can contain an uncommitted edit; hidden widgets may be stale
+    if ( m_notes.isFocusWithin() )
+      m_notes.updatePlan();
+    if ( m_properties.isFocusWithin() )
+      m_properties.updatePlan( null );
+  }
+
+  /**************************************** updateFromPlan ***************************************/
+  public void updateFromPlan()
+  {
+    m_properties.updateFromPlan();
+    m_notes.updateFromPlan();
   }
 }

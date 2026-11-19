@@ -19,11 +19,11 @@
 package rjc.jplanner.gui;
 
 import java.io.File;
+import java.util.List;
 
 import javafx.beans.binding.Bindings;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -33,9 +33,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import rjc.jplanner.storage.FileLoad;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
+import rjc.table.view.editor.AbstractCellEditor;
 
 /*************************************************************************************************/
 /************************** Main JPlannerFX application window contents **************************/
@@ -46,7 +49,7 @@ public class MainWindow extends Scene
   private GridPane    m_grid;      // root grid layout container
   private PlanContext m_context;   // plan context shared across main window components
   private MenuBar     m_menus;     // menus at top of scene
-  private TabPane     m_tabs;      // tabs containing application functionality
+  private MainTabs    m_tabs;      // tabs containing application functionality
   private HBox        m_statusBar; // status bar at bottom of scene
   private TextField   m_jobField;  // job status field in status bar
 
@@ -143,6 +146,31 @@ public class MainWindow extends Scene
     m_grid.add( m_tabs, 0, 1 );
     GridPane.setHgrow( m_tabs, Priority.ALWAYS );
     GridPane.setVgrow( m_tabs, Priority.ALWAYS );
+  }
+
+  /**************************************** finishEditing ****************************************/
+  public void finishEditing()
+  {
+    // commit focused plan controls before table editing can change the focus
+    if ( m_tabs != null )
+      m_tabs.finishEditing();
+    AbstractCellEditor.endEditing();
+  }
+
+  /************************************* refreshPlanDetails **************************************/
+  public void refreshPlanDetails()
+  {
+    if ( m_tabs != null )
+      m_tabs.refreshPlanDetails();
+  }
+
+  /************************************** closePlanWindows ***************************************/
+  public void closePlanWindows()
+  {
+    // closing stages changes JavaFX's window list, so inspect a snapshot
+    for ( Window window : List.copyOf( Window.getWindows() ) )
+      if ( window instanceof Stage stage && stage.getScene() != null && stage.getScene().getRoot() instanceof MainTabs )
+        stage.close();
   }
 
 }

@@ -28,6 +28,7 @@ import javafx.scene.shape.StrokeLineJoin;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.gui.tasks.TasksData;
 import rjc.jplanner.gui.tasks.TasksView;
+import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.calendars.Calendar;
 import rjc.jplanner.plan.tasks.Dependency.DependencyType;
 import rjc.jplanner.plan.tasks.Task;
@@ -47,6 +48,7 @@ class GanttRenderer
   private static final double DEPENDENCY_ARROW_LENGTH      = 4.0; // arrowhead length outside the target bar
   private static final double DEPENDENCY_ARROW_HALF_HEIGHT = 2.0; // maximum arrowhead half-height
 
+  private final Plan          m_plan;                             // plan owning this view's task rows and calendar
   private final TasksView     m_view;                             // task data and visible table row geometry
   private final GanttScale    m_scale;                            // horizontal date-time scaling
 
@@ -65,6 +67,8 @@ class GanttRenderer
   /**************************************** constructor ******************************************/
   public GanttRenderer( TasksView view, GanttScale scale )
   {
+    // keep the table and plan together because queued draws can outlive context replacement
+    m_plan = ( (PlanContext) view.getData().getUserData() ).getPlan();
     m_view = view;
     m_scale = scale;
   }
@@ -105,7 +109,7 @@ class GanttRenderer
   private void shadeNonWorking( GraphicsContext gc, int width, double height )
   {
     // shade whole non-working days using the current project calendar and its exceptions
-    Calendar calendar = ( (PlanContext) m_view.getData().getUserData() ).getPlan().getDefaultCalendar();
+    Calendar calendar = m_plan.getDefaultCalendar();
     Date date = m_scale.datetime( -1 ).getDate();
     int endEpoch = m_scale.datetime( width ).getDate().getEpochDay();
 
@@ -141,7 +145,7 @@ class GanttRenderer
   {
     var rows = m_view.getRowsAxis();
     var data = (TasksData) m_view.getData();
-    var tasks = ( (PlanContext) data.getUserData() ).getPlan().getTasks();
+    var tasks = m_plan.getTasks();
     var bars = new ArrayList<TaskBar>( rows.getCount() );
 
     for ( int row = 0; row < rows.getCount(); row++ )

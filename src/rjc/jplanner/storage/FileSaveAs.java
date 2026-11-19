@@ -24,15 +24,19 @@ import javafx.stage.FileChooser;
 import rjc.jplanner.gui.PlanContext;
 
 /*************************************************************************************************/
-/********* Use FileChooser to choose file to save Plan and display details in XML format *********/
+/*********************** Choose a destination for saving plan data as XML ************************/
 /*************************************************************************************************/
 
 public class FileSaveAs
 {
+  private boolean m_successful; // whether a destination was chosen and saved
 
   /***************************************** constructor *****************************************/
   public FileSaveAs( PlanContext context )
   {
+    // finish the current edit before opening the file chooser
+    context.getGui().finishEditing();
+
     // use file-chooser defaulting (if available) to current plan location and filename
     FileChooser fc = new FileChooser();
     fc.setTitle( "Save plan" );
@@ -52,7 +56,13 @@ public class FileSaveAs
       return;
 
     // attempt to save to user specified file
-    new FileSave( context, file );
+    m_successful = new FileSave( context, file ).isSuccessful();
+  }
+
+  /**************************************** isSuccessful *****************************************/
+  public boolean isSuccessful()
+  {
+    return m_successful;
   }
 
 }

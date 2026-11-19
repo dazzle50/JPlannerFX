@@ -32,11 +32,11 @@ import rjc.jplanner.gui.tasks.TasksTab;
 
 public class MainTabs extends TabPane
 {
-  private Tab m_plan;      // tab showing overall plan controls & information, null if excluded
-  private Tab m_tasks;     // tab showing table view of plan tasks and Gantt
-  private Tab m_resources; // tab showing table view of plan resources
-  private Tab m_calendars; // tab showing table view of plan calendars
-  private Tab m_days;      // tab showing table view of plan day-types
+  private PlanTab m_plan;      // tab showing overall plan controls & information, null if excluded
+  private Tab     m_tasks;     // tab showing table view of plan tasks and Gantt
+  private Tab     m_resources; // tab showing table view of plan resources
+  private Tab     m_calendars; // tab showing table view of plan calendars
+  private Tab     m_days;      // tab showing table view of plan day-types
 
   /**************************************** constructor ******************************************/
   /**
@@ -71,6 +71,20 @@ public class MainTabs extends TabPane
     if ( m_plan != null )
       getTabs().add( m_plan );
     getTabs().addAll( m_tasks, m_resources, m_calendars, m_days );
+  }
+
+  /**************************************** finishEditing ****************************************/
+  public void finishEditing()
+  {
+    if ( m_plan != null && m_plan.isSelected() )
+      m_plan.finishEditing();
+  }
+
+  /************************************* refreshPlanDetails **************************************/
+  public void refreshPlanDetails()
+  {
+    if ( m_plan != null )
+      m_plan.updateFromPlan();
   }
 
 }

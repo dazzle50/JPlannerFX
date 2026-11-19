@@ -26,7 +26,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
 import rjc.jplanner.gui.PlanContext;
-import rjc.jplanner.plan.Schedule;
+import rjc.jplanner.plan.schedule.Schedule;
 import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/

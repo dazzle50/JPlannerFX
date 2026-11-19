@@ -16,7 +16,7 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/    *
  **************************************************************************/
 
-package rjc.jplanner.plan;
+package rjc.jplanner.plan.schedule;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 
+import rjc.jplanner.plan.Plan;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.Utils;

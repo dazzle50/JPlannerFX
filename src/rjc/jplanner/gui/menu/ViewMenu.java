@@ -18,11 +18,13 @@
 
 package rjc.jplanner.gui.menu;
 
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import rjc.jplanner.Main;
 import rjc.jplanner.gui.MainTabs;
 import rjc.jplanner.gui.PlanContext;
@@ -70,7 +72,7 @@ public class ViewMenu extends Menu
     return viewUndoStack;
   }
 
-  /****************************************** viewMenu *******************************************/
+  /****************************************** newWindow ******************************************/
   private MenuItem newWindow()
   {
     // create new window
@@ -83,6 +85,9 @@ public class ViewMenu extends Menu
       stage.setScene( new Scene( new MainTabs( m_context, false ) ) );
       stage.setWidth( 1000 );
       stage.setHeight( 600 );
+
+      // detach closed contents so scene-based listeners release the old plan
+      stage.addEventHandler( WindowEvent.WINDOW_HIDDEN, hidden -> stage.getScene().setRoot( new Group() ) );
       stage.show();
     } );
     return viewNewWindow;
