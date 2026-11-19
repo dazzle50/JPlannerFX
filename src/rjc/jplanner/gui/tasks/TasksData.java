@@ -121,7 +121,7 @@ public class TasksData extends TableData implements IDataSwapRows, IDataInsertDe
   }
 
   /***************************************** isSummary *******************************************/
-  boolean isSummary( int dataRow )
+  public boolean isSummary( int dataRow )
   {
     // task 0 remains the overall-project summary even when it has no children
     if ( dataRow == 0 )
