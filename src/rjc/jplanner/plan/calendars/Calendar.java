@@ -252,10 +252,8 @@ public class Calendar
   /************************************** getNormalDayType ***************************************/
   public DayType getNormalDayType( Date date )
   {
-    // return the normal cycle day without applying calendar exceptions
-    int normal = ( date.getEpochDay() - m_cycleAnchor.getEpochDay() ) % m_normal.size();
-    if ( normal < 0 )
-      normal += m_normal.size();
+    // widen before subtracting so distant dates retain their cycle across the compact date range
+    int normal = (int) Math.floorMod( (long) date.getEpochDay() - m_cycleAnchor.getEpochDay(), m_normal.size() );
 
     return m_normal.get( normal );
   }
