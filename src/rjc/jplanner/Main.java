@@ -66,7 +66,15 @@ public class Main extends Application
     m_icon = new Image( Main.class.getResourceAsStream( "JPlannerFX-icon64.png" ) );
     primaryStage.setTitle( "JPlannerFX  " + VERSION );
     primaryStage.getIcons().add( m_icon );
-    primaryStage.setScene( new MainWindow() );
+    var gui = new MainWindow();
+    primaryStage.setScene( gui );
+
+    // resolve unsaved edits before allowing a main-window close
+    primaryStage.setOnCloseRequest( event ->
+    {
+      if ( !gui.confirmExit() )
+        event.consume();
+    } );
 
     // close app when main window is closed (even if other windows are open)
     primaryStage.setOnHidden( event -> Platform.exit() );

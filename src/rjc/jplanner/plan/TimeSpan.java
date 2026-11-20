@@ -18,8 +18,6 @@
 
 package rjc.jplanner.plan;
 
-import java.math.BigDecimal;
-
 /*************************************************************************************************/
 /********************************** Quantity of time with units **********************************/
 /*************************************************************************************************/
@@ -122,10 +120,13 @@ public class TimeSpan
         throw new IllegalArgumentException( "Enter a time-span such as 15M or 1H, or None" );
       TimeSpan parsed = new TimeSpan( text );
 
-      // strict parsing rejects precision loss; existing constructors retain their rounding behaviour
-      if ( Double.isFinite( parsed.getNumber() ) && new BigDecimal( text.substring( 0, text.length() - 1 ) )
-          .compareTo( BigDecimal.valueOf( parsed.getNumber() ) ) != 0 )
-        throw new IllegalArgumentException( "Use whole seconds or at most two decimal places for other units" );
+      // inspect decimal digits before rounding can hide excess precision; trailing zeros are harmless
+      int point = text.indexOf( '.' );
+      int decimals = parsed.getUnit() == Unit.SECONDS ? 0 : 2;
+      if ( point >= 0 )
+        for ( int index = point + decimals + 1; index < text.length() - 1; index++ )
+          if ( text.charAt( index ) != '0' )
+            throw new IllegalArgumentException( "Use whole seconds or at most two decimal places for other units" );
       value = parsed;
     }
 

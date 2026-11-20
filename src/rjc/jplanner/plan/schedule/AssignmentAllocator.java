@@ -18,8 +18,6 @@
 
 package rjc.jplanner.plan.schedule;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -42,10 +40,23 @@ final class AssignmentAllocator
     if ( !Double.isFinite( maxQuantity ) || maxQuantity < 0.0 )
       throw new IllegalArgumentException( "Assignment maximum must be finite and non-negative" );
 
-    double[] allocations = copyCapacities( capacities );
+    return allocateUpToInPlace( copyCapacities( capacities ), maxQuantity );
+  }
+
+  /************************************* allocateUpToInPlace *************************************/
+  // callers supply a privately owned, validated capacity array and a finite, non-negative maximum.
+  static double[] allocateUpToInPlace( double[] allocations, double maxQuantity )
+  {
     if ( maxQuantity == 0.0 || allocations.length == 0 )
     {
       Arrays.fill( allocations, 0.0 );
+      return allocations;
+    }
+
+    // one match needs neither a sorting copy nor equal-share arithmetic.
+    if ( allocations.length == 1 )
+    {
+      allocations[0] = Math.min( allocations[0], maxQuantity );
       return allocations;
     }
 
@@ -53,26 +64,28 @@ final class AssignmentAllocator
     double[] sortedCapacities = allocations.clone();
     Arrays.sort( sortedCapacities );
 
-    // exact binary-double values preserve small capacities when subtracting from a large maximum.
-    BigDecimal remainingQuantity = new BigDecimal( maxQuantity );
+    // keep a conservative remaining maximum so floating-point rounding cannot invent capacity.
+    double remainingQuantity = maxQuantity;
     for ( int index = 0; index < sortedCapacities.length; index++ )
     {
-      BigDecimal remainingMatchCount = BigDecimal.valueOf( sortedCapacities.length - index );
-      BigDecimal capacity = new BigDecimal( sortedCapacities[index] );
-      if ( capacity.multiply( remainingMatchCount ).compareTo( remainingQuantity ) <= 0 )
+      int remainingMatchCount = sortedCapacities.length - index;
+      double capacity = sortedCapacities[index];
+      // integer match counts keep a non-zero exact difference at least one subnormal unit in size.
+      // fused multiplication therefore preserves its sign without rounding a separate product.
+      if ( Math.fma( capacity, remainingMatchCount, -remainingQuantity ) <= 0.0 )
       {
         // satisfy this capped resource and redistribute its shortfall among the remaining matches.
         // each pass removes one resource, so redistribution takes at most the number of matches.
-        remainingQuantity = remainingQuantity.subtract( capacity );
+        remainingQuantity = subtractDown( remainingQuantity, capacity );
         continue;
       }
 
-      // estimate the common share, then correct upward binary rounding using an exact comparison.
-      // equal shares round down together; no resource gets a traversal-dependent rounding remainder.
-      double share = remainingQuantity.divide( remainingMatchCount, MathContext.DECIMAL128 ).doubleValue();
-      if ( new BigDecimal( share ).multiply( remainingMatchCount ).compareTo( remainingQuantity ) > 0 )
+      // divide only when uncapped matches need a common share, correcting an upward-rounded quotient.
+      double share = remainingQuantity / remainingMatchCount;
+      if ( Math.fma( share, remainingMatchCount, -remainingQuantity ) > 0.0 )
         share = Math.nextDown( share );
 
+      // equal shares round down together; no resource gets a traversal-dependent rounding remainder.
       for ( int match = 0; match < allocations.length; match++ )
         allocations[match] = Math.min( allocations[match], share );
       return allocations;
@@ -87,6 +100,18 @@ final class AssignmentAllocator
   {
     // all-available has no aggregate maximum and still returns an independent result.
     return copyCapacities( capacities );
+  }
+
+  /**************************************** subtractDown *****************************************/
+  // callers supply 0 <= allocation <= available; discard an upward-rounded residual, never create capacity.
+  static double subtractDown( double available, double allocation )
+  {
+    double remaining = available - allocation;
+
+    // recover the subtraction error with FastTwoSum because available is at least allocation.
+    if ( ( available - remaining ) - allocation < 0.0 )
+      remaining = Math.nextDown( remaining );
+    return remaining;
   }
 
   /*************************************** copyCapacities ****************************************/

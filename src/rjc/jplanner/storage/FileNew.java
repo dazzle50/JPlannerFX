@@ -18,11 +18,6 @@
 
 package rjc.jplanner.storage;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.ButtonType;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.Plan;
 import rjc.table.signal.ObservableStatus.Level;
@@ -36,30 +31,8 @@ public class FileNew
   /***************************************** constructor *****************************************/
   public FileNew( PlanContext context )
   {
-    // commit active edits before checking cleanliness, including keyboard-triggered actions
-    context.getGui().finishEditing();
-    if ( !context.getUndoStack().isClean() )
-    {
-      var save = new ButtonType( "Save", ButtonData.YES );
-      var saveAs = new ButtonType( "Save As", ButtonData.OTHER );
-      var discard = new ButtonType( "Discard", ButtonData.NO );
-      var alert = new Alert( AlertType.CONFIRMATION, null, save, saveAs, discard, ButtonType.CANCEL );
-      alert.initOwner( context.getGui().getWindow() );
-      alert.setTitle( "New plan" );
-      alert.setHeaderText( "Do you want to save before starting new?" );
-
-      // keep the declared button order without gaps between button groups
-      var buttonBar = (ButtonBar) alert.getDialogPane().lookup( ".button-bar" );
-      buttonBar.setButtonOrder( ButtonBar.BUTTON_ORDER_NONE );
-
-      ButtonType choice = alert.showAndWait().orElse( ButtonType.CANCEL );
-      if ( choice == ButtonType.CANCEL )
-        return;
-      if ( choice == save && !FileSave.saveCurrent( context ) )
-        return;
-      if ( choice == saveAs && !new FileSaveAs( context ).isSuccessful() )
-        return;
-    }
+    if ( !context.getGui().confirmUnsavedChanges( "New plan", "Do you want to save before starting new?" ) )
+      return;
 
     // prepare fresh defaults before closing views or replacing the current plan
     var plan = new Plan();

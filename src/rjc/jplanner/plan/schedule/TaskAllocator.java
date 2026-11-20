@@ -18,7 +18,6 @@
 
 package rjc.jplanner.plan.schedule;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -64,7 +63,7 @@ final class TaskAllocator
   // task numbers determine precedence for this calculation; they are not persistent task identity.
   static double[][] allocate( double[] capacities, List<Request> requests )
   {
-    double[] availableCapacities = AssignmentAllocator.allocateAll( capacities );
+    double[] remainingCapacities = AssignmentAllocator.allocateAll( capacities );
     Request[] orderedRequests = List.copyOf( requests ).toArray( new Request[0] );
     var indexesByTaskNumber = new HashMap<Integer, Integer>();
 
@@ -75,15 +74,10 @@ final class TaskAllocator
       if ( indexesByTaskNumber.putIfAbsent( request.taskNumber(), index ) != null )
         throw new IllegalArgumentException( "Duplicate task number: " + request.taskNumber() );
       for ( int resourceIndex : request.resourceIndexes() )
-        if ( resourceIndex < 0 || resourceIndex >= availableCapacities.length )
+        if ( resourceIndex < 0 || resourceIndex >= remainingCapacities.length )
           throw new IllegalArgumentException(
               "Invalid resource index for task " + request.taskNumber() + ": " + resourceIndex );
     }
-
-    // retain exact residuals so repeated subtraction cannot invent or discard physical capacity.
-    var remainingCapacities = new BigDecimal[availableCapacities.length];
-    for ( int index = 0; index < availableCapacities.length; index++ )
-      remainingCapacities[index] = new BigDecimal( availableCapacities[index] );
 
     Arrays.sort( orderedRequests, REQUEST_ORDER );
     double[][] allocations = new double[orderedRequests.length][];
@@ -99,26 +93,19 @@ final class TaskAllocator
       }
 
       for ( int match = 0; match < resourceIndexes.size(); match++ )
-      {
-        BigDecimal remainingCapacity = remainingCapacities[resourceIndexes.get( match )];
-        double availableCapacity = remainingCapacity.doubleValue();
-        // round down when necessary so conversion cannot offer more than the exact residual.
-        if ( new BigDecimal( availableCapacity ).compareTo( remainingCapacity ) > 0 )
-          availableCapacity = Math.nextDown( availableCapacity );
-        matchedCapacities[match] = availableCapacity;
-      }
+        matchedCapacities[match] = remainingCapacities[resourceIndexes.get( match )];
 
-      // all-available can return this request's fresh array directly; it already holds its allocation.
+      // capacities and maxima are already validated; this fresh array belongs only to this result row.
       double[] taskAllocation = request.allAvailable() ? matchedCapacities
-          : AssignmentAllocator.allocateUpTo( matchedCapacities, request.maxQuantity() );
+          : AssignmentAllocator.allocateUpToInPlace( matchedCapacities, request.maxQuantity() );
       allocations[requestIndex] = taskAllocation;
 
-      // subtract each distinct match once; later requests cannot revise an earlier allocation.
+      // subtract each distinct match conservatively; later requests cannot revise an earlier allocation.
       for ( int match = 0; match < resourceIndexes.size(); match++ )
       {
         int resourceIndex = resourceIndexes.get( match );
-        remainingCapacities[resourceIndex] = remainingCapacities[resourceIndex]
-            .subtract( new BigDecimal( taskAllocation[match] ) );
+        remainingCapacities[resourceIndex] = AssignmentAllocator.subtractDown( remainingCapacities[resourceIndex],
+            taskAllocation[match] );
       }
     }
     return allocations;

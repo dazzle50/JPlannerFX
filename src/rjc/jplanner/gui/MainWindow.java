@@ -23,6 +23,11 @@ import java.util.List;
 
 import javafx.beans.binding.Bindings;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
@@ -36,6 +41,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import rjc.jplanner.storage.FileLoad;
+import rjc.jplanner.storage.FileSave;
+import rjc.jplanner.storage.FileSaveAs;
 import rjc.table.signal.ObservableStatus;
 import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.view.editor.AbstractCellEditor;
@@ -46,12 +53,14 @@ import rjc.table.view.editor.AbstractCellEditor;
 
 public class MainWindow extends Scene
 {
-  private GridPane    m_grid;      // root grid layout container
-  private PlanContext m_context;   // plan context shared across main window components
-  private MenuBar     m_menus;     // menus at top of scene
-  private MainTabs    m_tabs;      // tabs containing application functionality
-  private HBox        m_statusBar; // status bar at bottom of scene
-  private TextField   m_jobField;  // job status field in status bar
+  private GridPane    m_grid;                     // root grid layout container
+  private PlanContext m_context;                  // plan context shared across main window components
+  private MenuBar     m_menus;                    // menus at top of scene
+  private MainTabs    m_tabs;                     // tabs containing application functionality
+  private HBox        m_statusBar;                // status bar at bottom of scene
+  private TextField   m_jobField;                 // job status field in status bar
+
+  private boolean     m_confirmingUnsavedChanges; // whether an unsaved-changes confirmation is active
 
   /**************************************** constructor ******************************************/
   public MainWindow()
@@ -162,6 +171,66 @@ public class MainWindow extends Scene
   {
     if ( m_tabs != null )
       m_tabs.refreshPlanDetails();
+  }
+
+  /**************************************** confirmExit ******************************************/
+  public boolean confirmExit()
+  {
+    return confirmUnsavedChanges( "Exit JPlannerFX", "Do you want to save before exiting?" );
+  }
+
+  /************************************ confirmUnsavedChanges ************************************/
+  public boolean confirmUnsavedChanges( String title, String header )
+  {
+    // modal dialogs run a nested event loop; ignore New and Exit requests until this confirmation finishes
+    if ( m_confirmingUnsavedChanges )
+      return false;
+
+    m_confirmingUnsavedChanges = true;
+    try
+    {
+      // commit active edits before checking cleanliness, including keyboard-triggered actions
+      finishEditing();
+      if ( m_context.getUndoStack().isClean() )
+        return true;
+
+      // keep asking after an unsuccessful save; fresh dialogs do not retain the previous result
+      while ( true )
+      {
+        boolean hasFilename = !m_context.getPlan().getFilename().isBlank();
+        var save = new ButtonType( "Save", ButtonData.YES );
+        var saveAs = new ButtonType( "Save As", hasFilename ? ButtonData.OTHER : ButtonData.YES );
+        var discard = new ButtonType( "Discard", ButtonData.NO );
+        var alert = new Alert( AlertType.CONFIRMATION, null, save, saveAs, discard, ButtonType.CANCEL );
+        if ( !hasFilename )
+          alert.getButtonTypes().remove( save );
+        alert.initOwner( getWindow() );
+        alert.setTitle( title );
+        alert.setHeaderText( header );
+
+        // keep the declared button order without gaps between button groups
+        var buttonBar = (ButtonBar) alert.getDialogPane().lookup( ".button-bar" );
+        buttonBar.setButtonOrder( ButtonBar.BUTTON_ORDER_NONE );
+
+        ButtonType choice = alert.showAndWait().orElse( ButtonType.CANCEL );
+        if ( choice == save )
+        {
+          if ( FileSave.saveCurrent( m_context ) )
+            return true;
+        }
+        else if ( choice == saveAs )
+        {
+          if ( new FileSaveAs( m_context ).isSuccessful() )
+            return true;
+        }
+        else
+          return choice == discard;
+      }
+    }
+    finally
+    {
+      m_confirmingUnsavedChanges = false;
+    }
   }
 
   /************************************** closePlanWindows ***************************************/

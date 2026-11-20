@@ -25,12 +25,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
+import javafx.stage.WindowEvent;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.storage.FileNew;
 import rjc.jplanner.storage.FileOpen;
 import rjc.jplanner.storage.FileSave;
 import rjc.jplanner.storage.FileSaveAs;
-import rjc.table.Utils;
 
 /*************************************************************************************************/
 /**************************** File menu for main application menu bar ****************************/
@@ -123,7 +123,12 @@ public class FileMenu extends Menu
     // exit the application
     MenuItem fileExit = new MenuItem( "Exit" );
     fileExit.setAccelerator( new KeyCodeCombination( KeyCode.Q, CONTROL ) );
-    fileExit.setOnAction( event -> Utils.trace( "EXIT - NOT YET IMPLEMENTED" ) );
+    fileExit.setOnAction( event ->
+    {
+      // use the same cancellable close request as the main window's close button
+      var window = m_context.getGui().getWindow();
+      window.fireEvent( new WindowEvent( window, WindowEvent.WINDOW_CLOSE_REQUEST ) );
+    } );
     return fileExit;
   }
 
