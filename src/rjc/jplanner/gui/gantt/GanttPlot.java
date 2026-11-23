@@ -31,10 +31,11 @@ import rjc.table.signal.ISignal;
 
 class GanttPlot extends Canvas
 {
-  private final GanttRenderer m_renderer;        // draws the plot contents
-  private final IListener     m_refreshListener; // requests redraw after model or row changes
-  private final ISignal[]     m_refreshSources;  // observed sources while the plot is attached
-  private boolean             m_redrawRequested; // whether a redraw is already queued
+  private final GanttRenderer m_renderer;                     // draws the plot contents
+  private final IListener     m_refreshListener;              // requests redraw after model or row changes
+  private final ISignal[]     m_refreshSources;               // observed sources while the plot is attached
+  private boolean             m_redrawRequested;              // whether a redraw is already queued
+  private boolean             m_nonWorkingDaysVisible = true; // whether this view shades non-working days
 
   /**************************************** constructor ******************************************/
   public GanttPlot( TasksView view, GanttScale scale )
@@ -70,6 +71,23 @@ class GanttPlot extends Canvas
     } );
   }
 
+  /*********************************** isNonWorkingDaysVisible ***********************************/
+  boolean isNonWorkingDaysVisible()
+  {
+    return m_nonWorkingDaysVisible;
+  }
+
+  /*********************************** setNonWorkingDaysVisible **********************************/
+  void setNonWorkingDaysVisible( boolean visible )
+  {
+    if ( m_nonWorkingDaysVisible == visible )
+      return;
+
+    // shading is per-view display state, without an undo entry or a plan clean-state change
+    m_nonWorkingDaysVisible = visible;
+    redraw();
+  }
+
   /******************************************* redraw ********************************************/
   public void redraw()
   {
@@ -81,7 +99,7 @@ class GanttPlot extends Canvas
     {
       m_redrawRequested = false;
       if ( getScene() != null && getWidth() > 0.0 && getHeight() > 0.0 )
-        m_renderer.draw( getGraphicsContext2D(), getWidth(), getHeight(), getLayoutY() );
+        m_renderer.draw( getGraphicsContext2D(), getWidth(), getHeight(), getLayoutY(), m_nonWorkingDaysVisible );
     } );
   }
 }

@@ -38,7 +38,7 @@ import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
-/**************** Draws calendar shading, dated tasks, and their dependency arrows ***************/
+/**************** Draws calendar shading, task shapes, dependencies, and deadlines ***************/
 /*************************************************************************************************/
 
 class GanttRenderer
@@ -54,7 +54,7 @@ class GanttRenderer
 
   // retain off-screen geometry so a dependency can cross the viewport without either bar on screen
   record TaskBar( Task task, double x, double y, double width, double height, double rowTop, double rowBottom,
-      boolean summary )
+      boolean summary, boolean milestone )
   {
     /*************************************** attachmentY *****************************************/
     double attachmentY()
@@ -74,7 +74,7 @@ class GanttRenderer
   }
 
   /********************************************* draw ********************************************/
-  public void draw( GraphicsContext gc, double width, double height, double plotTop )
+  public void draw( GraphicsContext gc, double width, double height, double plotTop, boolean nonWorkingDaysVisible )
   {
     // repaint the background before bars so edits and scrolling leave no old shapes
     gc.save();
@@ -82,7 +82,8 @@ class GanttRenderer
     {
       gc.setFill( Gantt.GANTT_BACKGROUND );
       gc.fillRect( 0, 0, width, height );
-      shadeNonWorking( gc, (int) Math.ceil( width ), height );
+      if ( nonWorkingDaysVisible )
+        shadeNonWorking( gc, (int) Math.ceil( width ), height );
 
       // table headers may be resized or zoomed independently of the timeline headers
       double top = Math.max( 0.0, m_view.getHeaderHeight() - plotTop );
@@ -97,6 +98,7 @@ class GanttRenderer
         var bars = layoutTasks( plotTop );
         drawDependencies( gc, bars, width, top, bottom );
         drawTasks( gc, bars, width, top, bottom );
+        drawDeadlines( gc, width, top, bottom, plotTop );
       }
     }
     finally
@@ -157,11 +159,17 @@ class GanttRenderer
       if ( rowHeight <= 4 || dataRow <= 0 || data.getValue( FIELD.Title.ordinal(), dataRow ) == null )
         continue;
 
-      // use only existing dates; do not infer a schedule or treat equal dates as a milestone
+      // use stored schedule dates rather than editable duration inputs that may have changed
       Object startValue = data.getValue( FIELD.Start.ordinal(), dataRow );
       Object endValue = data.getValue( FIELD.End.ordinal(), dataRow );
-      if ( !( startValue instanceof DateTime start ) || !( endValue instanceof DateTime end )
-          || start.toSerialMilliseconds() >= end.toSerialMilliseconds() )
+      if ( !( startValue instanceof DateTime start ) || !( endValue instanceof DateTime end ) )
+        continue;
+
+      // compare timeline values before scaling, including equivalent 24:00 and next-day 00:00
+      long interval = end.toSerialMilliseconds() - start.toSerialMilliseconds();
+      boolean summary = data.isSummary( dataRow );
+      boolean milestone = interval == 0L;
+      if ( interval < 0L || summary && milestone )
         continue;
 
       // retain off-screen endpoints; painting rejects bars and routes outside the viewport
@@ -170,11 +178,15 @@ class GanttRenderer
 
       // retain a visible mark for positive intervals shorter than one pixel
       double y = m_view.getRowStartY( row ) - plotTop;
-      double barWidth = Math.max( 1.0, (double) xe - xs );
       double barHeight = Math.min( 10, rowHeight - 4 );
-      double barY = Math.floor( y + ( rowHeight - barHeight ) / 2.0 );
-      bars.add( new TaskBar( tasks.get( dataRow ), xs, barY, barWidth, barHeight, y, y + rowHeight,
-          data.isSummary( dataRow ) ) );
+      double barWidth = milestone ? barHeight : Math.max( 1.0, (double) xe - xs );
+      double barX = milestone ? xs - barWidth / 2.0 : xs;
+
+      // keep diamond tips and their dependency strokes on the same sharp half-pixel centre
+      double barY = milestone ? Math.floor( y + rowHeight / 2.0 ) + 0.5 - barHeight / 2.0
+          : Math.floor( y + ( rowHeight - barHeight ) / 2.0 );
+      bars.add(
+          new TaskBar( tasks.get( dataRow ), barX, barY, barWidth, barHeight, y, y + rowHeight, summary, milestone ) );
     }
     return bars;
   }
@@ -315,6 +327,8 @@ class GanttRenderer
 
       if ( bar.summary() )
         drawSummaryBar( gc, bar.x(), bar.y(), bar.width(), bar.height() );
+      else if ( bar.milestone() )
+        drawMilestone( gc, bar.x(), bar.y(), bar.height() );
       else
         drawTaskBar( gc, bar.x(), bar.y(), bar.width(), bar.height() );
     }
@@ -328,6 +342,57 @@ class GanttRenderer
     gc.setLineWidth( 1.0 );
     gc.fillRect( x, y, width, height );
     gc.strokeRect( x + 0.5, y + 0.5, width - 1.0, height - 1.0 );
+  }
+
+  /**************************************** drawMilestone ****************************************/
+  private void drawMilestone( GraphicsContext gc, double x, double y, double size )
+  {
+    gc.setFill( Gantt.GANTT_MILESTONE );
+    gc.beginPath();
+    gc.moveTo( x + size / 2.0, y );
+    gc.lineTo( x + size, y + size / 2.0 );
+    gc.lineTo( x + size / 2.0, y + size );
+    gc.lineTo( x, y + size / 2.0 );
+    gc.closePath();
+    gc.fill();
+  }
+
+  /**************************************** drawDeadlines ****************************************/
+  private void drawDeadlines( GraphicsContext gc, double width, double top, double bottom, double plotTop )
+  {
+    var rows = m_view.getRowsAxis();
+    var data = (TasksData) m_view.getData();
+    int first = Math.max( 0, m_view.getRowIndex( (int) Math.ceil( top + plotTop ) ) );
+    int last = Math.min( rows.getCount() - 1, m_view.getRowIndex( (int) Math.ceil( bottom + plotTop ) ) );
+
+    // paint deadlines last so a coincident task cannot hide the marker
+    gc.setFill( Gantt.GANTT_DEADLINE );
+    for ( int row = first; row <= last; row++ )
+    {
+      int rowHeight = rows.getPixelSize( row );
+      int dataRow = rows.getDataIndex( row );
+      if ( rowHeight <= 4 || dataRow <= 0 || data.getValue( FIELD.Title.ordinal(), dataRow ) == null )
+        continue;
+
+      // deadlines do not require task dates and never take part in dependency routing
+      if ( !( data.getValue( FIELD.Deadline.ordinal(), dataRow ) instanceof DateTime deadline ) )
+        continue;
+
+      double size = Math.min( 10, rowHeight - 4 );
+      double halfWidth = Math.min( 3.0, size / 2.0 );
+      double x = m_scale.x( deadline ) + 0.5;
+      if ( x + halfWidth < 0.0 || x - halfWidth >= width )
+        continue;
+
+      double y = Math.floor( m_view.getRowStartY( row ) - plotTop + ( rowHeight - size ) / 2.0 ) + 1.0;
+      gc.fillRect( x - 0.5, y, 1.0, size - halfWidth );
+      gc.beginPath();
+      gc.moveTo( x, y + size );
+      gc.lineTo( x - halfWidth, y + size - halfWidth );
+      gc.lineTo( x + halfWidth, y + size - halfWidth );
+      gc.closePath();
+      gc.fill();
+    }
   }
 
   /*************************************** drawSummaryBar ****************************************/

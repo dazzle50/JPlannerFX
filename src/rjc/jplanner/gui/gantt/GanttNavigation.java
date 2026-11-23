@@ -21,6 +21,7 @@ package rjc.jplanner.gui.gantt;
 import java.util.function.DoubleSupplier;
 
 import rjc.jplanner.gui.PlanContext;
+import rjc.jplanner.plan.tasks.Task;
 import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;
 import rjc.table.undo.IUndoCommand;
@@ -101,7 +102,7 @@ class GanttNavigation
   /******************************************* canFit ********************************************/
   boolean canFit()
   {
-    // return true if there are any tasks to fit, and the current viewport width is sufficient for margins
+    // return true when the viewport width leaves sufficient room for fit margins
     double width = m_widthSupplier.getAsDouble();
     return width > 2.0 * FIT_MIN_MARGIN_PIXELS && width <= Gantt.MAX_LAYOUT_SIZE;
   }
@@ -163,15 +164,27 @@ class GanttNavigation
     TaskBounds bounds = taskBounds();
     DateTime start = bounds.start();
     DateTime end = bounds.end();
-    if ( start != null && end != null && end.toSerialMilliseconds() > start.toSerialMilliseconds() )
+    if ( start != null && end != null )
     {
-      // round up so both ends fit inside equal margins, including the minimum pixel margin
       long first = start.toSerialMilliseconds();
       long span = end.toSerialMilliseconds() - first;
-      double usable = width - 2.0 * Math.max( FIT_MIN_MARGIN_PIXELS, width * FIT_MARGIN_FRACTION );
-      millisecondsPP = Math.max( GanttScale.MIN_MS_PP, (long) Math.ceil( span / usable ) );
+      if ( span > 0L )
+      {
+        // round up so both ends fit inside equal margins, including the minimum pixel margin
+        double usable = width - 2.0 * Math.max( FIT_MIN_MARGIN_PIXELS, width * FIT_MARGIN_FRACTION );
+        millisecondsPP = Math.max( GanttScale.MIN_MS_PP, (long) Math.ceil( span / usable ) );
+      }
+
+      // centre the stored date range; a lone date keeps the default scale
       left = first - Math.round( ( width * millisecondsPP - span ) / 2.0 );
     }
+
+    // move fitted viewports inside the supported dates while retaining room for axis boundaries
+    long minimum = DateTime.MIN_VALUE.toSerialMilliseconds() + AXIS_BOUNDARY_PADDING_DAYS * Time.MILLIS_PER_DAY;
+    long maximum = DateTime.MAX_VALUE.toSerialMilliseconds() - AXIS_BOUNDARY_PADDING_DAYS * Time.MILLIS_PER_DAY;
+    left = Math.max( minimum, Math.min( left, maximum - (long) Math.ceil( width * millisecondsPP ) ) );
+    if ( !validViewport( left, millisecondsPP ) )
+      return;
 
     if ( undoable )
       changeViewport( left, millisecondsPP, true, bounds );
@@ -194,9 +207,42 @@ class GanttNavigation
   /***************************************** taskBounds ******************************************/
   private TaskBounds taskBounds()
   {
-    // return the earliest start and latest end of all tasks in the plan, or null if there are no tasks
-    var plan = m_context.getPlan();
-    return new TaskBounds( plan.getEarliestTaskStart(), plan.getLatestTaskEnd() );
+    // include deadlines locally without changing the plan's calculated start and end properties
+    var tasks = m_context.getPlan().getTasks();
+    DateTime start = null;
+    DateTime end = null;
+    for ( int index = 1; index < tasks.size(); index++ )
+    {
+      Task task = tasks.get( index );
+      if ( task.isBlank() )
+        continue;
+
+      DateTime taskStart = (DateTime) task.getValue( Task.FIELD.Start.ordinal() );
+      DateTime taskEnd = (DateTime) task.getValue( Task.FIELD.End.ordinal() );
+      DateTime deadline = (DateTime) task.getValue( Task.FIELD.Deadline.ordinal() );
+      if ( taskStart != null )
+      {
+        if ( start == null || taskStart.toSerialMilliseconds() < start.toSerialMilliseconds() )
+          start = taskStart;
+        if ( end == null || taskStart.toSerialMilliseconds() > end.toSerialMilliseconds() )
+          end = taskStart;
+      }
+      if ( taskEnd != null )
+      {
+        if ( start == null || taskEnd.toSerialMilliseconds() < start.toSerialMilliseconds() )
+          start = taskEnd;
+        if ( end == null || taskEnd.toSerialMilliseconds() > end.toSerialMilliseconds() )
+          end = taskEnd;
+      }
+      if ( deadline != null )
+      {
+        if ( start == null || deadline.toSerialMilliseconds() < start.toSerialMilliseconds() )
+          start = deadline;
+        if ( end == null || deadline.toSerialMilliseconds() > end.toSerialMilliseconds() )
+          end = deadline;
+      }
+    }
+    return new TaskBounds( start, end );
   }
 
   /*************************************** changeViewport ****************************************/

@@ -59,7 +59,7 @@ public class Schedule
     private TimeSpan                  m_duration;       // validated duration copied for the preview
     private TimeSpan                  m_rounding;       // validated optional end rounding
     private DateTime                  m_enteredStart;   // fixed start, or null for ASAP
-    private long                      m_durationMillis; // working target, or -1 for elapsed calendar duration
+    private long                      m_durationMillis; // working-millisecond target, or -1 for another duration basis
     private SchedulePreview.TaskDates m_dates;          // completed preview row
 
     /*************************************** constructor *****************************************/
@@ -84,11 +84,18 @@ public class Schedule
   /****************************************** schedule *******************************************/
   public static void schedule( Plan plan )
   {
-    // trace graph order; dated previews require an explicit calculation limit.
-    Utils.trace( "~~~~~~~~~~~~~~~~ SCHEDULE ~~~~~~~~~~~~~~~~" );
+    // attempt to schedule the specified plan
+    Utils.trace( "~~~~~~~~~~~~~~~~ SCHEDULING STARTED ~~~~~~~~~~~~~~~~" );
     var list = getOrderedTasks( plan.getTasks(), new IdentityHashMap<>() );
 
-    Utils.trace( list.stream().map( node -> node.m_task ).toList() );
+    // prepare tasks for scheduling (set all start-ends as NOT YET SCHEDULED)
+    // prepare resources for scheduling (clear all resourcing to task allocations)
+
+    // schedule each individual task in order
+
+    // update status to give overall result
+
+    Utils.trace( "~~~~~~~~~~~~~~~~ SCHEDULING FINISHED ~~~~~~~~~~~~~~~~" );
   }
 
   /****************************************** schedule *******************************************/
@@ -240,9 +247,7 @@ public class Schedule
       node.m_durationMillis = switch ( node.m_duration.getUnit() )
       {
         case SECONDS, MINUTES, HOURS -> IntervalProgress.targetMillis( node.m_duration );
-        case WEEKS, MONTHS, YEARS -> -1;
-        case DAYS -> throw new IllegalArgumentException(
-            "Positive day-based duration is not supported in this preview" );
+        case DAYS, WEEKS, MONTHS, YEARS -> -1;
       };
 
     node.m_rounding = TimeSpan.parse( task.getValue( Task.FIELD.Rounding.ordinal() ) );
@@ -258,7 +263,8 @@ public class Schedule
     if ( start.toSerialMilliseconds() > limit.toSerialMilliseconds() )
       throw new IllegalArgumentException( "Start " + start + " is after preview limit " + limit );
 
-    int searches = node.m_durationMillis > 0 ? 1 : 0;
+    int searches = node.m_durationMillis > 0
+        || node.m_duration.getUnit() == Unit.DAYS && node.m_duration.getNumber() > 0 ? 1 : 0;
     var predecessors = task.getPredecessors();
     for ( int index = 0; predecessors != null && index < predecessors.size(); index++ )
     {
@@ -302,9 +308,24 @@ public class Schedule
     }
 
     Utils.trace( "SCHEDULE PREVIEW start", "task=", node.m_index, "start=", start );
-    DateTime normalFinish = node.m_durationMillis >= 0
-        ? calendar.advanceWorkingMillis( start, node.m_durationMillis, Direction.FORWARD, limit )
-        : CalendarShift.shift( start, node.m_duration );
+    DateTime normalFinish;
+    if ( node.m_duration.getUnit() == Unit.DAYS )
+    {
+      // reconstruct entered hundredths once; day weights determine progress rather than a fixed hours-per-day value.
+      int quantity100ths = (int) Math.rint( node.m_duration.getNumber() * 100 );
+      try
+      {
+        normalFinish = calendar.advanceEquivalentDays( start, quantity100ths, limit );
+      }
+      catch ( IllegalArgumentException failure )
+      {
+        throw new IllegalArgumentException( "Task " + node.m_index + ": " + failure.getMessage(), failure );
+      }
+    }
+    else
+      normalFinish = node.m_durationMillis >= 0
+          ? calendar.advanceWorkingMillis( start, node.m_durationMillis, Direction.FORWARD, limit )
+          : CalendarShift.shift( start, node.m_duration );
     if ( normalFinish == null || normalFinish.toSerialMilliseconds() > limit.toSerialMilliseconds() )
       throw new IllegalArgumentException(
           "Task " + node.m_index + ": duration target was not reached by preview limit " + limit );

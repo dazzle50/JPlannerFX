@@ -21,7 +21,14 @@ package rjc.jplanner.gui.gantt;
 import java.util.ArrayList;
 
 import javafx.application.Platform;
+import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
@@ -49,8 +56,8 @@ public class Gantt extends Region
   private GanttScrollBar       m_scrollBar;                          // horizontal scroll bar
   private PlanContext          m_context;                            // shared undo history for keyboard shortcuts
   private TasksView            m_tasksView;                          // table whose header and zoom align with the axes
-  private GanttAxis            m_contextAxis;                        // last targeted axis for keyboard context menus
-  private GanttAxisContextMenu m_contextMenu;                        // currently open axis menu, or null
+  private GanttAxis            m_contextAxis;                        // keyboard menu axis, or null for the plot
+  private ContextMenu          m_contextMenu;                        // currently open context menu, or null
   private boolean              m_fitPending;                         // view still needs its first fit
   private boolean              m_fitQueued;                          // fit is waiting for layout to finish
 
@@ -86,7 +93,6 @@ public class Gantt extends Region
     m_axes = new ArrayList<>( 2 );
     m_axes.add( new GanttAxis( scale, GanttAxisInterval.MONTH ) );
     m_axes.add( new GanttAxis( scale, GanttAxisInterval.WEEK ) );
-    m_contextAxis = m_axes.get( 0 );
     m_plot = new GanttPlot( view, scale );
     getChildren().addAll( m_axes.get( 0 ), m_axes.get( 1 ), m_plot, m_scrollBar );
 
@@ -97,6 +103,8 @@ public class Gantt extends Region
       requestFocus();
       if ( event.getTarget() instanceof GanttAxis axis )
         m_contextAxis = axis;
+      else if ( event.getTarget() == m_plot )
+        m_contextAxis = null;
     } );
     addEventFilter( KeyEvent.KEY_PRESSED, this::keyPressed );
     setOnContextMenuRequested( this::openContextMenu );
@@ -157,11 +165,12 @@ public class Gantt extends Region
   /*************************************** openContextMenu ***************************************/
   private void openContextMenu( ContextMenuEvent event )
   {
-    // open the context menu for the last targeted axis, or the first axis if none has been targeted yet
+    // keyboard requests follow the last targeted area, defaulting to the plot
     GanttAxis axis = event.getTarget() instanceof GanttAxis target ? target : null;
     if ( event.isKeyboardTrigger() )
       axis = m_contextAxis;
-    if ( axis == null || !m_axes.contains( axis ) )
+    boolean plot = event.isKeyboardTrigger() ? axis == null : event.getTarget() == m_plot;
+    if ( !plot && ( axis == null || !m_axes.contains( axis ) ) )
       return;
 
     m_contextAxis = axis;
@@ -169,7 +178,7 @@ public class Gantt extends Region
     // replace the previous menu for repeated mouse or keyboard requests
     if ( m_contextMenu != null )
       m_contextMenu.hide();
-    var menu = new GanttAxisContextMenu( this, axis );
+    ContextMenu menu = plot ? createPlotContextMenu() : new GanttAxisContextMenu( this, axis );
     menu.setOnHidden( hidden ->
     {
       if ( m_contextMenu == menu )
@@ -180,6 +189,30 @@ public class Gantt extends Region
     // window ownership lets clicks anywhere in the Gantt dismiss the menu normally
     menu.show( getScene().getWindow(), event.getScreenX(), event.getScreenY() );
     event.consume();
+  }
+
+  /************************************ createPlotContextMenu ************************************/
+  private ContextMenu createPlotContextMenu()
+  {
+    // use the same navigation actions and undo behaviour as the keyboard shortcuts
+    var zoomIn = new MenuItem( "Zoom in" );
+    zoomIn.setAccelerator( new KeyCodeCombination( KeyCode.PLUS, KeyCombination.CONTROL_DOWN ) );
+    zoomIn.setOnAction( event -> m_navigation.zoomIn() );
+
+    var zoomOut = new MenuItem( "Zoom out" );
+    zoomOut.setAccelerator( new KeyCodeCombination( KeyCode.MINUS, KeyCombination.CONTROL_DOWN ) );
+    zoomOut.setOnAction( event -> m_navigation.zoomOut() );
+
+    var fit = new MenuItem( "Fit all" );
+    fit.setAccelerator( new KeyCodeCombination( KeyCode.DIGIT0, KeyCombination.CONTROL_DOWN ) );
+    fit.setDisable( !m_navigation.canFit() );
+    fit.setOnAction( event -> m_navigation.fit( true ) );
+
+    var nonWorkingDays = new CheckMenuItem( "Non-working days" );
+    nonWorkingDays.setSelected( m_plot.isNonWorkingDaysVisible() );
+    nonWorkingDays.setOnAction( event -> m_plot.setNonWorkingDaysVisible( nonWorkingDays.isSelected() ) );
+
+    return new ContextMenu( zoomIn, zoomOut, fit, new SeparatorMenuItem(), nonWorkingDays );
   }
 
   /**************************************** getAxisCount *****************************************/

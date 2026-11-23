@@ -397,6 +397,72 @@ public class Calendar
     }
   }
 
+  /************************************ advanceEquivalentDays ************************************/
+  // advance entered hundredths of equivalent days, rounding only the final completion forward to a millisecond.
+  // zero preserves from; null means insufficient progress within the inclusive limit, not impossibility.
+  public DateTime advanceEquivalentDays( DateTime from, int quantity100ths, DateTime limit )
+  {
+    validateSearch( from, limit, Direction.FORWARD );
+    if ( quantity100ths < 0 )
+      throw new IllegalArgumentException( "Equivalent-day quantity must not be negative" );
+    if ( quantity100ths == 0 )
+      return from;
+
+    long last = limit.toSerialMilliseconds();
+    Date date = from.getDate();
+    Time time = from.getTime();
+    long scaleMillis = 0;
+    long remaining = 0;
+    while ( true )
+    {
+      long midnight = (long) date.getEpochDay() * Time.MILLIS_PER_DAY;
+      int boundary = (int) Math.min( Time.MILLIS_PER_DAY, last - midnight );
+      DayType day = getDayType( date );
+      int available = day.workingMillisBetween( time, Time.ofMilliseconds( boundary ) );
+      double weight = day.getEquivalentDays();
+      if ( available > 0 && weight > 0 )
+      {
+        int weight100ths = (int) Math.rint( weight * 100 );
+        // preserve finer editable weights; this bounded calculation supports exact hundredths only.
+        if ( weight100ths / 100.0 != weight )
+          throw new IllegalArgumentException(
+              "Day type '" + day.getName() + "' has unsupported equivalent-day precision; expected hundredths" );
+
+        if ( scaleMillis == 0 )
+        {
+          // only the first contributing date can be partial before another date is visited.
+          // retain its working-day denominator so intervening whole dates subtract exact integer amounts.
+          scaleMillis = day.getWorkingMillis();
+          remaining = (long) quantity100ths * scaleMillis;
+          long capacity = (long) weight100ths * available;
+          if ( remaining <= capacity )
+            return DateTime.of( date,
+                day.advanceWorkingMillis( time, (int) Math.ceilDiv( remaining, weight100ths ), Direction.FORWARD ) );
+          remaining -= capacity;
+        }
+        else
+        {
+          long capacity = weight100ths * scaleMillis;
+          if ( remaining <= capacity )
+          {
+            // this product is at most 999 * MILLIS_PER_DAY squared, which fits in a long.
+            int required = (int) Math.ceilDiv( remaining * day.getWorkingMillis(), capacity );
+            if ( required > available )
+              return null;
+            return DateTime.of( date, day.advanceWorkingMillis( time, required, Direction.FORWARD ) );
+          }
+          remaining -= capacity;
+        }
+      }
+
+      // check the fence before stepping, including stored 24:00 and the maximum representable date.
+      if ( midnight + boundary == last || date.equals( Date.MAX_VALUE ) )
+        return null;
+      date = date.plusDays( 1 );
+      time = Time.MIN_VALUE;
+    }
+  }
+
   /*************************************** validateSearch ****************************************/
   // compare timeline positions so 24:00 and the following 00:00 share the same bound.
   private static void validateSearch( DateTime from, DateTime limit, Direction direction )
