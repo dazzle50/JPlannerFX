@@ -64,7 +64,7 @@ public class Resources extends ArrayList<Resource>
   {
     // initialise list with default resources
     clear();
-    for ( int count = 0; count <= 5; count++ )
+    for ( int count = 0; count <= 10; count++ )
       add( new Resource() );
 
     // setup special resource 0 (resource used for work tasks when no other resources assigned or available)

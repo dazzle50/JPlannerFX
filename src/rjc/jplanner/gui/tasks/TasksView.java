@@ -18,9 +18,16 @@
 
 package rjc.jplanner.gui.tasks;
 
+import java.lang.ref.WeakReference;
+import java.util.Objects;
+
 import javafx.application.Platform;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import rjc.jplanner.commands.CommandTaskSetTitle;
+import rjc.jplanner.commands.CommandTaskSetType;
 import rjc.jplanner.gui.editors.EditorPredecessors;
 import rjc.jplanner.gui.editors.EditorResources;
 import rjc.jplanner.gui.editors.EditorTimeSpan;
@@ -50,6 +57,7 @@ public class TasksView extends TableView
 {
   private final TasksViewInput     m_input;         // input safeguards and selection targeting for this view
   private final TasksRowVisibility m_rowVisibility; // independent collapse and manual hiding state
+  private final Tooltip            m_timingTooltip; // full explanation for the hovered task date
 
   /**************************************** constructor ******************************************/
   public TasksView( TableData data, String name )
@@ -62,6 +70,54 @@ public class TasksView extends TableView
         TableMenuItems.ROW_FILTER_TEXT );
     m_input = new TasksViewInput( this );
     m_rowVisibility = new TasksRowVisibility( this, m_input );
+
+    // keep date values available to editors and undo while showing explanations through the drawer
+    m_timingTooltip = new Tooltip();
+    m_timingTooltip.setWrapText( true );
+    m_timingTooltip.setMaxWidth( 400 );
+    getCanvas().getOverlay().addEventFilter( MouseEvent.MOUSE_MOVED, this::updateTimingTooltip );
+    getCanvas().getOverlay().addEventFilter( ScrollEvent.SCROLL, event -> setTimingTooltip( null ) );
+    var weakView = new WeakReference<>( this );
+    data.addListener( ( sender, message ) ->
+    {
+      var view = weakView.get();
+      if ( view != null )
+        view.setTimingTooltip( null );
+    } );
+  }
+
+  /************************************* updateTimingTooltip *************************************/
+  private void updateTimingTooltip( MouseEvent event )
+  {
+    var point = sceneToLocal( event.getSceneX(), event.getSceneY() );
+    int column = getColumnIndex( (int) point.getX() );
+    int row = getRowIndex( (int) point.getY() );
+    String text = null;
+    if ( point.getX() >= getHeaderWidth() && point.getY() >= getHeaderHeight() && point.getX() < getCanvas().getWidth()
+        && point.getY() < getCanvas().getHeight() && column >= 0 && column < getColumnsAxis().getCount() && row >= 0
+        && row < getRowsAxis().getCount() )
+    {
+      var cell = (TasksCellDrawer) getCellDrawer();
+      cell.setIndex( this, column, row );
+      cell.getValueVisual();
+      text = cell.getTimingStatus();
+    }
+
+    setTimingTooltip( text );
+  }
+
+  /************************************** setTimingTooltip ***************************************/
+  private void setTimingTooltip( String text )
+  {
+    if ( Objects.equals( text, m_timingTooltip.getText() ) )
+      return;
+
+    // uninstall on ordinary cells so hovering them cannot open an empty tooltip
+    m_timingTooltip.hide();
+    Tooltip.uninstall( getCanvas().getOverlay(), m_timingTooltip );
+    m_timingTooltip.setText( text );
+    if ( text != null && !text.isBlank() )
+      Tooltip.install( getCanvas().getOverlay(), m_timingTooltip );
   }
 
   /******************************************** reset ********************************************/
@@ -165,7 +221,26 @@ public class TasksView extends TableView
         return new EditorResources();
 
       case Type:
-        return new EditorChoose( TaskType.values() );
+        // capture the edited model row so later focus changes cannot redirect the command
+        final int typeRow = cell.dataRow;
+        return new EditorChoose( TaskType.values() )
+        {
+          /*************************************** commit ****************************************/
+          @Override
+          protected boolean commit()
+          {
+            try
+            {
+              return getUndoStack()
+                  .push( new CommandTaskSetType( (TasksData) getData(), typeRow, (TaskType) getValue() ) );
+            }
+            catch ( IllegalArgumentException | IllegalStateException exception )
+            {
+              getStatus().update( Level.ERROR, exception.getMessage() );
+              return false;
+            }
+          }
+        };
 
       default:
         return null;

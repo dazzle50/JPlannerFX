@@ -23,6 +23,7 @@ import rjc.jplanner.commands.CommandCalendarSetExceptions;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.calendars.Calendar.FIELD;
 import rjc.table.data.TableData;
+import rjc.table.data.types.Date;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
 import rjc.table.view.TableContextMenuBuilder;
@@ -71,6 +72,25 @@ public class CalendarsView extends TableView
     super.reset();
     getColumnsAxis().setHeaderNominalSize( 80 );
     getColumnsAxis().setDefaultNominalSize( 140 );
+  }
+
+  /**************************************** getCellDrawer ****************************************/
+  @Override
+  public CellDrawer getCellDrawer()
+  {
+    // format only the display; keep Date values available to editors and undo
+    return new CellDrawer()
+    {
+      /****************************************** getText ****************************************/
+      @Override
+      protected String getText()
+      {
+        if ( value instanceof Date date && view.getData().getUserData() instanceof PlanContext context )
+          return date.format( context.getPlan().getDateFormat() );
+
+        return super.getText();
+      }
+    };
   }
 
   /**************************************** getCellEditor ****************************************/

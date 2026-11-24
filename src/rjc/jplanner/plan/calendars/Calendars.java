@@ -71,11 +71,6 @@ public class Calendars extends ArrayList<Calendar>
 
     anchor = Date.of( 2025, 1, 1 );
     add( new Calendar( "Full time", anchor, fullTime ) );
-
-    add( new Calendar( "Fancy", anchor, nonWorking, nonWorking, nonWorking, shortDay, shortDay, evening, evening,
-        fullTime, nonWorking, fullTime ) );
-    getLast().addException( 25, 12, 2026, nonWorking );
-    getLast().addException( 28, 12, 2026, nonWorking );
   }
 
   /****************************************** setValue *******************************************/

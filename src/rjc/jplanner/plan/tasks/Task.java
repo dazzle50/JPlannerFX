@@ -18,6 +18,8 @@
 
 package rjc.jplanner.plan.tasks;
 
+import java.util.Objects;
+
 import rjc.jplanner.plan.TimeSpan;
 import rjc.table.Utils;
 import rjc.table.data.types.DateTime;
@@ -30,8 +32,7 @@ public class Task
 {
   private String        m_title;        // free text title
   private TimeSpan      m_duration;     // duration of task
-  private DateTime      m_start;        // start date-time of task
-  private DateTime      m_end;          // end date-time of task
+  private TaskTiming    m_timing;       // task dates and explanations for unavailable dates
   private TimeSpan      m_work;         // work effort for task
   private Predecessors  m_predecessors; // task predecessors
   private TaskResources m_resources;    // resources allocated to task
@@ -54,6 +55,7 @@ public class Task
   {
     // initialise
     m_duration = new TimeSpan( "1d" );
+    m_timing = new TaskTiming();
     m_type = TaskType.ASAP_FIXED_DURATION;
     m_priority = 100;
     m_indent = 0;
@@ -72,6 +74,38 @@ public class Task
   {
     // return task-type
     return m_type;
+  }
+
+  /****************************************** getTiming ******************************************/
+  public TaskTiming getTiming()
+  {
+    return m_timing;
+  }
+
+  /****************************************** setTiming ******************************************/
+  public void setTiming( TaskTiming timing )
+  {
+    Objects.requireNonNull( timing, "timing" );
+
+    // scheduling must preserve entered dates; user edits and undo use setValue instead
+    boolean fixedStart = m_type == TaskType.START_ON_DURATION || m_type == TaskType.START_ON_WORK
+        || m_type == TaskType.FIXED_PERIOD;
+    if ( fixedStart && !Objects.equals( m_timing.getStart(), timing.getStart() ) )
+      throw new IllegalArgumentException( "Scheduling cannot change an entered start" );
+    if ( m_type == TaskType.FIXED_PERIOD && !Objects.equals( m_timing.getEnd(), timing.getEnd() ) )
+      throw new IllegalArgumentException( "Scheduling cannot change an entered end" );
+
+    m_timing = timing;
+  }
+
+  /************************************ restoreTypeAndTiming *************************************/
+  public void restoreTypeAndTiming( TaskType type, TaskTiming timing )
+  {
+    // validate both values before restoring history without repeating type-transition status clearing
+    Objects.requireNonNull( type, "type" );
+    Objects.requireNonNull( timing, "timing" );
+    m_type = type;
+    m_timing = timing;
   }
 
   /***************************************** getPriority *****************************************/
@@ -112,7 +146,7 @@ public class Task
       case Duration:
         return m_duration;
       case End:
-        return m_end;
+        return m_timing.getEnd();
       case Rounding:
         return TimeSpan.copyOf( m_endRounding );
       case Predecessors:
@@ -122,7 +156,7 @@ public class Task
       case Resources:
         return m_resources;
       case Start:
-        return m_start;
+        return m_timing.getStart();
       case Title:
         return m_title;
       case Type:
@@ -154,21 +188,33 @@ public class Task
         return null;
 
       case Start:
-        // check new value is date-time
+        // user edits and undo may clear a date; only calculated timing updates protect fixed dates
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_timing = m_timing.withStart( null );
+          return null;
+        }
         if ( newValue instanceof DateTime dt )
         {
           if ( commit )
-            m_start = dt;
+            m_timing = m_timing.withStart( dt );
           return null;
         }
         return "Not Date-time: " + Utils.objectsString( newValue );
 
       case End:
-        // check new value is date-time
+        // clearing an end also clears its derived rounded end
+        if ( newValue == null )
+        {
+          if ( commit )
+            m_timing = m_timing.withEnd( null );
+          return null;
+        }
         if ( newValue instanceof DateTime dt )
         {
           if ( commit )
-            m_end = dt;
+            m_timing = m_timing.withEnd( dt );
           return null;
         }
         return "Not Date-time: " + Utils.objectsString( newValue );
@@ -196,7 +242,20 @@ public class Task
         if ( newValue instanceof TaskType type )
         {
           if ( commit )
+          {
+            // discard scheduling explanations only for dates that become fixed
+            boolean wasFixedStart = m_type == TaskType.START_ON_DURATION || m_type == TaskType.START_ON_WORK
+                || m_type == TaskType.FIXED_PERIOD;
+            boolean fixedStart = type == TaskType.START_ON_DURATION || type == TaskType.START_ON_WORK
+                || type == TaskType.FIXED_PERIOD;
+            boolean clearStart = fixedStart && !wasFixedStart;
+            boolean clearEnd = type == TaskType.FIXED_PERIOD && m_type != TaskType.FIXED_PERIOD;
+            if ( clearStart || clearEnd )
+              m_timing = new TaskTiming( m_timing.getStart(), m_timing.getEnd(),
+                  clearStart ? null : m_timing.getStartStatus(), clearEnd ? null : m_timing.getEndStatus(),
+                  m_timing.getRoundedEnd() );
             m_type = type;
+          }
           return null;
         }
         return "Not task-type: " + Utils.objectsString( newValue );

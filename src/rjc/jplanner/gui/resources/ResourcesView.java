@@ -21,6 +21,7 @@ package rjc.jplanner.gui.resources;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.resources.Resource.FIELD;
 import rjc.table.data.TableData;
+import rjc.table.data.types.Date;
 import rjc.table.view.Colours;
 import rjc.table.view.TableContextMenu;
 import rjc.table.view.TableContextMenu.TableMenuItems;
@@ -70,6 +71,25 @@ public class ResourcesView extends TableView
     getColumnsAxis().setNominalSize( FIELD.Available.ordinal(), 70 );
     getColumnsAxis().setNominalSize( FIELD.Cost.ordinal(), 70 );
     getColumnsAxis().setNominalSize( FIELD.Comment.ordinal(), 250 );
+  }
+
+  /**************************************** getCellDrawer ****************************************/
+  @Override
+  public CellDrawer getCellDrawer()
+  {
+    // format only the display; keep Date values available to editors and undo
+    return new CellDrawer()
+    {
+      /****************************************** getText ****************************************/
+      @Override
+      protected String getText()
+      {
+        if ( value instanceof Date date && view.getData().getUserData() instanceof PlanContext context )
+          return date.format( context.getPlan().getDateFormat() );
+
+        return super.getText();
+      }
+    };
   }
 
   /**************************************** getCellEditor ****************************************/

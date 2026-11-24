@@ -19,17 +19,43 @@
 package rjc.jplanner.gui.tasks;
 
 import javafx.geometry.Rectangle2D;
+import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.tasks.Task.FIELD;
+import rjc.table.data.types.DateTime;
 import rjc.table.view.Colours;
 import rjc.table.view.cell.CellDrawer;
 
 /*************************************************************************************************/
-/************************* Draws task titles with summary collapse boxes **************************/
+/********************** Draws task date statuses and title collapse boxes ************************/
 /*************************************************************************************************/
 
 final class TasksCellDrawer extends CellDrawer
 {
   private static final double COLLAPSE_BOX_SIZE = 11.0; // logical pixels across the summary box
+
+  /****************************************** getText ********************************************/
+  @Override
+  protected String getText()
+  {
+    if ( value instanceof DateTime datetime && view.getData().getUserData() instanceof PlanContext context )
+      return datetime.format( context.getPlan().getDateTimeFormat() );
+
+    return value == null ? getTimingStatus() : super.getText();
+  }
+
+  /*************************************** getTimingStatus ***************************************/
+  String getTimingStatus()
+  {
+    if ( dataRow < 0 || dataColumn != FIELD.Start.ordinal() && dataColumn != FIELD.End.ordinal() )
+      return null;
+
+    var task = ( (TasksData) view.getData() ).getTasks().get( dataRow );
+    if ( task.isBlank() )
+      return null;
+
+    var timing = task.getTiming();
+    return dataColumn == FIELD.Start.ordinal() ? timing.getStartStatus() : timing.getEndStatus();
+  }
 
   /*************************************** getCollapseBox ****************************************/
   Rectangle2D getCollapseBox()
