@@ -30,6 +30,7 @@ final class AssignmentAllocator
   /***************************************** constructor *****************************************/
   private AssignmentAllocator()
   {
+    // use static calculations without creating an assignment allocator
   }
 
   /**************************************** allocateUpTo *****************************************/
@@ -37,6 +38,7 @@ final class AssignmentAllocator
   // maxQuantity is the aggregate maximum across all matching resources.
   static double[] allocateUpTo( double[] capacities, double maxQuantity )
   {
+    // allocate one capped assignment fairly across matching capacities without changing the supplied array
     if ( !Double.isFinite( maxQuantity ) || maxQuantity < 0.0 )
       throw new IllegalArgumentException( "Assignment maximum must be finite and non-negative" );
 
@@ -47,6 +49,7 @@ final class AssignmentAllocator
   // callers supply a privately owned, validated capacity array and a finite, non-negative maximum.
   static double[] allocateUpToInPlace( double[] allocations, double maxQuantity )
   {
+    // apply capped equal-share allocation to a privately owned, already validated capacity array
     if ( maxQuantity == 0.0 || allocations.length == 0 )
     {
       Arrays.fill( allocations, 0.0 );
@@ -98,6 +101,7 @@ final class AssignmentAllocator
   /**************************************** allocateAll ******************************************/
   static double[] allocateAll( double[] capacities )
   {
+    // return an independent validated allocation of all supplied capacity
     // all-available has no aggregate maximum and still returns an independent result.
     return copyCapacities( capacities );
   }
@@ -106,6 +110,7 @@ final class AssignmentAllocator
   // callers supply 0 <= allocation <= available; discard an upward-rounded residual, never create capacity.
   static double subtractDown( double available, double allocation )
   {
+    // subtract allocation conservatively so an upward-rounded residual cannot create physical capacity
     double remaining = available - allocation;
 
     // recover the subtraction error with FastTwoSum because available is at least allocation.
@@ -117,6 +122,7 @@ final class AssignmentAllocator
   /*************************************** copyCapacities ****************************************/
   private static double[] copyCapacities( double[] capacities )
   {
+    // copy and validate every capacity before allocation can change its private working array
     // validate the complete copy, including when a zero maximum would otherwise skip calculation.
     double[] copy = Objects.requireNonNull( capacities, "capacities" ).clone();
     for ( double capacity : copy )

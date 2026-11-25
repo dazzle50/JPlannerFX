@@ -19,9 +19,11 @@
 package rjc.jplanner.plan.schedule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
 
@@ -33,6 +35,7 @@ import rjc.jplanner.plan.days.DayType;
 import rjc.jplanner.plan.days.DayType.Direction;
 import rjc.jplanner.plan.tasks.Dependency.DependencyType;
 import rjc.jplanner.plan.tasks.Task;
+import rjc.jplanner.plan.tasks.TaskTiming;
 import rjc.jplanner.plan.tasks.TaskType;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.Utils;
@@ -40,68 +43,61 @@ import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
-/************************ Orders tasks and calculates bounded date previews **********************/
+/************************ Orders tasks and stages bounded date calculations **********************/
 /*************************************************************************************************/
 
-public class Schedule
+public final class Schedule
 {
-  private static final int              MAX_PREVIEW_TASKS = 1_000;                                               // nonblank tasks admitted to a date preview
-  private static final long             MAX_CALENDAR_WORK = 1_000_000;                                           // estimated graph, date and period visits
-  private static final Comparator<Node> NODE_ORDER        = Comparator.comparingLong( node -> node.m_orderKey ); // graph order
+  private static final int                   MAX_DATE_TASKS    = 1_000;     // task limit
+  private static final long                  MAX_CALENDAR_WORK = 1_000_000; // visit limit
 
-  private static class Node
+  private static final Comparator<TaskState> STATE_ORDER       = Comparator
+      .comparingInt( ( TaskState state ) -> state.m_priority ).reversed()
+      .thenComparingInt( state -> state.m_taskNumber );                     // graph order
+
+  // dependency links, captured inputs and staged timing for one task in this calculation.
+  private static class TaskState
   {
-    private final Task                m_task;           // original task identity
-    private final int                 m_index;          // task number captured for this run
-    private final long                m_orderKey;       // captured priority and task number
-    private int                       m_incoming;       // predecessors still awaiting graph processing
-    private ArrayList<Node>           m_successors;     // tasks released by graph processing
-    private TimeSpan                  m_duration;       // validated duration copied for the preview
-    private TimeSpan                  m_rounding;       // validated optional end rounding
-    private DateTime                  m_enteredStart;   // fixed start, or null for ASAP
-    private long                      m_durationMillis; // working-millisecond target, or -1 for another duration basis
-    private SchedulePreview.TaskDates m_dates;          // completed preview row
+    private final Task           m_task;           // original task identity
+    private final int            m_taskNumber;     // task number captured for this run
+    private final int            m_priority;       // priority captured for this run
+    private int                  m_incoming;       // predecessors still awaiting graph processing
+    private ArrayList<TaskState> m_successors;     // tasks released by graph processing
+    private TimeSpan             m_duration;       // validated duration copied for calculation
+    private TimeSpan             m_rounding;       // validated optional end rounding
+    private DateTime             m_enteredStart;   // fixed start, or null for ASAP
+    private long                 m_durationMillis; // working-millisecond target, or -1 for another duration basis
+    private TaskTiming           m_timing;         // staged dates, never applied by date calculation
 
     /*************************************** constructor *****************************************/
-    private Node( Task task, int index )
+    private TaskState( Task task, int index )
     {
+      // capture task identity, list position and priority for one dependency-ordering pass
       m_task = task;
-      m_index = index;
-      m_orderKey = ( (long) ( 999 - task.getPriority() ) << 32 ) | index;
+      m_taskNumber = index;
+      m_priority = task.getPriority();
     }
+  }
 
-    /*************************************** addSuccessor ****************************************/
-    private void addSuccessor( Node successor )
-    {
-      // allocate successor storage only for tasks that need it
-      if ( m_successors == null )
-        m_successors = new ArrayList<>( 2 );
-
-      m_successors.add( successor );
-    }
+  /***************************************** constructor *****************************************/
+  private Schedule()
+  {
+    // use static entry points for task ordering and date staging
   }
 
   /****************************************** schedule *******************************************/
   public static void schedule( Plan plan )
   {
-    // attempt to schedule the specified plan
-    Utils.trace( "~~~~~~~~~~~~~~~~ SCHEDULING STARTED ~~~~~~~~~~~~~~~~" );
-    var list = getOrderedTasks( plan.getTasks(), new IdentityHashMap<>() );
-
-    // prepare tasks for scheduling (set all start-ends as NOT YET SCHEDULED)
-    // prepare resources for scheduling (clear all resourcing to task allocations)
-
-    // schedule each individual task in order
-
-    // update status to give overall result
-
-    Utils.trace( "~~~~~~~~~~~~~~~~ SCHEDULING FINISHED ~~~~~~~~~~~~~~~~" );
+    // placeholder for scheduling the specified plan
+    Utils.trace( "Plan scheduling is not implemented yet" );
   }
 
-  /****************************************** schedule *******************************************/
-  public static SchedulePreview schedule( Plan plan, DateTime limit )
+  /**************************************** stageTaskDates ***************************************/
+  // internal date staging only; callers must serialize model edits throughout this calculation.
+  static Map<Task, TaskTiming> stageTaskDates( Plan plan, DateTime limit )
   {
-    Utils.trace( "SCHEDULE PREVIEW begin", "limit=", limit );
+    // stage bounded task timing without changing live dates, statuses or allocations
+    Utils.trace( "SCHEDULE DATES begin", "limit=", limit );
     try
     {
       Objects.requireNonNull( plan, "plan" );
@@ -109,37 +105,33 @@ public class Schedule
       DateTime planStart = Objects.requireNonNull( plan.getDefaultStart(), "plan default start" );
       Tasks tasks = plan.getTasks();
       if ( tasks.size() > MAX_CALENDAR_WORK )
-        throw new IllegalArgumentException( "Too many plan rows for this preview" );
+        throw new IllegalArgumentException( "Too many plan rows for date calculation" );
       tasks.buildHierarchy();
       int taskCount = tasks.getNotNullCount();
-      Utils.trace( "SCHEDULE PREVIEW inputs", "tasks=", taskCount, "planStart=", planStart );
-      if ( taskCount > MAX_PREVIEW_TASKS )
-        throw new IllegalArgumentException( "Preview supports at most " + MAX_PREVIEW_TASKS + " tasks" );
+      if ( taskCount > MAX_DATE_TASKS )
+        throw new IllegalArgumentException( "Date calculation supports at most " + MAX_DATE_TASKS + " tasks" );
 
-      int maxPeriods = validateCalendar( plan );
+      int maxPeriods = validateProjectCalendar( plan );
       Calendar calendar = plan.getDefaultCalendar();
-      var nodesByTask = new IdentityHashMap<Task, Node>( taskCount );
-      var ordered = getOrderedTasks( tasks, nodesByTask );
+      var statesByTask = new IdentityHashMap<Task, TaskState>( taskCount );
+      var ordered = orderTasks( tasks, statesByTask );
       long searches = 0;
       long edges = 0;
       long earliestMillis = limit.toSerialMilliseconds();
-      for ( Node node : ordered )
+      for ( TaskState state : ordered )
       {
         try
         {
-          searches += validateTask( node, planStart, limit );
+          searches += prepareTask( state, planStart, limit );
         }
         catch ( IllegalArgumentException failure )
         {
-          throw new IllegalArgumentException( "Task " + node.m_index + ": " + failure.getMessage(), failure );
+          throw new IllegalArgumentException( "Task " + state.m_taskNumber + ": " + failure.getMessage(), failure );
         }
-        DateTime start = node.m_enteredStart == null ? planStart : node.m_enteredStart;
+        DateTime start = state.m_enteredStart == null ? planStart : state.m_enteredStart;
         earliestMillis = Math.min( earliestMillis, start.toSerialMilliseconds() );
-        var predecessors = node.m_task.getPredecessors();
+        var predecessors = state.m_task.getPredecessors();
         edges += predecessors == null ? 0 : predecessors.size();
-        Utils.trace( "SCHEDULE PREVIEW task", node.m_index, "title=",
-            node.m_task.getValue( Task.FIELD.Title.ordinal() ), "type=", node.m_task.getTaskType(), "duration=",
-            node.m_duration, "enteredStart=", node.m_enteredStart, "rounding=", node.m_rounding );
       }
 
       // include a spare date for stored 24:00 starts and both period scans on a completion date.
@@ -151,49 +143,39 @@ public class Schedule
       // divide the remaining budget before multiplying, including extremely distant calculation limits.
       if ( baseWork > MAX_CALENDAR_WORK
           || searches > 0 && days > ( MAX_CALENDAR_WORK - baseWork ) / searches / periodWork )
-      {
-        Utils.trace( "SCHEDULE PREVIEW workload rejected", "searches=", searches, "days=", days, "maxPeriods=",
-            maxPeriods, "baseVisits=", baseWork, "budget=", MAX_CALENDAR_WORK );
-        throw new IllegalArgumentException( "Preview calendar workload exceeds " + MAX_CALENDAR_WORK
+        throw new IllegalArgumentException( "Date calculation workload exceeds " + MAX_CALENDAR_WORK
             + " estimated visits; choose an earlier limit or fewer tasks" );
-      }
-      long estimatedWork = baseWork + searches * days * periodWork;
-      Utils.trace( "SCHEDULE PREVIEW workload", "searches=", searches, "days=", days, "estimatedVisits=",
-          estimatedWork );
 
-      // calculate independently from the live task fields; publish no partial preview if a task fails.
-      for ( Node node : ordered )
+      // stage dates independently from live timing; return nothing if any task fails.
+      for ( TaskState state : ordered )
         try
         {
-          node.m_dates = calculateTask( node, nodesByTask, calendar, planStart, limit );
+          state.m_timing = calculateTaskTiming( state, statesByTask, calendar, planStart, limit );
         }
         catch ( ArithmeticException failure )
         {
-          throw new IllegalArgumentException( "Task " + node.m_index + ": date exceeds the stored range", failure );
+          throw new IllegalArgumentException( "Task " + state.m_taskNumber + ": date exceeds the stored range",
+              failure );
         }
 
-      // return original plan order, retaining task identity and captured values rather than live getters.
-      var rows = new ArrayList<SchedulePreview.TaskDates>( taskCount );
-      for ( Task task : tasks )
-      {
-        Node node = nodesByTask.get( task );
-        if ( node != null )
-          rows.add( node.m_dates );
-      }
-      var preview = new SchedulePreview( limit, rows );
-      Utils.trace( "SCHEDULE PREVIEW complete", "tasks=", rows.size(), "limit=", limit, "applied=false" );
-      return preview;
+      // keep identity lookup so edits and row moves cannot rebind the staged dates to another task.
+      var timing = new IdentityHashMap<Task, TaskTiming>( taskCount );
+      for ( TaskState state : ordered )
+        timing.put( state.m_task, state.m_timing );
+      Utils.trace( "SCHEDULE DATES complete", "tasks=", taskCount, "limit=", limit, "applied=false" );
+      return Collections.unmodifiableMap( timing );
     }
     catch ( RuntimeException failure )
     {
-      Utils.trace( "SCHEDULE PREVIEW failed", failure.getClass().getSimpleName(), failure.getMessage() );
+      Utils.trace( "SCHEDULE DATES failed", failure.getClass().getSimpleName(), failure.getMessage() );
       throw failure;
     }
   }
 
-  /************************************** validateCalendar ***************************************/
-  private static int validateCalendar( Plan plan )
+  /*********************************** validateProjectCalendar ***********************************/
+  private static int validateProjectCalendar( Plan plan )
   {
+    // validate project-calendar ownership and structure, returning the largest work-period count
     Calendar calendar = plan.getDefaultCalendar();
     if ( calendar == null || !plan.getCalendars().contains( calendar ) )
       throw new IllegalArgumentException( "Project default calendar is missing or does not belong to this plan" );
@@ -201,7 +183,8 @@ public class Schedule
       throw new IllegalArgumentException( "Project default calendar has an invalid anchor or cycle" );
     if ( (long) plan.getDayTypes().size() + calendar.getNormals().size()
         + calendar.getExceptions().size() > MAX_CALENDAR_WORK )
-      throw new IllegalArgumentException( "Project calendar configuration exceeds the preview workload limit" );
+      throw new IllegalArgumentException(
+          "Project calendar configuration exceeds the date calculation workload limit" );
 
     var ownedDays = new IdentityHashMap<DayType, Boolean>();
     for ( DayType day : plan.getDayTypes() )
@@ -224,53 +207,54 @@ public class Schedule
     return maxPeriods;
   }
 
-  /**************************************** validateTask *****************************************/
-  private static int validateTask( Node node, DateTime planStart, DateTime limit )
+  /***************************************** prepareTask *****************************************/
+  private static int prepareTask( TaskState state, DateTime planStart, DateTime limit )
   {
-    Task task = node.m_task;
+    // validate supported task inputs, capture calculation values and count bounded calendar searches
+    Task task = state.m_task;
     if ( task.getIndent() != 0 )
-      throw new IllegalArgumentException( "Outline tasks are not supported in this preview" );
+      throw new IllegalArgumentException( "Outline tasks are not supported in date calculation" );
     if ( task.getTaskType() != TaskType.ASAP_FIXED_DURATION && task.getTaskType() != TaskType.START_ON_DURATION )
       throw new IllegalArgumentException(
-          "Only ASAP-duration and Start-on-duration tasks are supported in this preview" );
+          "Only ASAP-duration and Start-on-duration tasks are supported in date calculation" );
     if ( task.getValue( Task.FIELD.Resources.ordinal() ) != null )
-      throw new IllegalArgumentException( "Resource assignments are not supported in this preview" );
+      throw new IllegalArgumentException( "Resource assignments are not supported in date calculation" );
     if ( task.getPriority() < 0 || task.getPriority() > 999 )
       throw new IllegalArgumentException( "Priority must be between 0 and 999" );
 
-    node.m_duration = TimeSpan.parse( task.getValue( Task.FIELD.Duration.ordinal() ) );
-    if ( node.m_duration == null )
+    state.m_duration = TimeSpan.parse( task.getValue( Task.FIELD.Duration.ordinal() ) );
+    if ( state.m_duration == null )
       throw new IllegalArgumentException( "Duration is required" );
-    if ( node.m_duration.getNumber() == 0 )
-      node.m_durationMillis = 0;
+    if ( state.m_duration.getNumber() == 0 )
+      state.m_durationMillis = 0;
     else
-      node.m_durationMillis = switch ( node.m_duration.getUnit() )
+      state.m_durationMillis = switch ( state.m_duration.getUnit() )
       {
-        case SECONDS, MINUTES, HOURS -> IntervalProgress.targetMillis( node.m_duration );
+        case SECONDS, MINUTES, HOURS -> IntervalProgress.toTargetMillis( state.m_duration );
         case DAYS, WEEKS, MONTHS, YEARS -> -1;
       };
 
-    node.m_rounding = TimeSpan.parse( task.getValue( Task.FIELD.Rounding.ordinal() ) );
-    if ( node.m_rounding != null && node.m_rounding.getNumber() <= 0 )
+    state.m_rounding = TimeSpan.parse( task.getValue( Task.FIELD.Rounding.ordinal() ) );
+    if ( state.m_rounding != null && state.m_rounding.getNumber() <= 0 )
       throw new IllegalArgumentException( "End rounding must be positive or absent" );
     if ( task.getTaskType() == TaskType.START_ON_DURATION )
     {
-      node.m_enteredStart = (DateTime) task.getValue( Task.FIELD.Start.ordinal() );
-      if ( node.m_enteredStart == null )
+      state.m_enteredStart = (DateTime) task.getValue( Task.FIELD.Start.ordinal() );
+      if ( state.m_enteredStart == null )
         throw new IllegalArgumentException( "Start-on date is required" );
     }
-    DateTime start = node.m_enteredStart == null ? planStart : node.m_enteredStart;
+    DateTime start = state.m_enteredStart == null ? planStart : state.m_enteredStart;
     if ( start.toSerialMilliseconds() > limit.toSerialMilliseconds() )
-      throw new IllegalArgumentException( "Start " + start + " is after preview limit " + limit );
+      throw new IllegalArgumentException( "Start " + start + " is after calculation limit " + limit );
 
-    int searches = node.m_durationMillis > 0
-        || node.m_duration.getUnit() == Unit.DAYS && node.m_duration.getNumber() > 0 ? 1 : 0;
+    int searches = state.m_durationMillis > 0
+        || state.m_duration.getUnit() == Unit.DAYS && state.m_duration.getNumber() > 0 ? 1 : 0;
     var predecessors = task.getPredecessors();
     for ( int index = 0; predecessors != null && index < predecessors.size(); index++ )
     {
       var dependency = predecessors.get( index );
       if ( dependency.type != DependencyType.FS || dependency.lag100ths < 0 )
-        throw new IllegalArgumentException( "Only nonnegative FS dependencies are supported in this preview" );
+        throw new IllegalArgumentException( "Only nonnegative FS dependencies are supported in date calculation" );
       if ( dependency.lagUnit == null || dependency.lagUnit == Unit.DAYS && dependency.lag100ths != 0 )
         throw new IllegalArgumentException(
             "Dependency lag unit is missing or needs unsupported equivalent-day advancement" );
@@ -281,117 +265,116 @@ public class Schedule
     return searches;
   }
 
-  /**************************************** calculateTask ****************************************/
-  private static SchedulePreview.TaskDates calculateTask( Node node, IdentityHashMap<Task, Node> nodesByTask,
+  /************************************* calculateTaskTiming *************************************/
+  private static TaskTiming calculateTaskTiming( TaskState state, IdentityHashMap<Task, TaskState> statesByTask,
       Calendar calendar, DateTime planStart, DateTime limit )
   {
-    DateTime start = node.m_enteredStart == null ? planStart : node.m_enteredStart;
-    var predecessors = node.m_task.getPredecessors();
+    // calculate start, normal finish and rounded finish from the already staged predecessor dates
+    DateTime start = state.m_enteredStart == null ? planStart : state.m_enteredStart;
+    var predecessors = state.m_task.getPredecessors();
     for ( int index = 0; predecessors != null && index < predecessors.size(); index++ )
     {
       var dependency = predecessors.get( index );
-      Node predecessor = nodesByTask.get( dependency.task );
-      DateTime bound = DependencyBounds.calculate( dependency, predecessor.m_dates.start(),
-          predecessor.m_dates.finish(), calendar, limit );
-      Utils.trace( "SCHEDULE PREVIEW dependency", "task=", node.m_index, "predecessor=", predecessor.m_index,
-          "FS lag100ths=", dependency.lag100ths, "unit=", dependency.lagUnit, "bound=", bound );
+      TaskState predecessor = statesByTask.get( dependency.task );
+      DateTime bound = DependencyBounds.calculateRequiredDate( dependency, predecessor.m_timing.getStart(),
+          predecessor.m_timing.getRoundedEnd(), calendar, limit );
       if ( bound == null )
-        throw new IllegalArgumentException( "Task " + node.m_index + ": FS bound from task " + predecessor.m_index
-            + " was not reached by preview limit " + limit );
+        throw new IllegalArgumentException( "Task " + state.m_taskNumber + ": FS bound from task "
+            + predecessor.m_taskNumber + " was not reached by calculation limit " + limit );
       if ( bound.toSerialMilliseconds() > start.toSerialMilliseconds() )
       {
-        if ( node.m_enteredStart != null )
-          throw new IllegalArgumentException( "Task " + node.m_index + ": entered start " + start
-              + " conflicts with FS on task " + predecessor.m_index + "; required start is at or after " + bound );
+        if ( state.m_enteredStart != null )
+          throw new IllegalArgumentException( "Task " + state.m_taskNumber + ": entered start " + start
+              + " conflicts with FS on task " + predecessor.m_taskNumber + "; required start is at or after " + bound );
         start = bound;
       }
     }
 
-    Utils.trace( "SCHEDULE PREVIEW start", "task=", node.m_index, "start=", start );
     DateTime normalFinish;
-    if ( node.m_duration.getUnit() == Unit.DAYS )
+    if ( state.m_duration.getUnit() == Unit.DAYS )
     {
       // reconstruct entered hundredths once; day weights determine progress rather than a fixed hours-per-day value.
-      int quantity100ths = (int) Math.rint( node.m_duration.getNumber() * 100 );
+      int quantity100ths = (int) Math.rint( state.m_duration.getNumber() * 100 );
       try
       {
         normalFinish = calendar.advanceEquivalentDays( start, quantity100ths, limit );
       }
       catch ( IllegalArgumentException failure )
       {
-        throw new IllegalArgumentException( "Task " + node.m_index + ": " + failure.getMessage(), failure );
+        throw new IllegalArgumentException( "Task " + state.m_taskNumber + ": " + failure.getMessage(), failure );
       }
     }
     else
-      normalFinish = node.m_durationMillis >= 0
-          ? calendar.advanceWorkingMillis( start, node.m_durationMillis, Direction.FORWARD, limit )
-          : CalendarShift.shift( start, node.m_duration );
+      normalFinish = state.m_durationMillis >= 0
+          ? calendar.advanceWorkingMillis( start, state.m_durationMillis, Direction.FORWARD, limit )
+          : ElapsedDateShift.shift( start, state.m_duration );
     if ( normalFinish == null || normalFinish.toSerialMilliseconds() > limit.toSerialMilliseconds() )
       throw new IllegalArgumentException(
-          "Task " + node.m_index + ": duration target was not reached by preview limit " + limit );
-    DateTime finish = EndRounding.roundUp( normalFinish, node.m_rounding );
+          "Task " + state.m_taskNumber + ": duration target was not reached by calculation limit " + limit );
+    DateTime finish = EndRounding.roundUp( normalFinish, state.m_rounding );
     if ( finish.toSerialMilliseconds() > limit.toSerialMilliseconds() )
       throw new IllegalArgumentException(
-          "Task " + node.m_index + ": rounded finish " + finish + " is after preview limit " + limit );
-    Utils.trace( "SCHEDULE PREVIEW dates", "task=", node.m_index, "start=", start, "normalFinish=", normalFinish,
-        "finish=", finish );
-    return new SchedulePreview.TaskDates( node.m_task, node.m_index,
-        (String) node.m_task.getValue( Task.FIELD.Title.ordinal() ), start, normalFinish, finish );
+          "Task " + state.m_taskNumber + ": rounded finish " + finish + " is after calculation limit " + limit );
+    return new TaskTiming( start, normalFinish, null, null, finish );
   }
 
-  /*************************************** getOrderedTasks ***************************************/
-  private static List<Node> getOrderedTasks( Tasks tasks, IdentityHashMap<Task, Node> nodesByTask )
+  /****************************************** orderTasks *****************************************/
+  private static List<TaskState> orderTasks( Tasks tasks, IdentityHashMap<Task, TaskState> statesByTask )
   {
-    // create scheduling nodes for non-blank tasks, excluding the overall-project task
+    // order nonblank tasks by predecessor readiness, descending priority and ascending task number
+    // create scheduling states for non-blank tasks, excluding the overall-project task
     int taskCount = tasks.getNotNullCount();
-    var nodes = new ArrayList<Node>( taskCount );
+    var states = new ArrayList<TaskState>( taskCount );
 
     for ( int index = 1; index < tasks.size(); index++ )
     {
       Task task = tasks.get( index );
       if ( !task.isBlank() )
       {
-        Node node = new Node( task, index );
-        if ( task == tasks.get( 0 ) || nodesByTask.putIfAbsent( task, node ) != null )
+        TaskState state = new TaskState( task, index );
+        if ( task == tasks.get( 0 ) || statesByTask.putIfAbsent( task, state ) != null )
           throw new IllegalStateException( "Task object is repeated at row " + index );
-        nodes.add( node );
+        states.add( state );
       }
     }
 
     // build incoming counts and successor links from predecessor relationships
-    for ( Node node : nodes )
+    for ( TaskState state : states )
     {
-      var predecessors = node.m_task.getPredecessors();
+      var predecessors = state.m_task.getPredecessors();
       if ( predecessors == null )
         continue;
 
       for ( int index = 0; index < predecessors.size(); index++ )
       {
         var dependency = predecessors.get( index );
-        Node predecessor = dependency == null ? null : nodesByTask.get( dependency.task );
+        TaskState predecessor = dependency == null ? null : statesByTask.get( dependency.task );
         if ( predecessor == null )
-          throw new IllegalStateException( "Invalid predecessor for task " + node.m_index );
+          throw new IllegalStateException( "Invalid predecessor for task " + state.m_taskNumber );
 
-        node.m_incoming++;
-        predecessor.addSuccessor( node );
+        // allocate successor storage only for tasks that need it
+        if ( predecessor.m_successors == null )
+          predecessor.m_successors = new ArrayList<>( 2 );
+        predecessor.m_successors.add( state );
+        state.m_incoming++;
       }
     }
 
     // queue graph-ready tasks by descending priority and then ascending task index
-    var ready = new PriorityQueue<Node>( Math.max( 1, taskCount ), NODE_ORDER );
-    for ( Node node : nodes )
-      if ( node.m_incoming == 0 )
-        ready.add( node );
+    var ready = new PriorityQueue<TaskState>( Math.max( 1, taskCount ), STATE_ORDER );
+    for ( TaskState state : states )
+      if ( state.m_incoming == 0 )
+        ready.add( state );
 
     // remove each best graph-ready task and release its successors
-    var ordered = new ArrayList<Node>( taskCount );
+    var ordered = new ArrayList<TaskState>( taskCount );
     while ( !ready.isEmpty() )
     {
-      Node node = ready.remove();
-      ordered.add( node );
+      TaskState state = ready.remove();
+      ordered.add( state );
 
-      if ( node.m_successors != null )
-        for ( Node successor : node.m_successors )
+      if ( state.m_successors != null )
+        for ( TaskState successor : state.m_successors )
           if ( --successor.m_incoming == 0 )
             ready.add( successor );
     }

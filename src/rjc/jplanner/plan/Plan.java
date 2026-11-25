@@ -18,12 +18,15 @@
 
 package rjc.jplanner.plan;
 
+import java.util.Objects;
+
 import rjc.jplanner.plan.calendars.Calendar;
 import rjc.jplanner.plan.calendars.Calendars;
 import rjc.jplanner.plan.days.DayType;
 import rjc.jplanner.plan.days.DayTypes;
 import rjc.jplanner.plan.resources.Resource;
 import rjc.jplanner.plan.resources.Resources;
+import rjc.jplanner.plan.schedule.AllocationStore;
 import rjc.jplanner.plan.tasks.Task;
 import rjc.jplanner.plan.tasks.Tasks;
 import rjc.table.Utils;
@@ -36,22 +39,24 @@ import rjc.table.data.types.TimeInterval;
 
 public class Plan
 {
-  private String    m_title;          // plan title
-  private DateTime  m_start;          // plan default start date-time for scheduling
-  private Calendar  m_calendar;       // plan default calendar
-  private TimeSpan  m_endRounding;    // default end rounding copied into new tasks, null for none
-  private String    m_datetimeFormat; // format to display date-times
-  private String    m_dateFormat;     // format to display dates
-  private String    m_filename;       // filename when saved or loaded
-  private String    m_fileLocation;   // file location
-  private String    m_savedBy;        // who saved last
-  private DateTime  m_savedWhen;      // when was last saved
-  private String    m_notes;          // plan notes
+  private String          m_title;          // plan title
+  private DateTime        m_start;          // plan default start date-time for scheduling
+  private Calendar        m_calendar;       // plan default calendar
+  private TimeSpan        m_endRounding;    // default end rounding copied into new tasks, null for none
+  private String          m_datetimeFormat; // format to display date-times
+  private String          m_dateFormat;     // format to display dates
+  private String          m_filename;       // filename when saved or loaded
+  private String          m_fileLocation;   // file location
+  private String          m_savedBy;        // who saved last
+  private DateTime        m_savedWhen;      // when was last saved
+  private String          m_notes;          // plan notes
 
-  private Tasks     tasks;            // list of plan tasks
-  private Resources resources;        // list of plan resources
-  private Calendars calendars;        // list of plan calendars
-  private DayTypes  daytypes;         // list of plan day types
+  private Tasks           tasks;            // list of plan tasks
+  private Resources       resources;        // list of plan resources
+  private Calendars       calendars;        // list of plan calendars
+  private DayTypes        daytypes;         // list of plan day types
+
+  private AllocationStore m_allocations;    // retained immutable calculated resource-task allocation intervals
 
   /**************************************** constructor ******************************************/
   public Plan()
@@ -61,6 +66,8 @@ public class Plan
     calendars = new Calendars( this );
     resources = new Resources( this );
     tasks = new Tasks( this );
+
+    m_allocations = AllocationStore.empty();
 
     m_title = "";
     m_datetimeFormat = "EEE dd/MM/yyyy HH:mm";
@@ -88,6 +95,7 @@ public class Plan
     calendars.initialise();
     resources.initialise();
     tasks.initialise();
+    m_allocations = AllocationStore.empty();
 
     // default calendar to first calendar (should be standard week)
     m_calendar = calendars.get( 0 );
@@ -126,6 +134,31 @@ public class Plan
   public Resources getResources()
   {
     return resources;
+  }
+
+  /**************************************** getAllocations ***************************************/
+  public AllocationStore getAllocations()
+  {
+    return m_allocations;
+  }
+
+  /**************************************** getAllocations ***************************************/
+  public AllocationStore.Selection getAllocations( Task task )
+  {
+    return m_allocations.getAllocations( task );
+  }
+
+  /**************************************** getAllocations ***************************************/
+  public AllocationStore.Selection getAllocations( Resource resource )
+  {
+    return m_allocations.getAllocations( resource );
+  }
+
+  /**************************************** setAllocations ***************************************/
+  public void setAllocations( AllocationStore allocations )
+  {
+    // install together with other calculated state in the caller's complete scheduling update
+    m_allocations = Objects.requireNonNull( allocations, "allocations" );
   }
 
   /****************************************** calendar *******************************************/

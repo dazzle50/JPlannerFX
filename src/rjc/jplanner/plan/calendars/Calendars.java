@@ -52,8 +52,8 @@ public class Calendars extends ArrayList<Calendar>
     var plan = m_weakPlan.get();
     DayType nonWorking = plan.getDayType( 0 );
     DayType working = plan.getDayType( 1 );
-    DayType shortDay = plan.getDayType( 2 );
-    DayType evening = plan.getDayType( 3 );
+    // DayType shortDay = plan.getDayType( 2 );
+    // DayType evening = plan.getDayType( 3 );
     DayType fullTime = plan.getDayType( 4 );
 
     // initialise list with default calendars

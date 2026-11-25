@@ -35,12 +35,14 @@ final class DependencyBounds
   /***************************************** constructor *****************************************/
   private DependencyBounds()
   {
+    // use static calculations without creating a dependency-bound object
   }
 
-  /****************************************** calculate ******************************************/
-  static DateTime calculate( Dependency dependency, DateTime predecessorStart, DateTime predecessorFinish,
+  /************************************ calculateRequiredDate ************************************/
+  static DateTime calculateRequiredDate( Dependency dependency, DateTime predecessorStart, DateTime predecessorFinish,
       Calendar projectCalendar, DateTime limit )
   {
+    // calculate the successor start or finish bound from the required predecessor boundary and lag
     Objects.requireNonNull( dependency, "dependency" );
     var type = Objects.requireNonNull( dependency.type, "dependency type" );
     var unit = Objects.requireNonNull( dependency.lagUnit, "lag unit" );
@@ -78,7 +80,7 @@ final class DependencyBounds
             limit );
       }
       case WEEKS, MONTHS, YEARS -> {
-        DateTime bound = CalendarShift.shift( from, lag100ths, unit );
+        DateTime bound = ElapsedDateShift.shift( from, lag100ths, unit );
         // compare timeline positions so equivalent 24:00/00:00 limits are inclusive.
         boolean beyondLimit = forward ? bound.toSerialMilliseconds() > limitMillis
             : bound.toSerialMilliseconds() < limitMillis;

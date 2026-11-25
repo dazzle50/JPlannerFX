@@ -31,41 +31,46 @@ final class IntervalProgress
   private static final long MAX_EXACT_MILLIS = 1L << 53; // largest exact whole-millisecond double value
 
   // work uses resource-milliseconds; entries follow the supplied allocation order.
-  static final class Result
+  static final class Measurement
   {
     private final long     m_durationMillis;     // project working milliseconds
     private final double[] m_resourceWorkMillis; // privately owned resource contributions
     private final double   m_workMillis;         // compensated total of resource contributions
 
     /*************************************** constructor *****************************************/
-    private Result( long durationMillis, double[] resourceWorkMillis, double workMillis )
+    private Measurement( long durationMillis, double[] resourceWorkMillis, double workMillis )
     {
+      // retain measured duration, private per-resource credits and their compensated total
       m_durationMillis = durationMillis;
       m_resourceWorkMillis = resourceWorkMillis;
       m_workMillis = workMillis;
     }
 
-    /************************************** durationMillis ***************************************/
-    long durationMillis()
+    /************************************* getDurationMillis *************************************/
+    long getDurationMillis()
     {
+      // return measured project-working milliseconds, counted once independently of resource quantity
       return m_durationMillis;
     }
 
-    /*************************************** resourceCount ***************************************/
-    int resourceCount()
+    /************************************** getResourceCount *************************************/
+    int getResourceCount()
     {
+      // return the number of resource credits in the original allocation order
       return m_resourceWorkMillis.length;
     }
 
-    /************************************ resourceWorkMillis *************************************/
-    double resourceWorkMillis( int index )
+    /*********************************** getResourceWorkMillis ***********************************/
+    double getResourceWorkMillis( int index )
     {
+      // return the measured resource-millisecond credit at this allocation position
       return m_resourceWorkMillis[index];
     }
 
-    /**************************************** workMillis *****************************************/
-    double workMillis()
+    /*************************************** getWorkMillis ***************************************/
+    double getWorkMillis()
     {
+      // return credited resource-milliseconds without passing calculated work through input rounding
       // defer aggregate overflow until the total is requested; individual resource work remains usable.
       if ( !Double.isFinite( m_workMillis ) )
         throw new ArithmeticException( "Total work exceeds the supported double range" );
@@ -74,27 +79,30 @@ final class IntervalProgress
   }
 
   // completion is an offset from the supplied interval start; work is for the sole resource.
-  static final class WorkResult
+  static final class WorkCompletion
   {
-    private final long   m_completionMillis; // represented completion offset, or -1 when not reached
-    private final double m_workMillis;       // credited resource-milliseconds, clipped at completion
+    private final long   m_completionOffsetMillis; // represented completion offset, or -1 when not reached
+    private final double m_workMillis;             // credited resource-milliseconds, clipped at completion
 
     /*************************************** constructor *****************************************/
-    private WorkResult( long completionMillis, double workMillis )
+    private WorkCompletion( long completionMillis, double workMillis )
     {
-      m_completionMillis = completionMillis;
+      // retain the completion offset or -1 together with the credited work for the sole resource
+      m_completionOffsetMillis = completionMillis;
       m_workMillis = workMillis;
     }
 
-    /************************************* completionMillis **************************************/
-    long completionMillis()
+    /********************************* getCompletionOffsetMillis *********************************/
+    long getCompletionOffsetMillis()
     {
-      return m_completionMillis;
+      // return the completion offset from interval start, or -1 when the target was not reached
+      return m_completionOffsetMillis;
     }
 
-    /**************************************** workMillis *****************************************/
-    double workMillis()
+    /*************************************** getWorkMillis ***************************************/
+    double getWorkMillis()
     {
+      // return credited resource-milliseconds without passing calculated work through input rounding
       return m_workMillis;
     }
   }
@@ -102,12 +110,14 @@ final class IntervalProgress
   /***************************************** constructor *****************************************/
   private IntervalProgress()
   {
+    // use static measurements without retaining progress between supplied intervals
   }
 
-  /**************************************** targetMillis *****************************************/
+  /**************************************** toTargetMillis ***************************************/
   // convert entered seconds/hundredths as integers; calculated work never passes through input rounding.
-  static long targetMillis( TimeSpan target )
+  static long toTargetMillis( TimeSpan target )
   {
+    // convert an entered target in seconds, minutes or hours to exact whole-millisecond units
     double number = Objects.requireNonNull( target, "target" ).getNumber();
     if ( !Double.isFinite( number ) || number < 0.0 )
       throw new IllegalArgumentException( "Target must be finite and non-negative" );
@@ -128,11 +138,12 @@ final class IntervalProgress
     return (long) units * millisPerUnit;
   }
 
-  /***************************************** calculate *******************************************/
+  /*************************************** measureInterval ***************************************/
   // callers supply [start, end) with unchanged calendar state and allocations after resource restrictions.
   // this measures the whole interval; target clipping and resource-release dates are calculated separately.
-  static Result calculate( long elapsedMillis, boolean projectWorking, double[] allocations )
+  static Measurement measureInterval( long elapsedMillis, boolean projectWorking, double[] allocations )
   {
+    // measure duration and per-resource work across the entire supplied interval with constant allocations
     Objects.requireNonNull( allocations, "allocations" );
     if ( elapsedMillis < 0 || elapsedMillis > MAX_EXACT_MILLIS )
       throw new IllegalArgumentException( "Elapsed milliseconds must be non-negative and exactly representable" );
@@ -157,15 +168,16 @@ final class IntervalProgress
       sum = next;
     }
 
-    return new Result( projectWorking ? elapsedMillis : 0, work, sum + correction );
+    return new Measurement( projectWorking ? elapsedMillis : 0, work, sum + correction );
   }
 
-  /************************************** calculateDuration **************************************/
+  /*********************************** measureToDurationTarget ***********************************/
   // targetDurationMillis is the remaining project working duration at the supplied interval start.
   // exact durationMillis equality with that target establishes completion at the same offset, including zero.
-  static Result calculateDuration( long elapsedMillis, long targetDurationMillis, boolean projectWorking,
+  static Measurement measureToDurationTarget( long elapsedMillis, long targetDurationMillis, boolean projectWorking,
       double[] allocations )
   {
+    // measure interval progress clipped at the remaining project-working-duration target
     // validate the original interval before clipping so a short target cannot hide an invalid elapsed value.
     if ( elapsedMillis < 0 || elapsedMillis > MAX_EXACT_MILLIS )
       throw new IllegalArgumentException( "Elapsed milliseconds must be non-negative and exactly representable" );
@@ -180,14 +192,15 @@ final class IntervalProgress
       productiveMillis = Math.min( elapsedMillis, targetDurationMillis );
 
     // calculation validates every allocation even when clipping leaves no productive time.
-    return calculate( productiveMillis, projectWorking, allocations );
+    return measureInterval( productiveMillis, projectWorking, allocations );
   }
 
-  /**************************************** calculateWork ****************************************/
+  /************************************* measureToWorkTarget *************************************/
   // one constant allocation and an integer work target at the interval start; no accumulated remainder.
   // completionMillis determines completion; rounded incomplete work can already equal the target.
-  static WorkResult calculateWork( long elapsedMillis, long targetWorkMillis, double allocation )
+  static WorkCompletion measureToWorkTarget( long elapsedMillis, long targetWorkMillis, double allocation )
   {
+    // measure one resource up to its remaining work target and locate the first sufficient millisecond
     // validate all inputs before handling zero targets or intervals.
     if ( elapsedMillis < 0 || elapsedMillis > MAX_EXACT_MILLIS )
       throw new IllegalArgumentException( "Elapsed milliseconds must be non-negative and exactly representable" );
@@ -197,13 +210,13 @@ final class IntervalProgress
       throw new IllegalArgumentException( "Allocation must be finite and non-negative" );
 
     if ( targetWorkMillis == 0 )
-      return new WorkResult( 0, 0.0 );
+      return new WorkCompletion( 0, 0.0 );
 
     // integer milliseconds make a non-zero exact residual at least one subnormal unit in magnitude.
     // fused rounding preserves its sign even when a separately rounded product equals the target.
     // check the interval end first so division cannot overflow or produce an out-of-range candidate.
     if ( Math.fma( allocation, elapsedMillis, -targetWorkMillis ) < 0.0 )
-      return new WorkResult( -1, allocation * elapsedMillis );
+      return new WorkCompletion( -1, allocation * elapsedMillis );
 
     long completionMillis = (long) Math.ceil( targetWorkMillis / allocation );
     // all integer boundaries through 2^53 are exact doubles; quotient rounding can be at most one millisecond early.
@@ -211,6 +224,6 @@ final class IntervalProgress
       completionMillis++;
 
     // credit the exact target; callers retain allocation until F0 without adding productive work.
-    return new WorkResult( completionMillis, targetWorkMillis );
+    return new WorkCompletion( completionMillis, targetWorkMillis );
   }
 }

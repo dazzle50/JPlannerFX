@@ -40,6 +40,7 @@ final class TaskAllocator
     /*************************************** constructor *****************************************/
     Request
     {
+      // validate one assignment request and capture distinct resource matches independently of later list edits
       if ( taskNumber <= 0 )
         throw new IllegalArgumentException( "Task number must be positive" );
       if ( priority < 0 || priority > 999 )
@@ -56,6 +57,7 @@ final class TaskAllocator
   /***************************************** constructor *****************************************/
   private TaskAllocator()
   {
+    // use static calculations without retaining reservations between allocation events
   }
 
   /****************************************** allocate *******************************************/
@@ -63,8 +65,9 @@ final class TaskAllocator
   // task numbers determine precedence for this calculation; they are not persistent task identity.
   static double[][] allocate( double[] capacities, List<Request> requests )
   {
+    // allocate eligible task requests in priority order, returning rows in the original request order
     double[] remainingCapacities = AssignmentAllocator.allocateAll( capacities );
-    Request[] orderedRequests = List.copyOf( requests ).toArray( new Request[0] );
+    Request[] orderedRequests = requests.toArray( new Request[0] );
     var indexesByTaskNumber = new HashMap<Integer, Integer>();
 
     // validate every reference before allocating, including requests that are currently ineligible.

@@ -27,20 +27,22 @@ import rjc.table.data.types.DateTime;
 import rjc.table.data.types.Time;
 
 /*************************************************************************************************/
-/******************** Shifts elapsed calendar duration and dependency boundaries *****************/
+/********************* Shifts elapsed weeks, months and years on the timeline *********************/
 /*************************************************************************************************/
 
-final class CalendarShift
+final class ElapsedDateShift
 {
   /***************************************** constructor *****************************************/
-  private CalendarShift()
+  private ElapsedDateShift()
   {
+    // use static calculations without creating a date-shift object
   }
 
   /******************************************** shift ********************************************/
   // reconstruct entered hundredths once; signed dependency quantities use the integer overload directly.
   static DateTime shift( DateTime from, TimeSpan duration )
   {
+    // shift by elapsed weeks, months or years without consulting any working calendar
     double number = Objects.requireNonNull( duration, "duration" ).getNumber();
     if ( !Double.isFinite( number ) || number < 0.0 || number > Integer.MAX_VALUE / 100.0 )
       throw new IllegalArgumentException( "Calendar duration must be finite, non-negative and within the input range" );
@@ -52,12 +54,13 @@ final class CalendarShift
   // only elapsed weeks/months/years belong here; project equivalent days and optional end rounding are separate.
   static DateTime shift( DateTime from, int quantity100ths, Unit unit )
   {
+    // shift by elapsed weeks, months or years without consulting any working calendar
     Objects.requireNonNull( from, "from" );
     // validate units even for zero quantities; promote before scaling so signed integer extrema cannot wrap.
     return switch ( Objects.requireNonNull( unit, "unit" ) )
     {
       case WEEKS -> {
-        long days = roundDays( (long) quantity100ths * 7 );
+        long days = roundToWholeDays( (long) quantity100ths * 7 );
         yield from.plusMilliseconds( Math.multiplyExact( days, Time.MILLIS_PER_DAY ) );
       }
       case MONTHS -> shiftMonths( from, quantity100ths );
@@ -69,6 +72,7 @@ final class CalendarShift
   /***************************************** shiftMonths *****************************************/
   private static DateTime shiftMonths( DateTime from, long months100ths )
   {
+    // shift whole and fractional months from the original date, preserving the represented time
     if ( months100ths == 0 )
       return from;
 
@@ -85,16 +89,17 @@ final class CalendarShift
       // shift both boundaries from the original date; negative fractions travel toward the preceding month.
       // wider temporary dates avoid rejecting a valid result because its interpolation boundary is out of storage.
       long adjacentDay = original.plusMonths( wholeMonths + Long.signum( fraction100ths ) ).toEpochDay();
-      resultDay += roundDays( Math.abs( fraction100ths ) * ( adjacentDay - baseDay ) );
+      resultDay += roundToWholeDays( Math.abs( fraction100ths ) * ( adjacentDay - baseDay ) );
     }
 
     // apply the final whole-day displacement on the timeline, retaining milliseconds and checked storage limits.
     return from.plusMilliseconds( Math.multiplyExact( resultDay - originalDay, Time.MILLIS_PER_DAY ) );
   }
 
-  /****************************************** roundDays ******************************************/
-  private static long roundDays( long days100ths )
+  /*************************************** roundToWholeDays **************************************/
+  private static long roundToWholeDays( long days100ths )
   {
+    // round signed day hundredths to the nearest whole day, with ties away from zero
     // numerators are bounded by signed integer inputs; truncation with a signed half rounds ties away from zero.
     return ( days100ths + ( days100ths < 0 ? -50 : 50 ) ) / 100;
   }

@@ -38,11 +38,13 @@ final class EndRounding
   /***************************************** constructor *****************************************/
   private EndRounding()
   {
+    // use static calculations without creating an end-rounding object
   }
 
   /******************************************* roundUp *******************************************/
   static DateTime roundUp( DateTime normalFinish, TimeSpan rounding )
   {
+    // find the first configured finish boundary at or after normal finish, retaining absent rounding unchanged
     long finishMillis = Objects.requireNonNull( normalFinish, "normalFinish" ).toSerialMilliseconds();
     if ( rounding == null )
       return normalFinish;
@@ -60,10 +62,10 @@ final class EndRounding
 
     long advanceMillis;
     if ( unit == Unit.MONTHS || unit == Unit.YEARS )
-      advanceMillis = monthAdvanceMillis( finishMillis, unit == Unit.YEARS ? quantity * 12 : quantity );
+      advanceMillis = calculateMonthAdvanceMillis( finishMillis, unit == Unit.YEARS ? quantity * 12 : quantity );
     else
     {
-      long intervalMillis = intervalMillis( quantity, unit );
+      long intervalMillis = toIntervalMillis( quantity, unit );
       boolean subDay = intervalMillis < Time.MILLIS_PER_DAY;
       // use timeline positions so stored 24:00 and the following 00:00 share the same grid.
       long position = subDay ? Math.floorMod( finishMillis, Time.MILLIS_PER_DAY ) : finishMillis - REFERENCE_MILLIS;
@@ -85,9 +87,10 @@ final class EndRounding
     return normalFinish.plusMilliseconds( advanceMillis );
   }
 
-  /*************************************** intervalMillis ****************************************/
-  private static long intervalMillis( long quantity, Unit unit )
+  /*************************************** toIntervalMillis **************************************/
+  private static long toIntervalMillis( long quantity, Unit unit )
   {
+    // convert a validated whole-second or hundredth-unit quantity to an exact fixed-length interval
     // quantities are validated; even the largest week interval fits in a long.
     long millisPerQuantity = switch ( unit )
     {
@@ -101,9 +104,10 @@ final class EndRounding
     return quantity * millisPerQuantity;
   }
 
-  /************************************* monthAdvanceMillis **************************************/
-  private static long monthAdvanceMillis( long finishMillis, long months100ths )
+  /********************************* calculateMonthAdvanceMillis *********************************/
+  private static long calculateMonthAdvanceMillis( long finishMillis, long months100ths )
   {
+    // calculate the forward offset to the first month-grid boundary at or after the finish
     // use the date before the first permissible midnight, including one day below compact storage.
     // this retains exact midnight boundaries rounded forward from the preceding month.
     LocalDate date = LocalDate.ofEpochDay( Math.floorDiv( finishMillis - 1, Time.MILLIS_PER_DAY ) );
