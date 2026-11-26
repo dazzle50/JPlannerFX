@@ -27,6 +27,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyCombination.Modifier;
 import rjc.jplanner.gui.PlanContext;
 import rjc.jplanner.plan.schedule.Schedule;
+import rjc.table.signal.ObservableStatus.Level;
 import rjc.table.undo.UndoStack;
 
 /*************************************************************************************************/
@@ -107,7 +108,19 @@ public class EditMenu extends Menu
   {
     // trigger plan scheduling
     MenuItem editSchedule = new MenuItem( "Schedule" );
-    editSchedule.setOnAction( event -> Schedule.schedule( m_context.getPlan() ) );
+    editSchedule.setOnAction( event ->
+    {
+      // opening the menu has already finished editing through the shared menu and popup handlers
+      try
+      {
+        Schedule.schedule( m_context.getPlan() );
+        m_context.getStatus().update( Level.INFO, "Inputs checked; scheduling calculation is not implemented yet" );
+      }
+      catch ( IllegalArgumentException | IllegalStateException exception )
+      {
+        m_context.getStatus().update( Level.ERROR, "Scheduling pre-checks failed: " + exception.getMessage() );
+      }
+    } );
     return editSchedule;
   }
 

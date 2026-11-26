@@ -39,24 +39,33 @@ import rjc.table.data.types.TimeInterval;
 
 public class Plan
 {
-  private String          m_title;          // plan title
-  private DateTime        m_start;          // plan default start date-time for scheduling
-  private Calendar        m_calendar;       // plan default calendar
-  private TimeSpan        m_endRounding;    // default end rounding copied into new tasks, null for none
-  private String          m_datetimeFormat; // format to display date-times
-  private String          m_dateFormat;     // format to display dates
-  private String          m_filename;       // filename when saved or loaded
-  private String          m_fileLocation;   // file location
-  private String          m_savedBy;        // who saved last
-  private DateTime        m_savedWhen;      // when was last saved
-  private String          m_notes;          // plan notes
+  public enum ScheduleOutcome
+  {
+    NONE, COMPLETE, PARTIAL
+  }
 
-  private Tasks           tasks;            // list of plan tasks
-  private Resources       resources;        // list of plan resources
-  private Calendars       calendars;        // list of plan calendars
-  private DayTypes        daytypes;         // list of plan day types
+  private String          m_title;             // plan title
+  private DateTime        m_start;             // plan default start date-time for scheduling
+  private Calendar        m_calendar;          // plan default calendar
+  private TimeSpan        m_endRounding;       // default end rounding copied into new tasks, null for none
+  private String          m_datetimeFormat;    // format to display date-times
+  private String          m_dateFormat;        // format to display dates
+  private String          m_filename;          // filename when saved or loaded
+  private String          m_fileLocation;      // file location
+  private String          m_savedBy;           // who saved last
+  private DateTime        m_savedWhen;         // when was last saved
+  private String          m_notes;             // plan notes
 
-  private AllocationStore m_allocations;    // retained immutable calculated resource-task allocation intervals
+  private Tasks           tasks;               // list of plan tasks
+  private Resources       resources;           // list of plan resources
+  private Calendars       calendars;           // list of plan calendars
+  private DayTypes        daytypes;            // list of plan day types
+
+  private AllocationStore m_allocations;       // retained immutable calculated resource-task allocation intervals
+
+  private ScheduleOutcome m_scheduleOutcome;   // outcome of the retained scheduling attempt
+  private String          m_scheduleReason;    // reason the retained attempt is partial
+  private boolean         m_scheduleOutOfDate; // whether retained results precede relevant input changes
 
   /**************************************** constructor ******************************************/
   public Plan()
@@ -68,6 +77,7 @@ public class Plan
     tasks = new Tasks( this );
 
     m_allocations = AllocationStore.empty();
+    m_scheduleOutcome = ScheduleOutcome.NONE;
 
     m_title = "";
     m_datetimeFormat = "EEE dd/MM/yyyy HH:mm";
@@ -95,7 +105,7 @@ public class Plan
     calendars.initialise();
     resources.initialise();
     tasks.initialise();
-    m_allocations = AllocationStore.empty();
+    resetCalculatedResults();
 
     // default calendar to first calendar (should be standard week)
     m_calendar = calendars.get( 0 );
@@ -159,6 +169,68 @@ public class Plan
   {
     // install together with other calculated state in the caller's complete scheduling update
     m_allocations = Objects.requireNonNull( allocations, "allocations" );
+  }
+
+  /************************************* getScheduleOutcome **************************************/
+  public ScheduleOutcome getScheduleOutcome()
+  {
+    return m_scheduleOutcome;
+  }
+
+  /************************************** getScheduleReason **************************************/
+  public String getScheduleReason()
+  {
+    return m_scheduleReason;
+  }
+
+  /************************************* isScheduleOutOfDate *************************************/
+  public boolean isScheduleOutOfDate()
+  {
+    return m_scheduleOutOfDate;
+  }
+
+  /************************************ resetCalculatedResults ***********************************/
+  public void resetCalculatedResults()
+  {
+    // resolve derived summary roles once before changing any task or retained allocation state
+    if ( !tasks.isEmpty() )
+    {
+      var hierarchy = tasks.buildHierarchy();
+      for ( int index = 0; index < tasks.size(); index++ )
+        tasks.get( index ).resetCalculatedResults( index == 0 || hierarchy.hasChildren( index ) );
+    }
+
+    // release the active attempt without changing input ownership or retaining an earlier result
+    m_allocations = AllocationStore.empty();
+    m_scheduleOutcome = ScheduleOutcome.NONE;
+    m_scheduleReason = null;
+    m_scheduleOutOfDate = false;
+  }
+
+  /************************************ markScheduleOutOfDate ************************************/
+  public void markScheduleOutOfDate()
+  {
+    // no retained attempt exists to become stale until a final outcome has been recorded
+    if ( m_scheduleOutcome != ScheduleOutcome.NONE )
+      m_scheduleOutOfDate = true;
+  }
+
+  /************************************* setScheduleOutcome **************************************/
+  public void setScheduleOutcome( ScheduleOutcome outcome, String reason )
+  {
+    // validate all metadata before changing the recorded outcome or freshness
+    Objects.requireNonNull( outcome, "outcome" );
+    if ( outcome == ScheduleOutcome.NONE )
+      throw new IllegalArgumentException( "Use resetCalculatedResults to clear a scheduling result" );
+    if ( outcome == ScheduleOutcome.COMPLETE && reason != null )
+      throw new IllegalArgumentException( "A complete scheduling outcome must not have a partial reason" );
+    if ( outcome == ScheduleOutcome.PARTIAL && ( reason == null || reason.isBlank() ) )
+      throw new IllegalArgumentException( "A partial scheduling outcome requires a reason" );
+
+    // the caller must install and validate the actual result before recording its final outcome
+    m_scheduleOutcome = outcome;
+    m_scheduleReason = reason;
+    m_scheduleOutOfDate = false;
   }
 
   /****************************************** calendar *******************************************/

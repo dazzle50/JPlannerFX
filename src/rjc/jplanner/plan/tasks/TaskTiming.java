@@ -90,6 +90,21 @@ public final class TaskTiming
     return m_roundedEnd;
   }
 
+  /************************************ withoutCalculatedDates ***********************************/
+  TaskTiming withoutCalculatedDates( boolean fixedStart, boolean fixedEnd )
+  {
+    // retain fixed inputs exactly, including missing values, but remove previous calculation explanations
+    DateTime start = fixedStart ? m_start : null;
+    DateTime end = fixedEnd ? m_end : null;
+    String startStatus = fixedStart ? null : NOT_YET_SCHEDULED;
+    String endStatus = fixedEnd ? null : NOT_YET_SCHEDULED;
+    if ( start == m_start && end == m_end && Objects.equals( startStatus, m_startStatus )
+        && Objects.equals( endStatus, m_endStatus ) && m_roundedEnd == null )
+      return this;
+
+    return new TaskTiming( start, end, startStatus, endStatus, null );
+  }
+
   /****************************************** withStart ******************************************/
   TaskTiming withStart( DateTime start )
   {

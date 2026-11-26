@@ -47,6 +47,18 @@ public class Calendar
     Name, Anchor, Exceptions, Cycle, Normal
   }
 
+  // unsupported contributing weights are calculation limits, distinct from invalid method arguments.
+  public static final class EquivalentDayPrecisionException extends IllegalArgumentException
+  {
+    private static final long serialVersionUID = 1L; // exception serialization version
+
+    /*************************************** constructor *****************************************/
+    private EquivalentDayPrecisionException( String message )
+    {
+      super( message );
+    }
+  }
+
   /**************************************** constructor ******************************************/
   public Calendar( DayType day )
   {
@@ -425,7 +437,7 @@ public class Calendar
         int weight100ths = (int) Math.rint( weight * 100 );
         // preserve finer editable weights; this bounded calculation supports exact hundredths only.
         if ( weight100ths / 100.0 != weight )
-          throw new IllegalArgumentException(
+          throw new EquivalentDayPrecisionException(
               "Day type '" + day.getName() + "' has unsupported equivalent-day precision; expected hundredths" );
 
         if ( scaleMillis == 0 )

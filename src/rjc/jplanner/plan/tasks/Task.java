@@ -98,6 +98,17 @@ public class Task
     m_timing = timing;
   }
 
+  /************************************ resetCalculatedResults ***********************************/
+  public void resetCalculatedResults( boolean summary )
+  {
+    // project and summary dates are derived even when the stored ordinary type normally fixes them
+    boolean fixedEnd = !summary && m_type == TaskType.FIXED_PERIOD;
+    boolean fixedStart = !summary
+        && ( m_type == TaskType.START_ON_DURATION || m_type == TaskType.START_ON_WORK || fixedEnd );
+    m_timing = m_timing.withoutCalculatedDates( fixedStart, fixedEnd );
+    m_cost = null;
+  }
+
   /************************************ restoreTypeAndTiming *************************************/
   public void restoreTypeAndTiming( TaskType type, TaskTiming timing )
   {
